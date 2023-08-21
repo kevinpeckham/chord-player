@@ -20,7 +20,7 @@
 	$: setContext("chords", chords);
 
 	// variable
-	let oscillatorVoice = "square"
+	let oscillatorVoice = "sine"
 
 	// create store
 	const oscillatorStore = writable(oscillatorVoice);
