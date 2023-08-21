@@ -1,0 +1,110 @@
+[
+	{
+		"majorDisplay": "A",
+		"majorId": "A",
+		"minorDisplay": "F♯m",
+		"minorId": "Fsm",
+		"diminishedDisplay": "G♯°",
+		"diminishedId": "Gs-dim",
+		"keySignature": "♯♯♯"
+	},
+	{
+		"majorDisplay": "E",
+		"majorId": "E",
+		"minorDisplay": "C♯m",
+		"minorId": "Csm",
+		"diminishedDisplay": "D♯°",
+		"diminishedId": "Ds-dim",
+		"keySignature": "♯♯♯♯"
+	},
+	{
+		"majorDisplay": "B",
+		"majorId": "B",
+		"minorDisplay": "G♯m",
+		"minorId": "Gsm",
+		"diminishedDisplay": "A♯°",
+		"diminishedId": "As-dim",
+		"keySignature": "♯♯♯♯♯"
+	},
+	{
+		"majorDisplay": "G♭",
+		"majorId": "Gb",
+		"minorDisplay": "E♭m",
+		"minorId": "Ebm",
+		"diminishedDisplay": "F♯°",
+		"diminishedId": "Fs-dim",
+		"keySignature": "♯♯♯♯♯♯"
+	},
+	{
+		"majorDisplay": "D♭",
+		"majorId": "Db",
+		"minorDisplay": "B♭m",
+		"minorId": "Bbm",
+		"diminishedDisplay": "C°",
+		"diminishedId": "C-dim",
+		"keySignature": "♭♭♭♭♭"
+	},
+	{
+		"majorDisplay": "A♭",
+		"majorId": "Ab",
+		"minorDisplay": "Fm",
+		"minorId": "Fm",
+		"diminishedDisplay": "G°",
+		"diminishedId": "G-dim",
+		"keySignature": "♭♭♭♭"
+	},
+	{
+		"majorDisplay": "E♭",
+		"majorId": "Eb",
+		"minorDisplay": "Cm",
+		"minorId": "Cm",
+		"diminishedDisplay": "D°",
+		"diminishedId": "D-dim",
+		"keySignature": "♭♭♭"
+	},
+	{
+		"majorDisplay": "B♭",
+		"majorId": "Bb",
+		"minorDisplay": "Gm",
+		"minorId": "Gm",
+		"diminishedDisplay": "A°",
+		"diminishedId": "A-dim",
+		"keySignature": "♭♭"
+	},
+	{
+		"majorDisplay": "F",
+		"majorId": "F",
+		"minorDisplay": "Dm",
+		"minorId": "Dm",
+		"diminishedDisplay": "E°",
+		"diminishedId": "E-dim",
+		"keySignature": "♭"
+	},
+	{
+		"majorDisplay": "C",
+		"majorId": "C",
+		"minorDisplay": "Am",
+		"minorId": "Am",
+		"diminishedDisplay": "B°",
+		"diminishedId": "B-dim",
+		"keySignature": ""
+	},
+	{
+		"majorDisplay": "G",
+		"majorId": "G",
+		"minorDisplay": "Em",
+		"minorId": "Em",
+		"diminishedDisplay": "F°",
+		"diminishedId": "F-dim",
+		"keySignature": "♯"
+	},
+	{
+		"majorDisplay": "D",
+		"majorId": "D",
+		"minorDisplay": "Bm",
+		"minorId": "Bm",
+		"diminishedDisplay": "C♯°",
+		"diminishedId": "Cs-dim",
+		"keySignature": "♯♯"
+	}
+]
