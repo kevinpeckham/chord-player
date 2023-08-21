@@ -125,17 +125,18 @@ SVG Circle of Fifths
 
 <template lang='pug'>
 	svg#circle-of-fifths.w-full.h-auto.aspect-square.z-10(
+		class="scale-[1.1] max-w-[860px]"
 		viewBox="0 0 400 400"
 		xmlns="http://www.w3.org/2000/svg"
 		height="800"
 		width="800"
 		)
-		circle(
-			class="fill-transparent stroke-neutral-100 transition-opacity opacity-20 hover:opacity-40 stroke-[1em]"
-			cx="200"
-			cy="200"
-			r="190"
-			)
+		//- circle(
+		//- 	class="fill-transparent stroke-neutral-100 transition-opacity opacity-20 hover:opacity-40 stroke-[1em]"
+		//- 	cx="200"
+		//- 	cy="200"
+		//- 	r="190"
+		//- 	)
 		g(class="rotate-[15deg]" style="transform-origin: 200px 200px 0px;")
 			+each('chords as item, i')
 				+each('modes as m, index')
@@ -162,6 +163,7 @@ SVG Circle of Fifths
 				+const('radius1 = 150')
 				+const('[x1, y1] = textCoords(radius1, i)')
 				text(
+					class="text-20 sm:text-[1em]"
 					id!="chord-button-label-{item.majorId}"
 					x!="{x1.toFixed(2)}"
 					y!="{y1.toFixed(2)}"
@@ -173,7 +175,7 @@ SVG Circle of Fifths
 				+const('[x2, y2] = textCoords(radius2, i)')
 				text(
 					id!="chord-button-label-{item.minorId}"
-					class="text-[0.9em]"
+					class="text-18 sm:text-[0.9em]"
 					x!="{x2.toFixed(2)}"
 					y!="{y2.toFixed(2)}"
 					style="text-anchor: middle; dominant-baseline: central;"
@@ -182,7 +184,7 @@ SVG Circle of Fifths
 		//- center text
 		g.pointer-events-none
 			text.fill-accent(
-				class="text-[.8em]",
+				class="text-20 sm:text-[.8em]",
 				style="text-anchor: middle; dominant-baseline: central",
 				x="200",
 				y="200"

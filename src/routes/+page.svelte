@@ -51,31 +51,35 @@
 		h1.text-24.text-accent  Chord Player
 		div.opacity-80 A playable Circle of Fifths.
 
-	//- controls
-	.absolute.right-8.top-8.z-20
-		+each('["sine","triangle","square","sawtooth"] as voice')
-			.flex.gap-x-2
-				input(
-					type="radio"
-					checked!="{oscillatorVoice === voice}"
-					name="oscillator"
-					value!="{voice}"
-					bind:group!="{oscillatorVoice}"
-					)
-				label {voice}
 
 
-	main.relative.grid.grid-cols-1.min-h-screen.place-items-center.p-4.text-neutral-50.w-full.h-full
+
+	main.relative.grid.grid-cols-1.min-h-screen.place-items-center.p-4.text-neutral-50.max-w-full.h-full
+
 
 
 
 		//- outer circle container
-		.flex.items-center.justify-center.w-auto.aspect-square(class="h-[90vmin]")
+		.flex.items-center.justify-center.w-auto.aspect-square(class="sm:h-[90vmin]")
 			CircleOfFifths
 
 		//- version
 		.absolute.right-8.bottom-8.opacity-60.text-xs beta 0.0.2
 
-	footer
+		//- controls
+		.absolute.left-8.bottom-8.z-20
+			+each('["sine","triangle","square","sawtooth"] as voice')
+				.flex.gap-x-3
+					input.text-18(
+						type="radio"
+						checked!="{oscillatorVoice === voice}"
+						name="oscillator"
+						value!="{voice}"
+						bind:group!="{oscillatorVoice}"
+						)
+					label {voice}
+
+	footer.text-12.px-8.py-4.border-t(class="border-t-neutral-100/30 bg-black/10")
+		.flex.opacity-60 ©️ 2023 Speed Nuts
 
 </template>
