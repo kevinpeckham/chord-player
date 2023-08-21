@@ -30,19 +30,22 @@ SVG Circle of Fifths
 
 	// import types
 	import type { Chord} from "$types/types";
+	import type { Writable } from "svelte/store";
 
 	// create store
 	const activeChord = writable("");
-	const oscillatorValue = writable("sine");
+
+	// get store from context
+	const oscillatorStore = getContext("oscillatorStore") as Writable<string>;
 
 
 
 	// create audioContext singleton
 	// const audioCtx = new window.AudioContext
 	// let audioCtx: AudioContext;
-	onMount(() => {
-		// audioCtx = new (window.AudioContext);
-	});
+	// onMount(() => {
+	// 	// audioCtx = new (window.AudioContext);
+	// });
 
 	//- interaction functions
 	function onMousedown(event: PointerEvent) {
@@ -80,7 +83,7 @@ SVG Circle of Fifths
 
 		frequencies.forEach(frequency => {
       const oscNode = audioCtx.createOscillator();
-      oscNode.type = $oscillatorValue as OscillatorType; // hook up other values
+      oscNode.type = $oscillatorStore as OscillatorType; // hook up other values
 
       oscNode.frequency.value = frequency;
       oscNode.connect(gainNode);
@@ -121,9 +124,6 @@ SVG Circle of Fifths
 </script>
 
 <template lang='pug'>
-	//- .absolute.inset-0.z-0(
-	//- 	on:mousedown!="{onMousedown}"
-	//- 	)
 	svg#circle-of-fifths.w-full.h-auto.aspect-square.z-10(
 		viewBox="0 0 400 400"
 		xmlns="http://www.w3.org/2000/svg"

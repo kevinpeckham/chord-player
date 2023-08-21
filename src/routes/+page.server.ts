@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 
 // import store
-import { chordsStore } from "$stores/musicStore";
+import { chordsStore } from "$stores/chordsStore";
 
 // types
 import type { PageServerLoadEvent } from "./$types";
