@@ -20,6 +20,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Chord Player is an interactive web application that visualizes and plays musical chords using the Circle of Fifths. It's built with SvelteKit, TypeScript, and uses the Web Audio API for sound generation.
 
+**Current Version**: 0.2.0
+**Feature Roadmap**: See FEATURES.md for planned enhancements
+
 **Package Manager**: Bun 1.x
 **Framework**: Svelte 5 with runes API, SvelteKit 2.x
 **Language**: TypeScript 5.x
@@ -52,21 +55,26 @@ Chord Player is an interactive web application that visualizes and plays musical
 
 ### Component Structure
 Components are organized in a flat structure:
-- `/src/lib/components/` - All UI components (ButtonLink, CircleOfFifths, PreFooter, Footer)
+- `/src/lib/components/` - All UI components (CircleOfFifths, LinkButton, Footer)
 
 ### Data Flow
-1. **Static Data**: Musical data stored in JSON files under `/src/lib/data/`
+1. **Server-Side Data Loading**: 
+   - Chord data is pre-processed on the server via `chordsData.server.ts`
+   - Loaded through `+page.server.ts` and `+layout.server.ts`
+   - Improves initial load performance
+
+2. **Static Data**: Musical data stored in JSON files under `/src/lib/data/`
    - `circle-of-fifths-data.json` - Circle positions and chord relationships
    - `notes.json` - Note-to-frequency mappings
    - `chords.json` - Chord-to-note mappings
 
-2. **State Management**: Uses Svelte 5 runes
+3. **State Management**: Uses Svelte 5 runes
    - Reactive state objects with `$state()`
    - Props passing with `$props()`
    - Computed values with `$derived()`
    - No legacy stores - all state is managed with runes
 
-3. **Audio Generation**: Uses Web Audio API with oscillator types (sine, triangle, square, sawtooth)
+4. **Audio Generation**: Uses Web Audio API with oscillator types (sine, triangle, square, sawtooth)
 
 ### Path Aliases
 Configured shortcuts in `svelte.config.js`:
@@ -101,7 +109,7 @@ The project has undergone significant modernization:
 
 ### Semantic Versioning
 The project follows [Semantic Versioning](https://semver.org/):
-- **MAJOR.MINOR.PATCH** (e.g., 0.1.1)
+- **MAJOR.MINOR.PATCH** (e.g., 0.2.0)
 - **MAJOR**: Breaking changes
 - **MINOR**: New features, backwards compatible
 - **PATCH**: Bug fixes, backwards compatible
@@ -111,9 +119,27 @@ The project follows [Semantic Versioning](https://semver.org/):
 2. **src/routes/+page.svelte** - Version display in UI (bottom right)
 3. **CHANGELOG.md** - Document all changes with date
 4. **README.md** - Update if there are user-facing changes
+5. **CLAUDE.md** - Update current version reference
 
 ### Changelog Format
 Follow [Keep a Changelog](https://keepachangelog.com/) format:
 - Group changes under: Added, Changed, Fixed, Deprecated, Removed, Security
 - Include date in YYYY-MM-DD format
 - List changes in bullet points
+
+## GitHub Workflow
+
+### Branch Protection
+- Main branch is protected with CI checks
+- GitHub Actions runs quality checks on PRs
+- See `.github/branch-protection-rules.md` for configuration
+
+### CI/CD
+- **GitHub Actions**: `.github/workflows/ci.yml` runs on PRs and pushes to main
+- **Quality Checks**: format, lint, type check, build, test
+- **Deployment**: Automatic via Vercel on main branch updates
+
+### Working with PRs
+- Use GitHub CLI: `gh pr create`, `gh pr merge`
+- Set `GH_TOKEN` environment variable for CLI authentication
+- PRs can be merged once CI checks pass
