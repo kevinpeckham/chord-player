@@ -33,7 +33,7 @@
 				},
 				{
 					"key": "Permissions-Policy",
-					"value": "camera=(), geolocation=(), interest-cohort=()"
+					"value": "camera=(), geolocation=()"
 				}
 			]
 		}
