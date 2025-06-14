@@ -33,7 +33,7 @@ let oscillator = $state({
 	</div>
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">beta 0.0.2</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.1.1</div>
 
 	<!-- controls -->
 	<div class="absolute left-8 bottom-8 z-20">

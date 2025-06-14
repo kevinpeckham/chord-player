@@ -7,6 +7,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Never include "Generated with Claude Code" or "Co-Authored-By" statements in commit messages**
 - **Always use Svelte 5 runes API** ($state, $props, $derived, $effect) - no legacy stores
 - **Component structure is flattened** - components are directly in `/src/lib/components/` (no atoms/molecules/organisms subdirectories)
+- **When bumping versions**, always:
+  1. Update version in `package.json`
+  2. Update version in the UI (`src/routes/+page.svelte`)
+  3. Update `CHANGELOG.md` with changes
+  4. Update documentation as needed
+  5. Create a version bump commit
 
 ## Project Overview
 
@@ -88,3 +94,24 @@ The project has undergone significant modernization:
 - **Package Manager**: Migrated from pnpm to Bun
 - **Testing**: Switched from Vitest/Playwright to Bun's native test runner
 - **Dependencies**: Updated all packages to latest versions (SvelteKit 2.x, Vite 6.x, etc.)
+
+## Version Management
+
+### Semantic Versioning
+The project follows [Semantic Versioning](https://semver.org/):
+- **MAJOR.MINOR.PATCH** (e.g., 0.1.1)
+- **MAJOR**: Breaking changes
+- **MINOR**: New features, backwards compatible
+- **PATCH**: Bug fixes, backwards compatible
+
+### Files to Update When Versioning
+1. **package.json** - `version` field
+2. **src/routes/+page.svelte** - Version display in UI (bottom right)
+3. **CHANGELOG.md** - Document all changes with date
+4. **README.md** - Update if there are user-facing changes
+
+### Changelog Format
+Follow [Keep a Changelog](https://keepachangelog.com/) format:
+- Group changes under: Added, Changed, Fixed, Deprecated, Removed, Security
+- Include date in YYYY-MM-DD format
+- List changes in bullet points
