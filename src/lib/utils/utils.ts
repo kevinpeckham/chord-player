@@ -37,7 +37,14 @@ export function segmentPath(
 //- n = number of segments
 export function wedgePath(r0: number, r1: number, i: number, n?: number) {
 	const segments = n ?? 12;
-	return segmentPath(200, 200, r0, r1, (360 / segments) * i, ((i + 1) * 360) / segments);
+	return segmentPath(
+		200,
+		200,
+		r0,
+		r1,
+		(360 / segments) * i,
+		((i + 1) * 360) / segments,
+	);
 }
 
 // text coordinates for labelling segments

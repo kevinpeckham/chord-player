@@ -4,7 +4,7 @@
 
 // import from svelte
 import { page } from "$app/state";
-import ButtonLink from "$components/ButtonLink.svelte";
+import LinkButton from "$components/LinkButton.svelte";
 </script>
 
 <div class="grid h-screen w-screen grid-cols-1 place-content-center place-items-center bg-primary text-neutral-100">
@@ -15,9 +15,6 @@ import ButtonLink from "$components/ButtonLink.svelte";
 	</div>
 	<div class="mb-24">Looks like you hit a dead end. Sorry about that.</div>
 
-	<div>
-		<ButtonLink targetUrl="/" title="Go Home">
-			Go Home
-		</ButtonLink>
-	</div>
+
+	<LinkButton link={{ href: "/", title: "Go Home", label: "Go Home" }} format="outline" />
 </div>
