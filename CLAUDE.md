@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Always use Svelte 5 runes API** ($state, $props, $derived, $effect) - no legacy stores
 - **Component structure is flattened** - components are directly in `/src/lib/components/` (no atoms/molecules/organisms subdirectories)
 - **Always format and lint before committing** - Run `bun run format` and `bun run lint` before any commit
+- **Default branch is `main`** - The primary branch is `main` (not `master`)
 - **When bumping versions**, always:
   1. Update version in `package.json`
   2. Update version in the UI (`src/routes/+page.svelte`)
