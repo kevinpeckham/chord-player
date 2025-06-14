@@ -1,3 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@unocss preflights;
+@unocss default;
+
+/* UnoCSS placeholder for transformed styles */
+@unocss;
