@@ -1,0 +1,34 @@
+version: "0.2"
+ignorePaths:
+  - /apps/web/src/lib/data/**.json
+  - /apps/web/src/lib/data/**.jsonc
+  - /cspell.config.yaml
+  - pnpm-lock.yaml
+  - pnpm-workspace.yaml
+  - package.json
+  - /node_modules/
+dictionaryDefinitions: []
+dictionaries: []
+allowCompoundWords: true
+patterns:
+  - name: nanoID
+    pattern: /(["'`])[A-Za-z0-9_\-]{21}$1"/
+  - name: acronym
+    pattern: /[A-Z]{3,}/
+  - name: url
+    pattern: /(?:https?:\/\/)?[a-z0-9-_./]+\.[a-z0-9-_./]{2,}/
+  - name: htmlSpecialCharacters
+    pattern: /&(?:[a-z]{2,});/
+  - name: imageFormats
+    pattern: /(?:(?:webp|avif|png|jpg|jpeg|svg|gif)s?(?![a-zA-Z0-9]))+/i
+  - name: videoFormats
+    pattern: /(?:(?:webm|mp4)s?)+/i
+ignoreRegExpList:
+  - nanoID
+  - imageFormats
+  - videoFormats
+  - htmlSpecialCharacters
+words:
+  - autoplay
+  - chord
+  - chords

@@ -1,35 +1,35 @@
 {
 	"author": "Kevin Peckham",
 	"name": "chord-player",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^2.1.0",
-		"@sveltejs/adapter-vercel": "^3.0.3",
-		"@sveltejs/kit": "^1.22.6",
-		"@unocss/extractor-svelte": "^0.58.0",
-		"@unocss/preset-wind": "^0.58.0",
-		"unocss": "^0.58.0",
-		"pug": "^3.0.2",
-		"svelte": "^4.2.0",
-		"svelte-check": "^3.5.0",
-		"svelte-preprocess": "^5.0.4",
-		"tslib": "^2.6.2",
-		"typescript": "^5.1.6",
-		"vite": "^4.4.9",
-		"vitest": "^0.31.4"
+		"@biomejs/biome": "^1.9.4",
+		"@sveltejs/adapter-vercel": "^5.7.0",
+		"@sveltejs/kit": "^2.20.8",
+		"@unocss/extractor-svelte": "^66.1.2",
+		"@unocss/preset-wind": "^66.1.2",
+		"svelte": "^5.0.0",
+		"svelte-check": "^4.0.0",
+		"typescript": "^5.8.3",
+		"unocss": "^66.1.2",
+		"vite": "^6.3.5"
 	},
 	"license": "MIT",
 	"private": true,
 	"scripts": {
 		"dev": "vite dev",
+		"format": "bunx biome format --write .",
+		"lint": "bunx biome lint --write .",
 		"build": "vite build",
 		"preview": "vite preview",
-		"test": "vitest",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "bun test",
+		"test:watch": "bun test --watch"
 	},
 	"engines": {
-		"node": ">=18.0.0"
+		"bun": "1.x",
+		"node": "22.x"
 	},
 	"type": "module"
 }

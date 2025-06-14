@@ -1,0 +1,102 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.9.1/schema.json",
+	"vcs": {
+		"enabled": false,
+		"clientKind": "git",
+		"useIgnoreFile": false
+	},
+	"files": {
+		"maxSize": 2097152,
+		"ignoreUnknown": false,
+		"ignore": [
+			"**/~partytown/**",
+			"**/vite.config.js",
+			"**/.svelte-kit/**",
+			"**/output/**",
+			"**/.vercel/**",
+			"**/build/**",
+			"**/package/**",
+			"**/yarn.lock",
+			"**/package-lock.json",
+			"**/pnpm-lock.yaml",
+			"**/bun.lockb",
+			"**/npm-debug.log*",
+			"pnpm-debug.log*",
+			"**/static/**",
+			"**/dist/**",
+			"node_modules",
+			"out",
+			".vscode",
+			".DS_Store",
+			".env",
+			".env.local",
+			".env.development",
+			".env.test",
+			".env.production",
+			".env.*.local",
+			"data/",
+			"output"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"indentWidth": 2
+	},
+	"organizeImports": {
+		"enabled": true
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"style": {
+				"useConst": "off",
+				"useImportType": "off"
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"arrowParentheses": "always",
+			"bracketSameLine": false,
+			"bracketSpacing": true,
+			"jsxQuoteStyle": "double",
+			"quoteProperties": "asNeeded",
+			"quoteStyle": "double",
+			"semicolons": "always",
+			"trailingCommas": "all"
+		}
+	},
+	"json": {
+		"formatter": {
+			"trailingCommas": "none"
+		}
+	},
+	"overrides": [
+		{
+			"include": ["*.svelte", "*.astro", "*.vue"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useConst": "off",
+						"useImportType": "off"
+					}
+				}
+			}
+		},
+		{
+			"include": ["tests/**/*", "**/*.test.*", "**/*.spec.*"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noExplicitAny": "off"
+					},
+					"performance": {
+						"noDelete": "off"
+					}
+				}
+			}
+		}
+	]
+}

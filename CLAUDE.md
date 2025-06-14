@@ -13,6 +13,8 @@ Chord Player is an interactive web application that visualizes and plays musical
 **Package Manager**: Bun (no longer uses pnpm)
 **Code Quality**: TypeScript with svelte-check only (ESLint and Prettier have been removed)
 **Testing**: Vitest only (Playwright has been removed)
+**Framework**: Svelte 5 with runes API ($state, $derived, $effect)
+**Templating**: Native Svelte syntax (Pug has been removed)
 
 ## Key Commands
 
@@ -60,5 +62,4 @@ Configured shortcuts in `svelte.config.js`:
 ### Styling
 - UnoCSS with Wind preset (Tailwind-compatible utilities)
 - Custom color scheme (primary: #142239, accent: #ebf92f)
-- Pug templating for cleaner HTML syntax
 - Svelte extractor for optimal CSS generation
