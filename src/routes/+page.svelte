@@ -33,7 +33,7 @@ let oscillator = $state({
 	</div>
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.1.1</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.2.0</div>
 
 	<!-- controls -->
 	<div class="absolute left-8 bottom-8 z-20">
@@ -55,5 +55,5 @@ let oscillator = $state({
 </main>
 
 <footer class="text-12px px-8 py-4 border-t border-t-neutral-100/30 bg-black/10">
-	<div class="flex opacity-60">©️ 2025 Speed Nuts</div>
+	<div class="flex opacity-60">MIT License</div>
 </footer>

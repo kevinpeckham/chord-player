@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html
-	class="scroll-smooth"
 	lang="en"
 >
 	<head>
@@ -11,14 +10,18 @@
 		/>
 		<meta
 			name="viewport"
-			content="width=device-width"
+			content="width=device-width, initial-scale=1"
 		/>
+
+		<!-- plausible -->
+		<script id="plausible-launcher" src="/plausible.js" defer=""></script>
+
 		%sveltekit.head%
 	</head>
 	<body
 		class="text-neutral-50 bg-primary relative max-w-screen overflow-hidden"
 		data-sveltekit-preload-data="hover"
 	>
-		<div>%sveltekit.body%</div>
+		<div class="contents">%sveltekit.body%</div>
 	</body>
 </html>

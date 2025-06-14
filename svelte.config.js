@@ -15,10 +15,14 @@ const config = {
 			$components: "./src/lib/components",
 			$data: "./src/lib/data",
 			$settings: "./src/lib/settings",
-			$stores: "./src/lib/stores",
 			$tools: "./src/lib/components/tools",
 			$types: "./src/lib/types",
 			$utils: "./src/lib/utils",
+		},
+		csp: {
+			directives: {
+				"script-src": ["self"],
+			},
 		},
 	},
 	compilerOptions: {

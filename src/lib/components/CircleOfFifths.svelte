@@ -11,24 +11,9 @@ SVG Circle of Fifths
 -->
 
 <script lang='ts'>
-// type
-interface Chord {
-	[key: string]: string | string[] | number[];
-	majorNotes: string[];
-	majorFrequencies: number[];
-	minorNotes: string[];
-	minorFrequencies: number[];
-	majorDisplay: string;
-	majorId: string;
-	minorDisplay: string;
-	minorId: string;
-	keySignature: string;
-}
-interface Oscillator {
-	activeChord: string;
-	activeVoice: string;
-	voices: readonly ["sine", "triangle", "square", "sawtooth"];
-}
+// types
+import type { Chord } from "$lib/types/Chord";
+import type { Oscillator } from "$lib/types/Oscillator";
 
 // props
 interface Props {
@@ -114,14 +99,14 @@ const modes = [
 </script>
 
 <svg
-	id="circle-of-fifths"
+	id="instrument-circle-of-fifths"
 	class="w-full h-auto aspect-square z-10 scale-[1.1] max-w-[860px]"
 	viewBox="0 0 400 400"
 	xmlns="http://www.w3.org/2000/svg"
 	height="800"
 	width="800"
 >
-	<g class="rotate-[15deg]" style="transform-origin: 200px 200px 0px;">
+	<g class="rotate-[15deg] origin-[200px_200px_0px]">
 		{#each chords as item, i}
 			{#each modes as m, index}
 				<path
@@ -149,11 +134,10 @@ const modes = [
 			{@const radius1 = 150}
 			{@const [x1, y1] = textCoords(radius1, i)}
 			<text
-				class="text-20px sm:text-[1em]"
+				class="text-20px sm:text-[1em] text-anchor-middle dominant-baseline-central"
 				id="chord-button-label-{item.majorId}"
 				x={x1.toFixed(2)}
 				y={y1.toFixed(2)}
-				style="text-anchor: middle; dominant-baseline: central;"
 			>{item.majorDisplay}</text>
 
 			<!-- inner labels -->
@@ -161,10 +145,9 @@ const modes = [
 			{@const [x2, y2] = textCoords(radius2, i)}
 			<text
 				id="chord-button-label-{item.minorId}"
-				class="text-18px sm:text-[0.9em]"
+				class="text-18px sm:text-[0.9em] text-anchor-middle dominant-baseline-central"
 				x={x2.toFixed(2)}
 				y={y2.toFixed(2)}
-				style="text-anchor: middle; dominant-baseline: central;"
 			>{item.minorDisplay}</text>
 		{/each}
 	</g>
@@ -172,8 +155,7 @@ const modes = [
 	<!-- center text -->
 	<g class="pointer-events-none">
 		<text
-			class="fill-accent text-20px sm:text-[.8em]"
-			style="text-anchor: middle; dominant-baseline: central"
+			class="fill-accent text-20px sm:text-[.8em] text-anchor-middle dominant-baseline-central"
 			x="200"
 			y="200"
 		>{oscillator.activeChord}</text>

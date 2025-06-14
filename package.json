@@ -1,11 +1,12 @@
 {
 	"author": "Kevin Peckham",
 	"name": "chord-player",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
 		"@sveltejs/adapter-vercel": "^5.7.0",
 		"@sveltejs/kit": "^2.20.8",
+		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@unocss/extractor-svelte": "^66.1.2",
 		"@unocss/preset-wind": "^66.1.2",
 		"svelte": "^5.0.0",

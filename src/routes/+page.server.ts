@@ -1,15 +1,8 @@
-import { get } from "svelte/store";
+// import data
+import { chordsData } from "$data/chordsData.server";
 
-// import store
-import { chordsStore } from "$stores/chordsStore";
-
-// types
-import type { PageServerLoadEvent } from "./$types";
-
-export async function load(event: PageServerLoadEvent) {
-	const chords = get(chordsStore);
-
+export async function load() {
 	return {
-		chords,
+		chords: chordsData,
 	};
 }
