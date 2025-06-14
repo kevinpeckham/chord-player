@@ -21,7 +21,7 @@ const config = {
 		},
 		csp: {
 			directives: {
-				"script-src": ["self","https://plausible.io"],
+				"script-src": ["self", "https://plausible.io"]
 			},
 		},
 	},

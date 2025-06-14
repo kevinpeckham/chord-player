@@ -19,8 +19,6 @@ let { children = null, data }: Props = $props();
 
 // setup action
 const setUp = (node: HTMLDivElement) => {
-	console.log("setup");
-
 	// intercept innerHTML invocation
 	// to catch svelte-announcer being created and strip inline style
 	// to prevent CSP violation
