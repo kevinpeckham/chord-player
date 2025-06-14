@@ -1,19 +1,17 @@
 <!-- Example Svelte Page / Starter Web Page-->
 <script lang="ts">
+// components
+import CircleOfFifths from "$components/CircleOfFifths.svelte";
 
-	// components
-	import CircleOfFifths from "$components/CircleOfFifths.svelte";
+// props
+let { data } = $props();
 
-	// props
-	let { data } = $props();
-
-	// Svelte 5 runes
-	let oscillator = $state({
-		activeChord: "",
-		activeVoice: "sine",
-		voices: ["sine", "triangle", "square", "sawtooth"] as const,
-	})
-
+// Svelte 5 runes
+let oscillator = $state({
+	activeChord: "",
+	activeVoice: "sine",
+	voices: ["sine", "triangle", "square", "sawtooth"] as const,
+});
 </script>
 
 

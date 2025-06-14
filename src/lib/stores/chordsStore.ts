@@ -12,24 +12,21 @@ const circle: ChordDatum[] = circleRaw;
 const notes: { [key: string]: number } = notesRaw;
 const chords: { [key: string]: string[] } = chordsRaw;
 
-const derived = circle.map(chord => {
-  const majorId = chord.majorId;
-  const majorNotes = chords[majorId];
-  const majorFrequencies = majorNotes.map(note => notes[note]);
-  const minorId = chord.minorId;
-  const minorNotes = chords[minorId];
-  const minorFrequencies = minorNotes.map(note => notes[note]);
+const derived = circle.map((chord) => {
+	const majorId = chord.majorId;
+	const majorNotes = chords[majorId];
+	const majorFrequencies = majorNotes.map((note) => notes[note]);
+	const minorId = chord.minorId;
+	const minorNotes = chords[minorId];
+	const minorFrequencies = minorNotes.map((note) => notes[note]);
 
-  return {
-    ...chord,
-    majorNotes,
-    majorFrequencies,
-    minorNotes,
-    minorFrequencies,
-  }
-
-
-})
-
+	return {
+		...chord,
+		majorNotes,
+		majorFrequencies,
+		minorNotes,
+		minorFrequencies,
+	};
+});
 
 export const chordsStore = readable(derived);

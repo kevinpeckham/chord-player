@@ -7,15 +7,15 @@ Web footer component
 * slot org -- organization's name
 -->
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	// Props type
-	interface Props {
-		authorLink: string;
-		orgLink: string;
-		author: Snippet;
-		org: Snippet;
-	}
-	let { authorLink = "#", orgLink = "#", author, org } = $props();
+import type { Snippet } from "svelte";
+// Props type
+interface Props {
+	authorLink: string;
+	orgLink: string;
+	author: Snippet;
+	org: Snippet;
+}
+let { authorLink = "#", orgLink = "#", author, org } = $props();
 </script>
 
 <footer class="bg-primary px-4 pb-24 text-xs text-white">

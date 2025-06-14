@@ -11,24 +11,23 @@ SVG Circle of Fifths
 -->
 
 <script lang='ts'>
-
-	// type
-	interface Chord {
-		[key: string]: string | string[] | number[];
-    majorNotes: string[];
-    majorFrequencies: number[];
-    minorNotes: string[];
-    minorFrequencies: number[];
-    majorDisplay: string;
-    majorId: string;
-    minorDisplay: string;
-    minorId: string;
-    keySignature: string;
+// type
+interface Chord {
+	[key: string]: string | string[] | number[];
+	majorNotes: string[];
+	majorFrequencies: number[];
+	minorNotes: string[];
+	minorFrequencies: number[];
+	majorDisplay: string;
+	majorId: string;
+	minorDisplay: string;
+	minorId: string;
+	keySignature: string;
 }
 interface Oscillator {
-		activeChord: string;
-    activeVoice: string;
-    voices: readonly ["sine", "triangle", "square", "sawtooth"];
+	activeChord: string;
+	activeVoice: string;
+	voices: readonly ["sine", "triangle", "square", "sawtooth"];
 }
 
 // props
@@ -38,87 +37,80 @@ interface Props {
 }
 let { chords, oscillator = $bindable() }: Props = $props();
 
+// import utils
+import { textCoords, wedgePath } from "$utils/utils";
 
-	// import utils
-	import { textCoords, wedgePath} from "$utils/utils";
+//- interaction functions
+function onMousedown(event: MouseEvent) {
+	event.stopPropagation();
+	const target = event.target as SVGPathElement;
+	const index = Number(target.dataset.index) ?? 0;
+	const adjustedIndex = index === 11 ? 0 : index + 1;
+	const datum = chords[adjustedIndex];
+	const mode = target.dataset.mode ?? "";
 
-
-	//- interaction functions
-	function onMousedown(event: MouseEvent) {
-		event.stopPropagation();
-		const target = event.target as SVGPathElement;
-		const index = Number(target.dataset.index) ?? 0;
-		const adjustedIndex = index === 11 ? 0 : index + 1;
-		const datum = chords[adjustedIndex];
-		const mode = target.dataset.mode ?? "";
-
-		// display active chord name
-		if (mode === "major") {
-			const chord = datum.majorDisplay;
-			oscillator.activeChord = `${chord} major`;
-		} else if (mode === "minor") {
-			const chord = datum.minorDisplay;
-			const chordAdjusted = chord.replace("m", " minor");
-			oscillator.activeChord = chordAdjusted;
-		}
-		else {
-			oscillator.activeChord = "";
-		}
-
-		// play chord
-
-		// get note frequencies
-		const frequencies = datum[`${mode}Frequencies`] as number[];
-
-
-		const audioCtx = new (window.AudioContext);
-
-		// create gainNode
-		const gainNode = audioCtx.createGain();
-    gainNode.gain.value = 1 / frequencies.length;
-    gainNode.connect(audioCtx.destination);
-
-		for (const frequency of frequencies) {
-      const oscNode = audioCtx.createOscillator();
-      oscNode.type = oscillator.activeVoice as OscillatorType; // hook up other values
-
-      oscNode.frequency.value = frequency;
-      oscNode.connect(gainNode);
-
-      oscNode.start(0);
-
-      /* Stop the audio after 1.5 seconds */
-      oscNode.stop(audioCtx.currentTime + 1.5);
-
-      /* Fade out the audio after half the time to avoid clicks  */
-      gainNode.gain.setTargetAtTime(0, 0.75, 0.25);
-		}
-
-	}
-	function onMouseup(event: MouseEvent) {
-		event.stopPropagation();
-
-		setTimeout(() => {
-			oscillator.activeChord = "";
-		}, 600);
+	// display active chord name
+	if (mode === "major") {
+		const chord = datum.majorDisplay;
+		oscillator.activeChord = `${chord} major`;
+	} else if (mode === "minor") {
+		const chord = datum.minorDisplay;
+		const chordAdjusted = chord.replace("m", " minor");
+		oscillator.activeChord = chordAdjusted;
+	} else {
+		oscillator.activeChord = "";
 	}
 
+	// play chord
 
+	// get note frequencies
+	const frequencies = datum[`${mode}Frequencies`] as number[];
 
-	const modes= [
-		{
-			classes:"fill-accent",
-			r0: 180,
-			r1: 130,
-			mode: "major",
-		},
-		{
-			classes:"fill-accent/90",
-			r0: 130,
-			r1: 80,
-			mode: "minor",
-		}
-	]
+	const audioCtx = new window.AudioContext();
+
+	// create gainNode
+	const gainNode = audioCtx.createGain();
+	gainNode.gain.value = 1 / frequencies.length;
+	gainNode.connect(audioCtx.destination);
+
+	for (const frequency of frequencies) {
+		const oscNode = audioCtx.createOscillator();
+		oscNode.type = oscillator.activeVoice as OscillatorType; // hook up other values
+
+		oscNode.frequency.value = frequency;
+		oscNode.connect(gainNode);
+
+		oscNode.start(0);
+
+		/* Stop the audio after 1.5 seconds */
+		oscNode.stop(audioCtx.currentTime + 1.5);
+
+		/* Fade out the audio after half the time to avoid clicks  */
+		gainNode.gain.setTargetAtTime(0, 0.75, 0.25);
+	}
+}
+function onMouseup(event: MouseEvent) {
+	event.stopPropagation();
+
+	setTimeout(() => {
+		oscillator.activeChord = "";
+	}, 600);
+}
+
+const modes = [
+	{
+		classes: "fill-accent",
+		r0: 180,
+		r1: 130,
+		mode: "major",
+	},
+	{
+		classes: "fill-accent/90",
+		r0: 130,
+		r1: 80,
+		mode: "minor",
+	},
+];
 </script>
 
 <svg

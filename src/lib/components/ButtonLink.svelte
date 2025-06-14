@@ -6,8 +6,7 @@ An <a> styled to look like a button.
 * slot (default) -- link text
 -->
 <script lang="ts">
-	let { targetUrl = "#", title = "", children } = $props();
-
+let { targetUrl = "#", title = "", children } = $props();
 </script>
 
 <div class="mb-16 w-full sm:mb-24">

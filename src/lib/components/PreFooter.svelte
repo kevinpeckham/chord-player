@@ -6,7 +6,7 @@ Prefooter contains a single linked call to action.
 * slot (default) -- link text
 -->
 <script lang="ts">
-	let { targetUrl = "#", title = "", children } = $props();
+let { targetUrl = "#", title = "", children } = $props();
 </script>
 
 <div class="bottom-0 left-0 w-full bg-primary px-4 pb-6 text-sm text-white sm:absolute sm:px-8">

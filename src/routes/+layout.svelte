@@ -1,13 +1,12 @@
 <script lang="ts">
+// css
+import "uno.css";
 
-	// css
-	import "uno.css";
+// types
+import type { Snippet } from "svelte";
+import type { LayoutServerData } from "./$types";
 
-	// types
-	import type { Snippet } from "svelte";
-	import type { LayoutServerData } from "./$types";
-
-	interface Props {
+interface Props {
 	children?: Snippet | null;
 	data: LayoutServerData;
 }
