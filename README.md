@@ -68,11 +68,32 @@ src/
 │   └── utils/         # Utility functions
 ├── routes/            # SvelteKit routes
 └── app.html          # HTML template
+
+.github/
+├── workflows/         # GitHub Actions CI/CD
+└── branch-protection-rules.md
+
+docs/
+├── CHANGELOG.md      # Version history
+├── FEATURES.md       # Feature roadmap
+└── CLAUDE.md         # AI assistant instructions
 ```
 
 ## Architecture
 
 The application uses server-side data loading to pre-process chord frequencies and deliver them to the client, improving initial load performance. The Circle of Fifths visualization is built with SVG, and chord playback uses the Web Audio API with configurable oscillator types.
+
+## Development Status
+
+Current version: 0.2.0
+
+- 📋 [Feature Roadmap](FEATURES.md) - Planned enhancements and new features
+- 📝 [Changelog](CHANGELOG.md) - Version history and recent updates
+- 🤖 [AI Assistant Guide](CLAUDE.md) - Instructions for Claude Code
+
+## Contributing
+
+This project uses GitHub Actions for CI/CD. All pull requests must pass quality checks (format, lint, type check, build, test) before merging.
 
 ## Credits
 This project was inspired by designs by Quinn Raymond for his physical product Q-RAY <https://qrayinstruments.com/products/q-ray-chord-player> which is a MIDI controller for musicians to play chords on. Initial work on this project grew out of my interest in Quinn's design and the Q-RAY product. The Circle of Fifths visualization was inspired by the SVG Circle of Fifths library <https://github.com/epiccoleman/react-circle-of-fifths/>.
@@ -80,9 +101,3 @@ This project was inspired by designs by Quinn Raymond for his physical product Q
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details
-
-## Version
-
-Current version: 0.2.0
-
-See [CHANGELOG.md](CHANGELOG.md) for version history.
