@@ -14,10 +14,10 @@ export const audioState = $state({
 	contextState: "suspended" as AudioContextState,
 });
 
-// Reactive derived values
-export const canPlayAudio = $derived(
-	audioState.isInitialized && audioState.contextState === "running",
-);
+// Function to check if audio can play
+export function canPlayAudio(): boolean {
+	return audioState.isInitialized && audioState.contextState === "running";
+}
 
 // Initialize audio context lazily (on first user interaction)
 function initializeAudio(): AudioContext {
@@ -47,20 +47,15 @@ function initializeAudio(): AudioContext {
 	return audioContext;
 }
 
-// React to volume changes
-$effect(() => {
+// Update volume on the audio node when setting master volume
+function updateMasterGainVolume(): void {
 	if (masterGainNode && audioContext) {
 		masterGainNode.gain.setValueAtTime(
 			audioState.masterVolume,
 			audioContext.currentTime,
 		);
 	}
-});
-
-// React to active note count changes
-$effect(() => {
-	audioState.isPlaying = audioState.activeNoteCount > 0;
-});
+}
 
 // Ensure audio context is running (handle browser autoplay policies)
 export async function ensureAudioRunning(): Promise<void> {
@@ -76,6 +71,7 @@ function cleanupOscillator(osc: OscillatorNode, gainNode: GainNode): void {
 	gainNode.disconnect();
 	activeOscillators.delete(osc);
 	audioState.activeNoteCount = activeOscillators.size;
+	audioState.isPlaying = activeOscillators.size > 0;
 }
 
 // Main chord playing function
@@ -121,6 +117,7 @@ export async function playChord(
 		// Track for cleanup
 		activeOscillators.add(oscillator);
 		audioState.activeNoteCount = activeOscillators.size;
+		audioState.isPlaying = true;
 
 		// Clean up when done
 		oscillator.onended = () => cleanupOscillator(oscillator, noteGain);
@@ -144,6 +141,7 @@ export async function playChord(
 // Reactive volume control (0-1)
 export function setMasterVolume(volume: number): void {
 	audioState.masterVolume = Math.max(0, Math.min(1, volume));
+	updateMasterGainVolume();
 }
 
 // Clean up all audio resources
@@ -158,6 +156,7 @@ export function cleanup(): void {
 	}
 	activeOscillators.clear();
 	audioState.activeNoteCount = 0;
+	audioState.isPlaying = false;
 
 	// Close audio context
 	if (audioContext && audioContext.state !== "closed") {
