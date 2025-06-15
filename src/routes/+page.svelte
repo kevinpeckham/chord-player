@@ -28,7 +28,7 @@ let { data } = $props();
 	</div>
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.2.0</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.3.0</div>
 
 	<!-- settings panel -->
 	<SettingsPanel />

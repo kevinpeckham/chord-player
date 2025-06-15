@@ -22,7 +22,7 @@ Chord Player is an interactive web application that visualizes and plays musical
 
 **Documentation**: All documentation and planning files should be placed in the `/docs` folder
 
-**Current Version**: 0.2.0
+**Current Version**: 0.3.0
 **Feature Roadmap**: See docs/FEATURES.md for planned enhancements
 
 **Package Manager**: Bun 1.x
