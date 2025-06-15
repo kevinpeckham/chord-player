@@ -8,9 +8,13 @@ An interactive web application that visualizes and plays musical chords using th
 
 - **Interactive Circle of Fifths** - Click any chord to hear it played
 - **Multiple Voice Types** - Choose between sine, triangle, square, and sawtooth wave oscillators
+- **Rich Chord Voicings** - Select from standard, spread, rich, or bass-enhanced voicings
+- **Extended Frequency Range** - Supports 7 octaves (C1 to C7) for fuller sound
+- **Volume Control** - Adjustable master volume with real-time feedback
 - **Visual Feedback** - See which chord is currently playing
 - **Responsive Design** - Works on desktop and mobile devices
 - **Server-Side Rendering** - Fast initial load with pre-rendered chord data
+- **Optimized for Serverless** - In-memory data generation, no filesystem writes
 
 ## Tech Stack
 
@@ -87,7 +91,7 @@ The application uses server-side data loading to pre-process chord frequencies a
 
 ## Development Status
 
-Current version: 0.2.0
+Current version: 0.3.0
 
 - 📋 [Feature Roadmap](FEATURES.md) - Planned enhancements and new features
 - 📝 [Changelog](CHANGELOG.md) - Version history and recent updates
