@@ -17,7 +17,7 @@ import { performance } from "$stores/performance.svelte";
 import { playChord } from "$stores/audio.svelte";
 
 // types
-import type { Chord } from "$lib/types/Chord";
+import type { Chord, VoicingFrequencies } from "$lib/types/Chord";
 
 // props
 interface Props {
@@ -49,8 +49,9 @@ function onMousedown(event: MouseEvent) {
 		performance.activeChord = "";
 	}
 
-	// play chord using the audio store
-	const frequencies = datum[`${mode}Frequencies`] as number[];
+	// play chord using the audio store with selected voicing
+	const voicings = datum[`${mode}Voicings`] as VoicingFrequencies;
+	const frequencies = voicings[settings.chordVoicing] || voicings.standard;
 	playChord(frequencies, settings.activeVoice as OscillatorType);
 }
 function onMouseup(event: MouseEvent) {

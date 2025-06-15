@@ -1,13 +1,22 @@
+export interface VoicingFrequencies {
+	standard: number[];
+	spread: number[];
+	rich: number[];
+	bass: number[];
+}
+
 export interface Chord {
-	[key: string]: string | string[] | number[];
+	[key: string]: string | string[] | number[] | VoicingFrequencies;
 	majorDisplay: string;
 	majorId: string;
 	majorNotes: string[];
 	majorFrequencies: number[];
+	majorVoicings: VoicingFrequencies;
 	minorDisplay: string;
 	minorId: string;
 	minorNotes: string[];
 	minorFrequencies: number[];
+	minorVoicings: VoicingFrequencies;
 	keySignature: string;
 }
 
