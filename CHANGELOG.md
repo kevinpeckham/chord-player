@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frequency generation moved from build-time to runtime (serverless-friendly)
 - Renamed utils.ts to circleGeometry.ts for clarity
 - Improved function naming: shiftOctave → transposeNoteByOctaves/shiftFrequencyByOctaves
+- Oscillator type selection changed from radio buttons to dropdown for consistency
 
 ### Fixed
 - Browser AudioContext limit exhaustion issue
