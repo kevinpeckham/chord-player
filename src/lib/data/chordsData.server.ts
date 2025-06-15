@@ -3,14 +3,21 @@ import type { ChordDatum, Chord } from "$types/Chord";
 
 // data
 import { default as circleRaw } from "$data/circle-of-fifths-data.json";
-import { default as notesRaw } from "$data/notes-extended.json";
 import { default as chordsRaw } from "$data/chords.json";
-import { default as chordsEnhanced } from "$data/chords-enhanced.json";
+
+// utilities
+import { generateFrequencyMap } from "$utils/frequencyGenerator";
+import { generateChordEnhancements } from "$utils/chordEnhancer";
 
 // typed data
 const circle: ChordDatum[] = circleRaw;
-const notes: { [key: string]: number } = notesRaw;
 const chords: { [key: string]: string[] } = chordsRaw;
+
+// Generate frequencies in memory (octaves 1-7)
+const notes = generateFrequencyMap(1, 7, true);
+
+// Generate enhanced chord voicings in memory
+const chordsEnhanced = generateChordEnhancements(chords);
 
 // Helper to get frequencies for a set of notes
 function getFrequencies(noteList: string[]): number[] {

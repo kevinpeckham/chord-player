@@ -31,9 +31,10 @@ Fifths (chord-player) is an interactive web application that visualizes and play
 **Feature Roadmap**: See docs/FEATURES.md for planned enhancements
 
 **Frequency Generation**: 
-- Extended frequencies (octaves 1-7) are generated at build time using scripts/generateFrequencies.ts
-- Enhanced chord voicings (standard, spread, rich, bass) are available via scripts/generateChords.ts
+- Extended frequencies (octaves 1-7) are generated in-memory at runtime on the server
+- Enhanced chord voicings (standard, spread, rich, bass) are computed dynamically
 - Mathematical precision is maintained at 2 decimal places for all frequencies
+- No file system writes required - perfect for serverless deployment
 
 **Package Manager**: Bun 1.x
 **Framework**: Svelte 5 with runes API, SvelteKit 2.x

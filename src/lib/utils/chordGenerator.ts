@@ -1,174 +1,211 @@
-import { calculateFrequency, shiftOctave } from "./frequencyGenerator";
-
-// Chord interval definitions (in semitones from root)
-const CHORD_INTERVALS = {
-	major: [0, 4, 7], // Root, Major 3rd, Perfect 5th
-	minor: [0, 3, 7], // Root, Minor 3rd, Perfect 5th
-	diminished: [0, 3, 6], // Root, Minor 3rd, Diminished 5th
-	augmented: [0, 4, 8], // Root, Major 3rd, Augmented 5th
-	maj7: [0, 4, 7, 11], // Major 7th
-	min7: [0, 3, 7, 10], // Minor 7th
-	dom7: [0, 4, 7, 10], // Dominant 7th
-	sus2: [0, 2, 7], // Suspended 2nd
-	sus4: [0, 5, 7], // Suspended 4th
-};
-
-// Common chord voicing patterns
-const VOICING_PATTERNS = {
-	root: [0, 0, 0], // All notes in same octave
-	firstInversion: [0, 0, 1], // 3rd in bass, 5th up an octave
-	secondInversion: [0, 1, 1], // 5th in bass, root & 3rd up
-	spread: [0, 1, 1], // Root position, spread voicing
-	drop2: [0, -1, 0, 0], // For 7th chords, drop 2nd voice down
-	close: [0, 0, 0, 0], // Close position for 7th chords
-};
-
-export interface ChordOptions {
-	rootNote: string; // e.g., "C4"
-	chordType: keyof typeof CHORD_INTERVALS;
-	voicing?: keyof typeof VOICING_PATTERNS;
-	octaveShift?: number; // Shift entire chord up/down octaves
-	spread?: number; // Additional octave spread between notes
-}
-
 /**
- * Generate chord frequencies with flexible voicing options
+ * Runtime chord generation utilities
+ * Generates chord voicings dynamically without file writes
  */
-export function generateChord(options: ChordOptions): number[] {
-	const {
-		rootNote,
-		chordType,
-		voicing = "root",
-		octaveShift = 0,
-		spread = 0,
-	} = options;
 
-	const intervals = CHORD_INTERVALS[chordType];
-	const voicingPattern = VOICING_PATTERNS[voicing] || VOICING_PATTERNS.root;
-
-	// Parse root note
-	const match = rootNote.match(/^([A-G][b#]?)(\d+)$/);
-	if (!match) throw new Error(`Invalid note format: ${rootNote}`);
-
+// Helper to shift notes by octaves
+function shiftOctave(note: string, shift: number): string {
+	const match = note.match(/^([A-G][b#]?)(\d+)$/);
+	if (!match) return note;
 	const [, noteName, octaveStr] = match;
-	const baseOctave = Number.parseInt(octaveStr);
+	const newOctave = Number.parseInt(octaveStr) + shift;
+	return `${noteName}${newOctave}`;
+}
 
-	// Map note names to semitone offsets from C
-	const noteOffsets: Record<string, number> = {
-		C: 0,
-		"C#": 1,
-		Db: 1,
-		D: 2,
-		"D#": 3,
-		Eb: 3,
-		E: 4,
-		F: 5,
-		"F#": 6,
-		Gb: 6,
-		G: 7,
-		"G#": 8,
-		Ab: 8,
-		A: 9,
-		"A#": 10,
-		Bb: 10,
-		B: 11,
+// Define chord structures with multiple voicing options
+interface ChordDefinition {
+	standard: string[]; // Original voicing
+	spread?: string[]; // Spread voicing
+	rich?: string[]; // Rich voicing with doubled notes
+	bass?: string[]; // With bass note
+	inversions?: {
+		first?: string[];
+		second?: string[];
 	};
-
-	const rootOffset = noteOffsets[noteName];
-	const frequencies: number[] = [];
-
-	intervals.forEach((interval, index) => {
-		// Calculate the note's semitone position
-		const totalSemitones = rootOffset + interval;
-		const noteOctaveShift = Math.floor(totalSemitones / 12);
-		const noteWithinOctave = totalSemitones % 12;
-
-		// Find the note name
-		const noteNames = [
-			"C",
-			"C#",
-			"D",
-			"D#",
-			"E",
-			"F",
-			"F#",
-			"G",
-			"G#",
-			"A",
-			"A#",
-			"B",
-		];
-		const resultNoteName = noteNames[noteWithinOctave];
-
-		// Apply voicing pattern and calculate final octave
-		const voicingShift = voicingPattern[index] || 0;
-		const spreadShift = spread * index;
-		const finalOctave =
-			baseOctave + noteOctaveShift + voicingShift + spreadShift + octaveShift;
-
-		// Generate the frequency
-		const noteString = `${resultNoteName}${finalOctave}`;
-		frequencies.push(calculateFrequency(noteString));
-	});
-
-	return frequencies;
 }
 
 /**
- * Generate chord progression frequencies
+ * Generate enhanced chord definitions for all major and minor chords
+ * @returns Map of chord names to their voicing definitions
  */
-export function generateProgression(
-	progression: string[], // e.g., ["C4", "Am3", "F4", "G4"]
-	defaultOctave = 4,
-): number[][] {
-	return progression.map((chordSymbol) => {
-		// Parse chord symbol (e.g., "C4", "Am3", "F#m5")
-		const match = chordSymbol.match(/^([A-G][b#]?)([m]?)(\d*)$/);
-		if (!match) throw new Error(`Invalid chord symbol: ${chordSymbol}`);
+export function generateEnhancedChords(): Record<string, ChordDefinition> {
+	return {
+		// C major variations
+		C: {
+			standard: ["C4", "E4", "G4"],
+			spread: ["C3", "E4", "G5"],
+			rich: ["C2", "C3", "E4", "G4", "C5"],
+			bass: ["C2", "C4", "E4", "G4"],
+			inversions: {
+				first: ["E4", "G4", "C5"],
+				second: ["G4", "C5", "E5"],
+			},
+		},
+		Cm: {
+			standard: ["C4", "Eb4", "G4"],
+			spread: ["C3", "Eb4", "G5"],
+			rich: ["C2", "C3", "Eb4", "G4", "C5"],
+			bass: ["C2", "C4", "Eb4", "G4"],
+		},
 
-		const [, rootName, minorFlag, octaveStr] = match;
-		const octave = octaveStr ? Number.parseInt(octaveStr) : defaultOctave;
-		const chordType = minorFlag ? "minor" : "major";
+		// C# / Db
+		Db: {
+			standard: ["Db4", "F4", "Ab4"],
+			spread: ["Db3", "F4", "Ab5"],
+			rich: ["Db2", "Db3", "F4", "Ab4", "Db5"],
+			bass: ["Db2", "Db4", "F4", "Ab4"],
+		},
+		Csm: {
+			standard: ["Db4", "E4", "Ab4"],
+			spread: ["Db3", "E4", "Ab5"],
+			rich: ["Db2", "Db3", "E4", "Ab4", "Db5"],
+		},
 
-		return generateChord({
-			rootNote: `${rootName}${octave}`,
-			chordType,
-		});
-	});
+		// D
+		D: {
+			standard: ["D4", "Gb4", "A4"],
+			spread: ["D3", "Gb4", "A5"],
+			rich: ["D2", "D3", "Gb4", "A4", "D5"],
+			bass: ["D2", "D4", "Gb4", "A4"],
+		},
+		Dm: {
+			standard: ["D4", "F4", "A4"],
+			spread: ["D3", "F4", "A5"],
+			rich: ["D2", "D3", "F4", "A4", "D5"],
+		},
+
+		// Eb
+		Eb: {
+			standard: ["Eb4", "G4", "Bb4"],
+			spread: ["Eb3", "G4", "Bb5"],
+			rich: ["Eb2", "Eb3", "G4", "Bb4", "Eb5"],
+			bass: ["Eb2", "Eb4", "G4", "Bb4"],
+		},
+		Dsm: {
+			standard: ["Eb4", "Gb4", "Bb4"],
+			spread: ["Eb3", "Gb4", "Bb5"],
+		},
+		Ebm: {
+			standard: ["Eb4", "Gb4", "Bb4"],
+			spread: ["Eb3", "Gb4", "Bb5"],
+			rich: ["Eb2", "Eb3", "Gb4", "Bb4", "Eb5"],
+		},
+
+		// E
+		E: {
+			standard: ["E4", "Ab4", "B4"],
+			spread: ["E3", "Ab4", "B5"],
+			rich: ["E2", "E3", "Ab4", "B4", "E5"],
+			bass: ["E2", "E4", "Ab4", "B4"],
+		},
+		Em: {
+			standard: ["E4", "G4", "B4"],
+			spread: ["E3", "G4", "B5"],
+			rich: ["E2", "E3", "G4", "B4", "E5"],
+		},
+
+		// F
+		F: {
+			standard: ["F4", "A4", "C5"],
+			spread: ["F3", "A4", "C6"],
+			rich: ["F2", "F3", "A4", "C5", "F5"],
+			bass: ["F2", "F4", "A4", "C5"],
+		},
+		Fm: {
+			standard: ["F4", "Ab4", "C5"],
+			spread: ["F3", "Ab4", "C6"],
+			rich: ["F2", "F3", "Ab4", "C5", "F5"],
+		},
+
+		// F# / Gb
+		Gb: {
+			standard: ["Gb4", "Bb4", "Db5"],
+			spread: ["Gb3", "Bb4", "Db6"],
+			rich: ["Gb2", "Gb3", "Bb4", "Db5", "Gb5"],
+			bass: ["Gb2", "Gb4", "Bb4", "Db5"],
+		},
+		Fsm: {
+			standard: ["Gb4", "A4", "Db5"],
+			spread: ["Gb3", "A4", "Db6"],
+		},
+
+		// G
+		G: {
+			standard: ["G4", "B4", "D5"],
+			spread: ["G3", "B4", "D6"],
+			rich: ["G2", "G3", "B4", "D5", "G5"],
+			bass: ["G2", "G4", "B4", "D5"],
+		},
+		Gm: {
+			standard: ["G4", "Bb4", "D5"],
+			spread: ["G3", "Bb4", "D6"],
+			rich: ["G2", "G3", "Bb4", "D5", "G5"],
+		},
+
+		// Ab
+		Ab: {
+			standard: ["Ab4", "C5", "Eb5"],
+			spread: ["Ab3", "C5", "Eb6"],
+			rich: ["Ab2", "Ab3", "C5", "Eb5", "Ab5"],
+			bass: ["Ab2", "Ab4", "C5", "Eb5"],
+		},
+		Gsm: {
+			standard: ["Ab4", "B4", "Eb5"],
+			spread: ["Ab3", "B4", "Eb6"],
+		},
+
+		// A
+		A: {
+			standard: ["A4", "Db5", "E5"],
+			spread: ["A3", "Db5", "E6"],
+			rich: ["A2", "A3", "Db5", "E5", "A5"],
+			bass: ["A2", "A4", "Db5", "E5"],
+		},
+		Am: {
+			standard: ["A4", "C5", "E5"],
+			spread: ["A3", "C5", "E6"],
+			rich: ["A2", "A3", "C5", "E5", "A5"],
+		},
+
+		// Bb
+		Bb: {
+			standard: ["Bb4", "D5", "F5"],
+			spread: ["Bb3", "D5", "F6"],
+			rich: ["Bb2", "Bb3", "D5", "F5", "Bb5"],
+			bass: ["Bb2", "Bb4", "D5", "F5"],
+		},
+		Bbm: {
+			standard: ["Bb4", "Db5", "F5"],
+			spread: ["Bb3", "Db5", "F6"],
+			rich: ["Bb2", "Bb3", "Db5", "F5", "Bb5"],
+		},
+
+		// B
+		B: {
+			standard: ["B4", "Eb5", "Gb5"],
+			spread: ["B3", "Eb5", "Gb6"],
+			rich: ["B2", "B3", "Eb5", "Gb5", "B5"],
+			bass: ["B2", "B4", "Eb5", "Gb5"],
+		},
+		Bm: {
+			standard: ["B4", "D5", "Gb5"],
+			spread: ["B3", "D5", "Gb6"],
+			rich: ["B2", "B3", "D5", "Gb5", "B5"],
+		},
+	};
 }
 
 /**
- * Create rich, multi-octave chord voicings
+ * Get standard chord definitions (backward compatible)
+ * @returns Map of chord names to their standard voicing notes
  */
-export function generateRichChord(
-	rootNote: string,
-	options: {
-		bassOctaveDown?: boolean; // Add bass note octave below
-		doubleRoot?: boolean; // Double the root an octave up
-		spread?: boolean; // Spread notes across octaves
-		addSeventh?: boolean; // Add 7th to the chord
-	} = {},
-): number[] {
-	const { bassOctaveDown, doubleRoot, spread, addSeventh } = options;
+export function generateStandardChords(): Record<string, string[]> {
+	const enhancedChords = generateEnhancedChords();
+	const standardChords: Record<string, string[]> = {};
 
-	// Start with basic triad
-	let frequencies = generateChord({
-		rootNote,
-		chordType: addSeventh ? "maj7" : "major",
-		voicing: spread ? "spread" : "root",
-	});
-
-	// Add bass note
-	if (bassOctaveDown) {
-		const bassFreq = shiftOctave(frequencies[0], -1);
-		frequencies = [bassFreq, ...frequencies];
+	for (const [name, def] of Object.entries(enhancedChords)) {
+		standardChords[name] = def.standard;
 	}
 
-	// Double root
-	if (doubleRoot) {
-		const highRoot = shiftOctave(frequencies[0], 1);
-		frequencies.push(highRoot);
-	}
-
-	return frequencies;
+	return standardChords;
 }

@@ -6,7 +6,7 @@
 // Constants for musical calculations
 const A4_FREQUENCY = 440; // Hz
 const SEMITONES_PER_OCTAVE = 12;
-const TWELFTH_ROOT_OF_TWO = Math.pow(2, 1 / 12);
+const TWELFTH_ROOT_OF_TWO = 2 ** (1 / 12);
 
 // Note names in chromatic order
 const NOTE_NAMES = [
@@ -56,7 +56,7 @@ export function calculateFrequency(note: string): number {
 	const semitonesFromA4 = (octave - 4) * SEMITONES_PER_OCTAVE + (noteIndex - 9);
 
 	// Calculate frequency: f = 440 * 2^(n/12)
-	return A4_FREQUENCY * Math.pow(TWELFTH_ROOT_OF_TWO, semitonesFromA4);
+	return A4_FREQUENCY * (TWELFTH_ROOT_OF_TWO ** semitonesFromA4);
 }
 
 /**
@@ -76,7 +76,10 @@ export function generateFrequencyMap(
 	for (let octave = startOctave; octave <= endOctave; octave++) {
 		for (const noteName of NOTE_NAMES) {
 			const noteWithOctave = `${noteName}${octave}`;
-			frequencies[noteWithOctave] = calculateFrequency(noteWithOctave);
+			frequencies[noteWithOctave] = roundFrequency(
+				calculateFrequency(noteWithOctave),
+				2,
+			);
 
 			// Add enharmonic equivalents
 			if (includeEnharmonics) {
@@ -129,11 +132,8 @@ export function analyzeFrequencyPrecision(storedFreqs: Record<string, number>) {
  * @param frequency - Frequency in Hz
  * @param decimalPlaces - Number of decimal places (default: 2)
  */
-export function roundFrequency(
-	frequency: number,
-	decimalPlaces = 2,
-): number {
-	const factor = Math.pow(10, decimalPlaces);
+export function roundFrequency(frequency: number, decimalPlaces = 2): number {
+	const factor = 10 ** decimalPlaces;
 	return Math.round(frequency * factor) / factor;
 }
 
@@ -146,5 +146,5 @@ export function shiftOctave(
 	baseFrequency: number,
 	octaveShift: number,
 ): number {
-	return baseFrequency * Math.pow(2, octaveShift);
+	return baseFrequency * (2 ** octaveShift);
 }
