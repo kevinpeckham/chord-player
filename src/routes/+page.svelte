@@ -1,17 +1,11 @@
 <!-- Example Svelte Page / Starter Web Page-->
 <script lang="ts">
 // components
-import CircleOfFifths from "$components/CircleOfFifths.svelte";
+import Instrument from "$components/Instrument.svelte";
+import SettingsPanel from "$components/SettingsPanel.svelte";
 
-// props
+// props, including data from load function
 let { data } = $props();
-
-// Svelte 5 runes
-let oscillator = $state({
-	activeChord: "",
-	activeVoice: "sine",
-	voices: ["sine", "triangle", "square", "sawtooth"] as const,
-});
 </script>
 
 
@@ -29,29 +23,14 @@ let oscillator = $state({
 <main class="relative grid grid-cols-1 min-h-screen place-items-center p-4 text-neutral-50 max-w-full h-full">
 	<!-- outer circle container -->
 	<div class="flex items-center justify-center w-auto aspect-square sm:h-[90vmin]">
-		<CircleOfFifths chords={data.chords} bind:oscillator={oscillator}></CircleOfFifths>
+		<Instrument chords={data.chords}></Instrument>
 	</div>
 
 	<!-- version -->
 	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.2.0</div>
 
-	<!-- controls -->
-	<div class="absolute left-8 bottom-8 z-20">
-		{#each oscillator.voices as voice}
-			<div class="flex gap-x-3">
-				<input
-					class="text-18px"
-					id="oscillator-{voice}"
-					type="radio"
-					checked={oscillator.activeVoice === voice}
-					name="oscillator"
-					value={voice}
-					onchange={() => oscillator.activeVoice = voice}
-				/>
-				<label for="oscillator-{voice}">{voice}</label>
-			</div>
-		{/each}
-	</div>
+	<!-- settings panel -->
+	<SettingsPanel />
 </main>
 
 <footer class="text-12px px-8 py-4 border-t border-t-neutral-100/30 bg-black/10">
