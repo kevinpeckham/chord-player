@@ -20,8 +20,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Chord Player is an interactive web application that visualizes and plays musical chords using the Circle of Fifths. It's built with SvelteKit, TypeScript, and uses the Web Audio API for sound generation.
 
+**Documentation**: All documentation and planning files should be placed in the `/docs` folder
+
 **Current Version**: 0.2.0
-**Feature Roadmap**: See FEATURES.md for planned enhancements
+**Feature Roadmap**: See docs/FEATURES.md for planned enhancements
 
 **Package Manager**: Bun 1.x
 **Framework**: Svelte 5 with runes API, SvelteKit 2.x
@@ -50,6 +52,16 @@ Chord Player is an interactive web application that visualizes and plays musical
 ### Testing
 - `bun test` - Run tests with Bun test runner
 - `bun test:watch` - Run tests in watch mode
+
+## Project Structure
+
+- `/docs` - Documentation and planning files
+  - `FEATURES.md` - Feature roadmap and planned enhancements
+  - `audio-context-analysis.md` - Technical analysis of audio architecture
+- `/src` - Source code
+- `README.md` - Project readme (stays in root)
+- `CLAUDE.md` - This file (AI assistant guidance)
+- `CHANGELOG.md` - Version history
 
 ## Architecture
 

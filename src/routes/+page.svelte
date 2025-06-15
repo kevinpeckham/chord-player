@@ -11,14 +11,14 @@ let { data } = $props();
 
 
 <svelte:head>
-	<title>Chord Player | Circle of Fifths</title>
+	<title>Fifths | Circle of Fifths Chord Player</title>
 	<meta content="A playable circle of fifths app." name="description" />
 </svelte:head>
 
 <!-- body -->
 <header class="pl-8 pt-8 absolute top-0 left-0 z-10">
-	<h1 class="text-24px text-accent">Chord Player</h1>
-	<div class="opacity-80">A playable Circle of Fifths.</div>
+	<h1 class="text-24px text-accent">Fifths</h1>
+	<div class="opacity-80">A playable circle of fifths synth.</div>
 </header>
 
 <main class="relative grid grid-cols-1 min-h-screen place-items-center p-4 text-neutral-50 max-w-full h-full">
@@ -32,7 +32,7 @@ let { data } = $props();
 
 	<!-- settings panel -->
 	<SettingsPanel />
-	
+
 	<!-- volume control -->
 	<VolumeControl />
 </main>
