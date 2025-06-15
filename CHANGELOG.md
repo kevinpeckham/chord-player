@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-01-21
+
+### Added
+- playChordByNotes wrapper function for playing chords using note names instead of frequencies
+- Root Bass voicing option combining bass root note with first inversion (e.g., C3, E4, G4, C5)
+
+### Changed
+- Oscillator type selection changed from radio buttons to dropdown for consistency
+
 ## [0.3.0] - 2025-01-21
 
 ### Added
@@ -20,8 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In-memory frequency and chord generation for serverless deployment
 - Chrome DevTools Vite plugin for enhanced debugging
 - Comprehensive JSDoc documentation for all utility functions
-- `playChordByNotes` wrapper function for playing chords using note names instead of frequencies
-- Root Bass voicing option combining bass root note with first inversion (e.g., C3, E4, G4, C5)
 
 ### Changed
 - Refactored components: CircleOfFifths renamed to Instrument
@@ -33,7 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frequency generation moved from build-time to runtime (serverless-friendly)
 - Renamed utils.ts to circleGeometry.ts for clarity
 - Improved function naming: shiftOctave → transposeNoteByOctaves/shiftFrequencyByOctaves
-- Oscillator type selection changed from radio buttons to dropdown for consistency
 
 ### Fixed
 - Browser AudioContext limit exhaustion issue
