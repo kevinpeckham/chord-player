@@ -33,10 +33,11 @@ const ENHARMONIC_MAP: Record<string, string> = {
 
 /**
  * Calculate frequency for any note using equal temperament
+ * Internal helper function used by generateFrequencyMap
  * @param note - Note name (e.g., "C4", "A#5", "Db3")
  * @returns Frequency in Hz
  */
-export function calculateFrequency(note: string): number {
+function calculateFrequency(note: string): number {
 	const match = note.match(/^([A-G][b#]?)(\d+)$/);
 	if (!match) throw new Error(`Invalid note format: ${note}`);
 
@@ -56,7 +57,7 @@ export function calculateFrequency(note: string): number {
 	const semitonesFromA4 = (octave - 4) * SEMITONES_PER_OCTAVE + (noteIndex - 9);
 
 	// Calculate frequency: f = 440 * 2^(n/12)
-	return A4_FREQUENCY * (TWELFTH_ROOT_OF_TWO ** semitonesFromA4);
+	return A4_FREQUENCY * TWELFTH_ROOT_OF_TWO ** semitonesFromA4;
 }
 
 /**
@@ -97,54 +98,12 @@ export function generateFrequencyMap(
 }
 
 /**
- * Compare stored frequencies with calculated ones
- * @param storedFreqs - Object of stored frequencies
- * @returns Analysis of precision differences
- */
-export function analyzeFrequencyPrecision(storedFreqs: Record<string, number>) {
-	const analysis: Array<{
-		note: string;
-		stored: number;
-		calculated: number;
-		difference: number;
-		percentError: number;
-	}> = [];
-
-	for (const [note, storedFreq] of Object.entries(storedFreqs)) {
-		const calculatedFreq = calculateFrequency(note);
-		const difference = Math.abs(storedFreq - calculatedFreq);
-		const percentError = (difference / calculatedFreq) * 100;
-
-		analysis.push({
-			note,
-			stored: storedFreq,
-			calculated: calculatedFreq,
-			difference,
-			percentError,
-		});
-	}
-
-	return analysis;
-}
-
-/**
  * Round frequency to a specific precision
+ * Internal helper function used by generateFrequencyMap
  * @param frequency - Frequency in Hz
  * @param decimalPlaces - Number of decimal places (default: 2)
  */
-export function roundFrequency(frequency: number, decimalPlaces = 2): number {
+function roundFrequency(frequency: number, decimalPlaces = 2): number {
 	const factor = 10 ** decimalPlaces;
 	return Math.round(frequency * factor) / factor;
-}
-
-/**
- * Get octave-shifted frequency
- * @param baseFrequency - Base frequency in Hz
- * @param octaveShift - Number of octaves to shift (positive = up, negative = down)
- */
-export function shiftOctave(
-	baseFrequency: number,
-	octaveShift: number,
-): number {
-	return baseFrequency * (2 ** octaveShift);
 }

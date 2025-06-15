@@ -26,7 +26,7 @@ interface Props {
 let { chords }: Props = $props();
 
 // import utils
-import { textCoords, wedgePath } from "$utils/utils";
+import { textCoords, wedgePath } from "$utils/circleGeometry";
 
 //- interaction functions
 function onMousedown(event: MouseEvent) {
