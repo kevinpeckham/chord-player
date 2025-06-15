@@ -109,6 +109,8 @@ Components are organized in a flat structure:
      - `settings.svelte.ts` - Audio settings (oscillator voice selection, chord voicing)
      - `performance.svelte.ts` - Performance state (active chord display)
      - `audio.svelte.ts` - Audio engine with singleton AudioContext, reactive state, and volume control
+       - Exports `playChord(frequencies, oscillatorType, duration)` for frequency-based playback
+       - Exports `playChordByNotes(notes, oscillatorType, duration)` for note-name-based playback
 
 4. **Audio Generation**: Uses Web Audio API with oscillator types (sine, triangle, square, sawtooth)
 

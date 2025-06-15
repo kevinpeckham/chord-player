@@ -14,7 +14,7 @@ SVG Circle of Fifths
 // stores
 import { settings } from "$stores/settings.svelte";
 import { performance } from "$stores/performance.svelte";
-import { playChord } from "$stores/audio.svelte";
+import { playChord, playChordByNotes } from "$stores/audio.svelte";
 
 // types
 import type { Chord, VoicingFrequencies } from "$lib/types/Chord";

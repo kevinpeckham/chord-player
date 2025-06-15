@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In-memory frequency and chord generation for serverless deployment
 - Chrome DevTools Vite plugin for enhanced debugging
 - Comprehensive JSDoc documentation for all utility functions
+- `playChordByNotes` wrapper function for playing chords using note names instead of frequencies
 
 ### Changed
 - Refactored components: CircleOfFifths renamed to Instrument
