@@ -8,7 +8,7 @@ An interactive web application that visualizes and plays musical chords using th
 
 - **Interactive Circle of Fifths** - Click any chord to hear it played
 - **Multiple Voice Types** - Choose between sine, triangle, square, and sawtooth wave oscillators
-- **Rich Chord Voicings** - Select from standard, spread, rich, or bass-enhanced voicings
+- **Rich Chord Voicings** - Select from standard, spread, rich, bass-enhanced, or root bass voicings
 - **Extended Frequency Range** - Supports 7 octaves (C1 to C7) for fuller sound
 - **Volume Control** - Adjustable master volume with real-time feedback
 - **Visual Feedback** - See which chord is currently playing

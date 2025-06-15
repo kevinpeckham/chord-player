@@ -51,12 +51,14 @@ export const chordsData = circle.reduce((acc, chord) => {
 			spread: majorVoicings.spread ? getFrequencies(majorVoicings.spread) : majorFrequencies,
 			rich: majorVoicings.rich ? getFrequencies(majorVoicings.rich) : majorFrequencies,
 			bass: majorVoicings.bass ? getFrequencies(majorVoicings.bass) : majorFrequencies,
+			rootBass: majorVoicings.rootBass ? getFrequencies(majorVoicings.rootBass) : majorFrequencies,
 		},
 		minorVoicings: {
 			standard: minorFrequencies,
 			spread: minorVoicings.spread ? getFrequencies(minorVoicings.spread) : minorFrequencies,
 			rich: minorVoicings.rich ? getFrequencies(minorVoicings.rich) : minorFrequencies,
 			bass: minorVoicings.bass ? getFrequencies(minorVoicings.bass) : minorFrequencies,
+			rootBass: minorVoicings.rootBass ? getFrequencies(minorVoicings.rootBass) : minorFrequencies,
 		}
 	});
 

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chrome DevTools Vite plugin for enhanced debugging
 - Comprehensive JSDoc documentation for all utility functions
 - `playChordByNotes` wrapper function for playing chords using note names instead of frequencies
+- Root Bass voicing option combining bass root note with first inversion (e.g., C3, E4, G4, C5)
 
 ### Changed
 - Refactored components: CircleOfFifths renamed to Instrument

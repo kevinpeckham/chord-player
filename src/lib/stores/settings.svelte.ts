@@ -2,7 +2,12 @@
 export const settings = $state({
 	activeVoice: "sine",
 	availableVoices: ["sine", "triangle", "square", "sawtooth"] as const,
-	chordVoicing: "standard" as "standard" | "spread" | "rich" | "bass",
+	chordVoicing: "standard" as
+		| "standard"
+		| "spread"
+		| "rich"
+		| "bass"
+		| "rootBass",
 });
 
 // functions to change settings

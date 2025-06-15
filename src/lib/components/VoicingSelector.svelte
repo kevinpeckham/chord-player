@@ -11,6 +11,11 @@ const voicingOptions = [
 	{ value: "spread", label: "Spread", description: "Notes across octaves" },
 	{ value: "rich", label: "Rich", description: "Doubled root with bass" },
 	{ value: "bass", label: "Bass", description: "Added bass note" },
+	{
+		value: "rootBass",
+		label: "Root Bass",
+		description: "Bass root + 1st inversion",
+	},
 ];
 </script>
 

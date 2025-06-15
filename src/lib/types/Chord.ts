@@ -3,6 +3,7 @@ export interface VoicingFrequencies {
 	spread: number[];
 	rich: number[];
 	bass: number[];
+	rootBass: number[];
 }
 
 export interface Chord {

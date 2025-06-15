@@ -8,6 +8,7 @@ export interface ChordDefinition {
 	spread?: string[];
 	rich?: string[];
 	bass?: string[];
+	rootBass?: string[]; // Root bass with first inversion
 	inversions?: {
 		first?: string[];
 		second?: string[];
@@ -74,6 +75,16 @@ export function generateChordEnhancements(
 				notes[1], // 3rd
 				notes[2], // 5th
 				transposeNoteByOctaves(rootNote, 1), // Root doubled up
+			];
+		}
+
+		// Add root bass with first inversion (root one octave down + first inversion)
+		if (notes.length === 3) {
+			enhanced[chordName].rootBass = [
+				transposeNoteByOctaves(notes[0], -1), // Root down 1 octave
+				notes[1], // 3rd (now lowest of the triad)
+				notes[2], // 5th
+				transposeNoteByOctaves(notes[0], 1), // Root up an octave
 			];
 		}
 

@@ -32,7 +32,7 @@ Fifths (chord-player) is an interactive web application that visualizes and play
 
 **Frequency Generation**: 
 - Extended frequencies (octaves 1-7) are generated in-memory at runtime on the server
-- Enhanced chord voicings (standard, spread, rich, bass) are computed dynamically
+- Enhanced chord voicings (standard, spread, rich, bass, root bass) are computed dynamically
 - Mathematical precision is maintained at 2 decimal places for all frequencies
 - No file system writes required - perfect for serverless deployment
 - Utility functions in `/src/lib/utils/`:
