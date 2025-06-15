@@ -27,8 +27,18 @@ Fifths (chord-player) is an interactive web application that visualizes and play
 
 **Documentation**: All documentation and planning files should be placed in the `/docs` folder
 
-**Current Version**: 0.3.0
+**Current Version**: 0.3.1
 **Feature Roadmap**: See docs/FEATURES.md for planned enhancements
+
+**Frequency Generation**: 
+- Extended frequencies (octaves 1-7) are generated in-memory at runtime on the server
+- Enhanced chord voicings (standard, spread, rich, bass, root bass) are computed dynamically
+- Mathematical precision is maintained at 2 decimal places for all frequencies
+- No file system writes required - perfect for serverless deployment
+- Utility functions in `/src/lib/utils/`:
+  - `frequencyGenerator.ts` - Generates frequency maps for notes
+  - `chordEnhancer.ts` - Creates enhanced chord voicings from standard chords
+  - `circleGeometry.ts` - SVG path generation for circle visualization
 
 **Package Manager**: Bun 1.x
 **Framework**: Svelte 5 with runes API, SvelteKit 2.x
@@ -72,10 +82,13 @@ Fifths (chord-player) is an interactive web application that visualizes and play
 
 ### Component Structure
 Components are organized in a flat structure:
-- `/src/lib/components/` - All UI components (Instrument, SettingsPanel, VolumeControl, LinkButton, Footer)
+- `/src/lib/components/` - All UI components
   - `Instrument.svelte` - Main circle of fifths instrument (formerly CircleOfFifths)
-  - `SettingsPanel.svelte` - Oscillator voice selection panel
+  - `SettingsPanel.svelte` - Oscillator voice selection and chord voicing options
   - `VolumeControl.svelte` - Master volume control with reactive state
+  - `VoicingSelector.svelte` - Dropdown for selecting chord voicing styles
+  - `LinkButton.svelte` - Reusable link button component
+  - `Footer.svelte` - Page footer component
 
 ### Data Flow
 1. **Server-Side Data Loading**: 
@@ -93,9 +106,11 @@ Components are organized in a flat structure:
    - Props passing with `$props()`
    - Computed values with `$derived()`
    - State stores in `/src/lib/stores/`:
-     - `settings.svelte.ts` - Audio settings (oscillator voice selection)
+     - `settings.svelte.ts` - Audio settings (oscillator voice selection, chord voicing)
      - `performance.svelte.ts` - Performance state (active chord display)
      - `audio.svelte.ts` - Audio engine with singleton AudioContext, reactive state, and volume control
+       - Exports `playChord(frequencies, oscillatorType, duration)` for frequency-based playback
+       - Exports `playChordByNotes(notes, oscillatorType, duration)` for note-name-based playback
 
 4. **Audio Generation**: Uses Web Audio API with oscillator types (sine, triangle, square, sawtooth)
 
@@ -167,3 +182,18 @@ Follow [Keep a Changelog](https://keepachangelog.com/) format:
 - Use GitHub CLI: `gh pr create`, `gh pr merge`
 - Set `GH_TOKEN` environment variable for CLI authentication
 - PRs can be merged once CI checks pass
+
+### GitHub CLI Authentication Method
+- The GH_TOKEN is stored in `.env.development.local`
+- Use inline token for gh commands: `GH_TOKEN="token_value" gh pr create ...`
+- This method works reliably without needing `gh auth login`
+- Example: `GH_TOKEN="github_pat_..." gh pr view 8`
+- For merging with admin privileges: `GH_TOKEN="token_value" gh pr merge 8 --merge --admin`
+
+## Development Tools
+
+### Chrome DevTools Integration
+- Project includes `vite-plugin-devtools-json` for enhanced debugging
+- Automatically configures Chrome DevTools workspace settings
+- Improves source map integration and debugging experience
+- No additional configuration needed - works out of the box

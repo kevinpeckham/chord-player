@@ -1,6 +1,11 @@
 // Audio engine store - manages AudioContext and sound generation
+import { generateFrequencyMap } from "$utils/frequencyGenerator";
+
 let audioContext: AudioContext | null = null;
 let masterGainNode: GainNode | null = null;
+
+// Lazily generate frequency map when needed
+let noteFrequencies: Record<string, number> | null = null;
 
 // Active oscillators tracking for cleanup
 const activeOscillators = new Set<OscillatorNode>();
@@ -136,6 +141,34 @@ export async function playChord(
 		},
 		duration * 1000 + 100,
 	);
+}
+
+// Wrapper function to play chord by note names
+export async function playChordByNotes(
+	notes: string[],
+	oscillatorType: OscillatorType,
+	duration = 1.5,
+): Promise<void> {
+	// Initialize frequency map on first use
+	if (!noteFrequencies) {
+		noteFrequencies = generateFrequencyMap(1, 7, true);
+	}
+
+	// Convert note names to frequencies
+	const frequencies: number[] = [];
+	for (const note of notes) {
+		const frequency = noteFrequencies[note];
+		if (frequency) {
+			frequencies.push(frequency);
+		} else {
+			console.warn(`Note "${note}" not found in frequency map`);
+		}
+	}
+
+	// Play the chord if we have valid frequencies
+	if (frequencies.length > 0) {
+		await playChord(frequencies, oscillatorType, duration);
+	}
 }
 
 // Reactive volume control (0-1)

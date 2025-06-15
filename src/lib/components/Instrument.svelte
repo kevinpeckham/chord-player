@@ -14,10 +14,10 @@ SVG Circle of Fifths
 // stores
 import { settings } from "$stores/settings.svelte";
 import { performance } from "$stores/performance.svelte";
-import { playChord } from "$stores/audio.svelte";
+import { playChord, playChordByNotes } from "$stores/audio.svelte";
 
 // types
-import type { Chord } from "$lib/types/Chord";
+import type { Chord, VoicingFrequencies } from "$lib/types/Chord";
 
 // props
 interface Props {
@@ -26,7 +26,7 @@ interface Props {
 let { chords }: Props = $props();
 
 // import utils
-import { textCoords, wedgePath } from "$utils/utils";
+import { textCoords, wedgePath } from "$utils/circleGeometry";
 
 //- interaction functions
 function onMousedown(event: MouseEvent) {
@@ -49,8 +49,9 @@ function onMousedown(event: MouseEvent) {
 		performance.activeChord = "";
 	}
 
-	// play chord using the audio store
-	const frequencies = datum[`${mode}Frequencies`] as number[];
+	// play chord using the audio store with selected voicing
+	const voicings = datum[`${mode}Voicings`] as VoicingFrequencies;
+	const frequencies = voicings[settings.chordVoicing] || voicings.standard;
 	playChord(frequencies, settings.activeVoice as OscillatorType);
 }
 function onMouseup(event: MouseEvent) {

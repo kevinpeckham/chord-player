@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-01-21
+
+### Added
+- playChordByNotes wrapper function for playing chords using note names instead of frequencies
+- Root Bass voicing option combining bass root note with first inversion (e.g., C3, E4, G4, C5)
+
+### Changed
+- Oscillator type selection changed from radio buttons to dropdown for consistency
+
 ## [0.3.0] - 2025-01-21
 
 ### Added
@@ -14,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation folder structure (/docs) for better organization
 - Audio context analysis documentation
 - Proper audio resource cleanup and memory management
+- Extended frequency generation for octaves 1-7 (119 total notes)
+- Rich chord voicings: standard, spread, rich, and bass-enhanced
+- Chord voicing selector component with 4 voicing options
+- In-memory frequency and chord generation for serverless deployment
+- Chrome DevTools Vite plugin for enhanced debugging
+- Comprehensive JSDoc documentation for all utility functions
 
 ### Changed
 - Refactored components: CircleOfFifths renamed to Instrument
@@ -22,11 +37,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated branding from "Chord Player" to "Fifths"
 - Moved documentation files to organized /docs folder
 - Audio context now reused instead of recreated for each chord
+- Frequency generation moved from build-time to runtime (serverless-friendly)
+- Renamed utils.ts to circleGeometry.ts for clarity
+- Improved function naming: shiftOctave → transposeNoteByOctaves/shiftFrequencyByOctaves
 
 ### Fixed
 - Browser AudioContext limit exhaustion issue
 - Memory leaks from uncleaned audio nodes
 - Svelte module compilation errors with $effect and $derived usage
+
+### Removed
+- Unused utility functions (calculateFrequency, analyzeFrequencyPrecision, shiftFrequencyByOctaves)
+- Build-time file generation scripts (now computed in-memory)
 
 ## [0.2.0] - 2025-01-14
 
