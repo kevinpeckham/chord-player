@@ -18,10 +18,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Chord Player is an interactive web application that visualizes and plays musical chords using the Circle of Fifths. It's built with SvelteKit, TypeScript, and uses the Web Audio API for sound generation.
+Fifths (chord-player) is an interactive web application that visualizes and plays musical chords using the Circle of Fifths. It's built with SvelteKit, TypeScript, and uses the Web Audio API for sound generation.
 
-**Current Version**: 0.2.0
-**Feature Roadmap**: See FEATURES.md for planned enhancements
+**Branding Strategy**: 
+- Product name: "Fifths" (used in UI and marketing)
+- Technical name: "chord-player" (used in package.json, GitHub repo, and infrastructure)
+- This hybrid approach balances brand uniqueness with SEO discoverability
+
+**Documentation**: All documentation and planning files should be placed in the `/docs` folder
+
+**Current Version**: 0.3.0
+**Feature Roadmap**: See docs/FEATURES.md for planned enhancements
 
 **Package Manager**: Bun 1.x
 **Framework**: Svelte 5 with runes API, SvelteKit 2.x
@@ -51,11 +58,24 @@ Chord Player is an interactive web application that visualizes and plays musical
 - `bun test` - Run tests with Bun test runner
 - `bun test:watch` - Run tests in watch mode
 
+## Project Structure
+
+- `/docs` - Documentation and planning files
+  - `FEATURES.md` - Feature roadmap and planned enhancements
+  - `audio-context-analysis.md` - Technical analysis of audio architecture
+- `/src` - Source code
+- `README.md` - Project readme (stays in root)
+- `CLAUDE.md` - This file (AI assistant guidance)
+- `CHANGELOG.md` - Version history
+
 ## Architecture
 
 ### Component Structure
 Components are organized in a flat structure:
-- `/src/lib/components/` - All UI components (CircleOfFifths, LinkButton, Footer)
+- `/src/lib/components/` - All UI components (Instrument, SettingsPanel, VolumeControl, LinkButton, Footer)
+  - `Instrument.svelte` - Main circle of fifths instrument (formerly CircleOfFifths)
+  - `SettingsPanel.svelte` - Oscillator voice selection panel
+  - `VolumeControl.svelte` - Master volume control with reactive state
 
 ### Data Flow
 1. **Server-Side Data Loading**: 
@@ -68,11 +88,14 @@ Components are organized in a flat structure:
    - `notes.json` - Note-to-frequency mappings
    - `chords.json` - Chord-to-note mappings
 
-3. **State Management**: Uses Svelte 5 runes
+3. **State Management**: Uses Svelte 5 runes and state stores
    - Reactive state objects with `$state()`
    - Props passing with `$props()`
    - Computed values with `$derived()`
-   - No legacy stores - all state is managed with runes
+   - State stores in `/src/lib/stores/`:
+     - `settings.svelte.ts` - Audio settings (oscillator voice selection)
+     - `performance.svelte.ts` - Performance state (active chord display)
+     - `audio.svelte.ts` - Audio engine with singleton AudioContext, reactive state, and volume control
 
 4. **Audio Generation**: Uses Web Audio API with oscillator types (sine, triangle, square, sawtooth)
 
@@ -138,6 +161,7 @@ Follow [Keep a Changelog](https://keepachangelog.com/) format:
 - **GitHub Actions**: `.github/workflows/ci.yml` runs on PRs and pushes to main
 - **Quality Checks**: format, lint, type check, build, test
 - **Deployment**: Automatic via Vercel on main branch updates
+- **Live URL**: https://www.fifths.app (custom domain)
 
 ### Working with PRs
 - Use GitHub CLI: `gh pr create`, `gh pr merge`

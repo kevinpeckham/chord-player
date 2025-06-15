@@ -11,16 +11,19 @@ SVG Circle of Fifths
 -->
 
 <script lang='ts'>
+// stores
+import { settings } from "$stores/settings.svelte";
+import { performance } from "$stores/performance.svelte";
+import { playChord } from "$stores/audio.svelte";
+
 // types
 import type { Chord } from "$lib/types/Chord";
-import type { Oscillator } from "$lib/types/Oscillator";
 
 // props
 interface Props {
 	chords: Chord[];
-	oscillator: Oscillator;
 }
-let { chords, oscillator = $bindable() }: Props = $props();
+let { chords }: Props = $props();
 
 // import utils
 import { textCoords, wedgePath } from "$utils/utils";
@@ -37,48 +40,24 @@ function onMousedown(event: MouseEvent) {
 	// display active chord name
 	if (mode === "major") {
 		const chord = datum.majorDisplay;
-		oscillator.activeChord = `${chord} major`;
+		performance.activeChord = `${chord} major`;
 	} else if (mode === "minor") {
 		const chord = datum.minorDisplay;
 		const chordAdjusted = chord.replace("m", " minor");
-		oscillator.activeChord = chordAdjusted;
+		performance.activeChord = chordAdjusted;
 	} else {
-		oscillator.activeChord = "";
+		performance.activeChord = "";
 	}
 
-	// play chord
-
-	// get note frequencies
+	// play chord using the audio store
 	const frequencies = datum[`${mode}Frequencies`] as number[];
-
-	const audioCtx = new window.AudioContext();
-
-	// create gainNode
-	const gainNode = audioCtx.createGain();
-	gainNode.gain.value = 1 / frequencies.length;
-	gainNode.connect(audioCtx.destination);
-
-	for (const frequency of frequencies) {
-		const oscNode = audioCtx.createOscillator();
-		oscNode.type = oscillator.activeVoice as OscillatorType; // hook up other values
-
-		oscNode.frequency.value = frequency;
-		oscNode.connect(gainNode);
-
-		oscNode.start(0);
-
-		/* Stop the audio after 1.5 seconds */
-		oscNode.stop(audioCtx.currentTime + 1.5);
-
-		/* Fade out the audio after half the time to avoid clicks  */
-		gainNode.gain.setTargetAtTime(0, 0.75, 0.25);
-	}
+	playChord(frequencies, settings.activeVoice as OscillatorType);
 }
 function onMouseup(event: MouseEvent) {
 	event.stopPropagation();
 
 	setTimeout(() => {
-		oscillator.activeChord = "";
+		performance.activeChord = "";
 	}, 600);
 }
 
@@ -155,9 +134,9 @@ const modes = [
 	<!-- center text -->
 	<g class="pointer-events-none">
 		<text
-			class="fill-accent text-20px sm:text-[.8em] text-anchor-middle dominant-baseline-central"
+			class="fill-accent text-20px sm:text-[.8em] text-anchor-middle dominant-baseline-central empty:hidden"
 			x="200"
 			y="200"
-		>{oscillator.activeChord}</text>
+		>{performance.activeChord}</text>
 	</g>
 </svg>

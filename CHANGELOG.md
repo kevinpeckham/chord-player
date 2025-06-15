@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-01-21
+
+### Added
+- Professional audio engine with singleton AudioContext pattern
+- Master volume control with real-time adjustment
+- Reactive audio state management using Svelte 5 runes
+- Documentation folder structure (/docs) for better organization
+- Audio context analysis documentation
+- Proper audio resource cleanup and memory management
+
+### Changed
+- Refactored components: CircleOfFifths renamed to Instrument
+- Extracted oscillator controls into SettingsPanel component
+- Implemented Svelte 5 state stores for settings and performance
+- Updated branding from "Chord Player" to "Fifths"
+- Moved documentation files to organized /docs folder
+- Audio context now reused instead of recreated for each chord
+
+### Fixed
+- Browser AudioContext limit exhaustion issue
+- Memory leaks from uncleaned audio nodes
+- Svelte module compilation errors with $effect and $derived usage
+
 ## [0.2.0] - 2025-01-14
 
 ### Added
