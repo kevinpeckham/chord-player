@@ -55,9 +55,10 @@ Chord Player is an interactive web application that visualizes and plays musical
 
 ### Component Structure
 Components are organized in a flat structure:
-- `/src/lib/components/` - All UI components (Instrument, SettingsPanel, LinkButton, Footer)
+- `/src/lib/components/` - All UI components (Instrument, SettingsPanel, VolumeControl, LinkButton, Footer)
   - `Instrument.svelte` - Main circle of fifths instrument (formerly CircleOfFifths)
   - `SettingsPanel.svelte` - Oscillator voice selection panel
+  - `VolumeControl.svelte` - Master volume control with reactive state
 
 ### Data Flow
 1. **Server-Side Data Loading**: 
@@ -77,6 +78,7 @@ Components are organized in a flat structure:
    - State stores in `/src/lib/stores/`:
      - `settings.svelte.ts` - Audio settings (oscillator voice selection)
      - `performance.svelte.ts` - Performance state (active chord display)
+     - `audio.svelte.ts` - Audio engine with singleton AudioContext, reactive state, and volume control
 
 4. **Audio Generation**: Uses Web Audio API with oscillator types (sine, triangle, square, sawtooth)
 

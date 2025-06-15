@@ -14,6 +14,7 @@ SVG Circle of Fifths
 // stores
 import { settings } from "$stores/settings.svelte";
 import { performance } from "$stores/performance.svelte";
+import { playChord } from "$stores/audio.svelte";
 
 // types
 import type { Chord } from "$lib/types/Chord";
@@ -48,33 +49,9 @@ function onMousedown(event: MouseEvent) {
 		performance.activeChord = "";
 	}
 
-	// play chord
-
-	// get note frequencies
+	// play chord using the audio store
 	const frequencies = datum[`${mode}Frequencies`] as number[];
-
-	const audioCtx = new window.AudioContext();
-
-	// create gainNode
-	const gainNode = audioCtx.createGain();
-	gainNode.gain.value = 1 / frequencies.length;
-	gainNode.connect(audioCtx.destination);
-
-	for (const frequency of frequencies) {
-		const oscNode = audioCtx.createOscillator();
-		oscNode.type = settings.activeVoice as OscillatorType; // hook up other values
-
-		oscNode.frequency.value = frequency;
-		oscNode.connect(gainNode);
-
-		oscNode.start(0);
-
-		/* Stop the audio after 1.5 seconds */
-		oscNode.stop(audioCtx.currentTime + 1.5);
-
-		/* Fade out the audio after half the time to avoid clicks  */
-		gainNode.gain.setTargetAtTime(0, 0.75, 0.25);
-	}
+	playChord(frequencies, settings.activeVoice as OscillatorType);
 }
 function onMouseup(event: MouseEvent) {
 	event.stopPropagation();

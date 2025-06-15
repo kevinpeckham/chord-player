@@ -3,6 +3,7 @@
 // components
 import Instrument from "$components/Instrument.svelte";
 import SettingsPanel from "$components/SettingsPanel.svelte";
+import VolumeControl from "$components/VolumeControl.svelte";
 
 // props, including data from load function
 let { data } = $props();
@@ -31,6 +32,9 @@ let { data } = $props();
 
 	<!-- settings panel -->
 	<SettingsPanel />
+	
+	<!-- volume control -->
+	<VolumeControl />
 </main>
 
 <footer class="text-12px px-8 py-4 border-t border-t-neutral-100/30 bg-black/10">
