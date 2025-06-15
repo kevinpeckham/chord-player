@@ -12,7 +12,7 @@ let { data } = $props();
 
 <svelte:head>
 	<title>Fifths | Circle of Fifths Chord Player</title>
-	<meta content="A playable circle of fifths app." name="description" />
+	<meta content="Fifths - An interactive chord player using the circle of fifths. Play major and minor chords with different synth voices." name="description" />
 </svelte:head>
 
 <!-- body -->

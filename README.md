@@ -1,6 +1,8 @@
-# Chord Player
+# Fifths - Interactive Circle of Fifths Chord Player
 
 An interactive web application that visualizes and plays musical chords using the Circle of Fifths. Built with SvelteKit 2, TypeScript, and the Web Audio API.
+
+**Live Demo**: [Visit Fifths](https://www.fifths.app)
 
 ## Features
 

@@ -18,7 +18,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Chord Player is an interactive web application that visualizes and plays musical chords using the Circle of Fifths. It's built with SvelteKit, TypeScript, and uses the Web Audio API for sound generation.
+Fifths (chord-player) is an interactive web application that visualizes and plays musical chords using the Circle of Fifths. It's built with SvelteKit, TypeScript, and uses the Web Audio API for sound generation.
+
+**Branding Strategy**: 
+- Product name: "Fifths" (used in UI and marketing)
+- Technical name: "chord-player" (used in package.json, GitHub repo, and infrastructure)
+- This hybrid approach balances brand uniqueness with SEO discoverability
 
 **Documentation**: All documentation and planning files should be placed in the `/docs` folder
 
@@ -156,6 +161,7 @@ Follow [Keep a Changelog](https://keepachangelog.com/) format:
 - **GitHub Actions**: `.github/workflows/ci.yml` runs on PRs and pushes to main
 - **Quality Checks**: format, lint, type check, build, test
 - **Deployment**: Automatic via Vercel on main branch updates
+- **Live URL**: https://www.fifths.app (custom domain)
 
 ### Working with PRs
 - Use GitHub CLI: `gh pr create`, `gh pr merge`
