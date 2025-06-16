@@ -88,24 +88,28 @@ export function wedgePath(
 
 /**
  * Calculate text label coordinates for a circular segment
- * Positions text at the start angle of a segment (for Circle of Fifths labeling)
+ * Positions text at the center of a segment (for Circle of Fifths labeling)
  * @param radius - Distance from center to place the text
  * @param segmentIndex - Index of the segment (0-based)
  * @param totalSegments - Total number of segments (default: 12)
+ * @param rotationOffset - Additional rotation offset in degrees (default: 15 for circle of fifths alignment)
  * @returns Array of [x, y] coordinates for text placement
  */
 export function textCoords(
 	radius: number,
 	segmentIndex: number,
 	totalSegments = 12,
+	rotationOffset = 15,
 ): [number, number] {
 	const degreesPerSegment = 360 / totalSegments;
-	const segmentStartDegree = degreesPerSegment * segmentIndex;
+	// Center the text in the segment by adding half the segment angle
+	const segmentCenterDegree =
+		degreesPerSegment * segmentIndex + degreesPerSegment / 2 + rotationOffset;
 
 	return polarToCartesian(
 		200, // SVG viewBox center X
 		200, // SVG viewBox center Y
 		radius,
-		segmentStartDegree,
+		segmentCenterDegree,
 	);
 }

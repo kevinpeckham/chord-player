@@ -10,9 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - playChordByNotes wrapper function for playing chords using note names instead of frequencies
 - Root Bass voicing option combining bass root note with first inversion (e.g., C3, E4, G4, C5)
+- Individual Notes mode for playing single chromatic notes instead of chords
+- Key Center selector to rotate the circle and place any note/chord at 12 o'clock position
+- Octave selector for individual notes mode (octaves 1-7)
 
 ### Changed
 - Oscillator type selection changed from radio buttons to dropdown for consistency
+- Circle of Fifths visualization now supports both chord mode and individual notes mode
+- Default key center is C (appears at 12 o'clock position)
 
 ## [0.3.0] - 2025-01-21
 
