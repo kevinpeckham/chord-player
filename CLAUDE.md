@@ -16,6 +16,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   4. Update documentation as needed
   5. Create a version bump commit
 
+## Circle of Fifths Visual Positioning
+
+**CRITICAL**: When working with the Circle of Fifths visualization:
+- The chord data array order is: A(0), E(1), B(2), Gb(3), Db(4), Ab(5), Eb(6), Bb(7), F(8), C(9), G(10), D(11)
+- Due to the SVG's 15-degree rotation and text centering, **array position 8 appears at 12 o'clock**
+- F (at index 8) naturally appears at the top without any data rotation
+- To place any key at 12 o'clock, rotate the array to put that key at position 8
+- Rotation formula: `rotateAmount = (keyCenterIndex - 8 + 12) % 12`
+- This applies to both chord mode and notes mode
+
 ## Project Overview
 
 Fifths (chord-player) is an interactive web application that visualizes and plays musical chords using the Circle of Fifths. It's built with SvelteKit, TypeScript, and uses the Web Audio API for sound generation.

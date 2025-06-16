@@ -8,6 +8,21 @@ export const settings = $state({
 		| "rich"
 		| "bass"
 		| "rootBass",
+	mode: "chords" as "chords" | "notes",
+	noteOctave: 4,
+	keyCenter: "C" as
+		| "C"
+		| "C#"
+		| "D"
+		| "D#"
+		| "E"
+		| "F"
+		| "F#"
+		| "G"
+		| "G#"
+		| "A"
+		| "A#"
+		| "B",
 });
 
 // functions to change settings

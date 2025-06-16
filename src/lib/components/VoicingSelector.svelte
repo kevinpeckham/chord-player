@@ -20,8 +20,8 @@ const voicingOptions = [
 </script>
 
 <div class="flex flex-col gap-2">
-  <label for="voicing-select" class="text-sm opacity-80">Chord Voicing</label>
-  <select 
+  <label for="voicing-select" class="text-sm opacity-80 sr-only">Chord Voicing</label>
+  <select
     id="voicing-select"
     bind:value={settings.chordVoicing}
     class="bg-primary/20 border border-neutral-100/20 rounded px-3 py-2 text-sm"
