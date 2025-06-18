@@ -1,10 +1,10 @@
 import { defineConfig } from "unocss";
-import presetWind from "@unocss/preset-wind";
+import presetWind3 from "@unocss/preset-wind3";
 import extractorSvelte from "@unocss/extractor-svelte";
 
 export default defineConfig({
 	extractors: [extractorSvelte()],
-	presets: [presetWind()],
+	presets: [presetWind3()],
 	preflights: [
 		// tailwind preflight
 		{
@@ -29,6 +29,10 @@ export default defineConfig({
 	content: {
 		filesystem: ["./src/**/*.{html,js,svelte,ts}"],
 	},
+	shortcuts: [
+		["page-x-padding", "px-4 sm:px-6 md:px-7 lg:px-8 xl:px-16 2xl:px-24"],
+		["page-y-padding", "pt-8 pb-8"],
+	],
 	rules: [
 		// SVG text-anchor utilities
 		["text-anchor-start", { "text-anchor": "start" }],

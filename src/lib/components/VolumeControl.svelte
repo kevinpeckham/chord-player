@@ -5,7 +5,7 @@ import { audioState, setMasterVolume } from "$stores/audio.svelte";
 const volumePercent = $derived(Math.round(audioState.masterVolume * 100));
 </script>
 
-<div class="absolute right-8 top-8 z-20 flex items-center gap-3">
+<div class="contents">
 	<label for="volume" class="text-sm opacity-80">Volume</label>
 	<input
 		id="volume"

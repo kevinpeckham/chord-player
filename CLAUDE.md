@@ -37,7 +37,7 @@ Fifths (chord-player) is an interactive web application that visualizes and play
 
 **Documentation**: All documentation and planning files should be placed in the `/docs` folder
 
-**Current Version**: 0.3.1
+**Current Version**: 0.3.2
 **Feature Roadmap**: See docs/FEATURES.md for planned enhancements
 
 **Frequency Generation**: 
@@ -97,8 +97,9 @@ Components are organized in a flat structure:
   - `SettingsPanel.svelte` - Oscillator voice selection and chord voicing options
   - `VolumeControl.svelte` - Master volume control with reactive state
   - `VoicingSelector.svelte` - Dropdown for selecting chord voicing styles
+  - `HamburgerButton.svelte` - Mobile menu toggle button
   - `LinkButton.svelte` - Reusable link button component
-  - `Footer.svelte` - Page footer component
+  - `Footer.svelte` - Page footer component with Fifths branding
 
 ### Data Flow
 1. **Server-Side Data Loading**: 
