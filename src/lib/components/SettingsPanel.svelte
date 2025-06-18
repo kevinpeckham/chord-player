@@ -4,10 +4,13 @@ import { settings } from "$stores/settings.svelte";
 import VoicingSelector from "$components/VoicingSelector.svelte";
 </script>
 
-<div class="absolute left-8 bottom-8 z-20 flex flex-col gap-6">
+<div class="grid grid-cols-1 gap-6 page-x-padding pt-4">
+
+	<h2 class="text-24px font-500 text-right">Settings</h2>
+
 	<!-- Play Mode Selection -->
 	<div class="flex flex-col gap-2">
-		<label for="mode-select" class="text-sm opacity-80 sr-only">Play Mode</label>
+		<label for="mode-select" class="text-sm opacity-80">Play Mode</label>
 		<select
 			id="mode-select"
 			bind:value={settings.mode}
@@ -20,7 +23,7 @@ import VoicingSelector from "$components/VoicingSelector.svelte";
 
 	<!-- Key Center Selection -->
 	<div class="flex flex-col gap-2">
-		<label for="key-center-select" class="text-sm opacity-80 sr-only">Key Center (12 o'clock)</label>
+		<label for="key-center-select" class="text-sm opacity-80">Key Center</label>
 		<select
 			id="key-center-select"
 			bind:value={settings.keyCenter}
@@ -43,7 +46,7 @@ import VoicingSelector from "$components/VoicingSelector.svelte";
 
 	<!-- Oscillator Voice Selection -->
 	<div class="flex flex-col gap-2">
-		<label for="oscillator-select" class="text-sm opacity-80 sr-only">Oscillator Type</label>
+		<label for="oscillator-select" class="text-sm opacity-80">Oscillator Type</label>
 		<select
 			id="oscillator-select"
 			bind:value={settings.activeVoice}
@@ -65,7 +68,7 @@ import VoicingSelector from "$components/VoicingSelector.svelte";
 	<!-- Octave Selection (only in notes mode) -->
 	{#if settings.mode === "notes"}
 		<div class="flex flex-col gap-2">
-			<label for="octave-select" class="text-sm opacity-80 sr-only">Octave</label>
+			<label for="octave-select" class="text-sm opacity-80">Octave</label>
 			<select
 				id="octave-select"
 				bind:value={settings.noteOctave}
@@ -77,4 +80,7 @@ import VoicingSelector from "$components/VoicingSelector.svelte";
 			</select>
 		</div>
 	{/if}
+
+	<!-- version -->
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.3.2</div>
 </div>

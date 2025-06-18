@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2025-01-21
+
+### Added
+- Responsive mobile UI with hamburger menu for settings panel
+- HamburgerButton component for mobile navigation
+- Touch-friendly mobile layout adjustments
+- Mobile-optimized settings panel that slides in from the left
+- Footer branding update with Fifths logo
+
+### Changed
+- Settings panel now hides on mobile and is accessible via hamburger menu
+- Improved responsive breakpoints for better mobile experience
+- Enhanced UnoCSS configuration with additional utility classes
+- Updated footer link styling for better visual hierarchy
+- App meta tags updated with theme color matching primary brand color
+
+### Fixed
+- Mobile layout issues with settings panel overlapping content
+- Touch interaction improvements for mobile devices
+
 ## [0.3.1] - 2025-01-21
 
 ### Added
