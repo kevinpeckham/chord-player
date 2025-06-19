@@ -15,8 +15,10 @@ interface ActiveChord {
 	oscillators: OscillatorNode[];
 	gains: GainNode[];
 	chordGain: GainNode;
+	frequencies: number[];
 }
 let activeChord: ActiveChord | null = null;
+let stopTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // Reactive state using Svelte 5 runes
 export const audioState = $state({
@@ -225,13 +227,31 @@ export async function startChord(
 	frequencies: number[],
 	oscillatorType: OscillatorType,
 ): Promise<void> {
-	// Stop any currently playing chord
-	stopChord();
+	// Clear any pending stop timeout
+	if (stopTimeout) {
+		clearTimeout(stopTimeout);
+		stopTimeout = null;
+	}
+
+	// Check if we're already playing these exact frequencies
+	if (
+		activeChord &&
+		activeChord.frequencies.length === frequencies.length &&
+		activeChord.frequencies.every((f, i) => f === frequencies[i])
+	) {
+		// Same chord, don't restart
+		return;
+	}
+
+	// Stop any currently playing chord immediately
+	stopChord(true);
 
 	// Ensure audio is initialized and running
 	await ensureAudioRunning();
 
-	if (!audioContext || !masterGainNode) return;
+	if (!audioContext || !masterGainNode) {
+		return;
+	}
 
 	// Create a gain node for this chord (for envelope and mixing)
 	const chordGain = audioContext.createGain();
@@ -279,15 +299,35 @@ export async function startChord(
 	}
 
 	// Store active chord info
-	activeChord = { oscillators, gains, chordGain };
+	activeChord = { oscillators, gains, chordGain, frequencies };
 
 	audioState.activeNoteCount = activeOscillators.size;
 	audioState.isPlaying = true;
 }
 
 // Stop the currently playing chord
-export function stopChord(): void {
+export function stopChord(immediate = false): void {
 	if (!audioContext) return;
+
+	// If not immediate, add a small delay to allow for smooth transitions
+	if (!immediate && activeChord) {
+		// Clear any existing stop timeout
+		if (stopTimeout) {
+			clearTimeout(stopTimeout);
+		}
+
+		// Set a new timeout
+		stopTimeout = setTimeout(() => {
+			stopChord(true);
+		}, 50);
+		return;
+	}
+
+	// Clear stop timeout if we're stopping immediately
+	if (stopTimeout) {
+		clearTimeout(stopTimeout);
+		stopTimeout = null;
+	}
 
 	// Stop all active oscillators immediately, regardless of activeChord tracking
 	if (activeOscillators.size > 0) {
