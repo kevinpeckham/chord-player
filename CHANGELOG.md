@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] - 2025-01-22
+
+### Fixed
+- iOS long-press browser defaults (context menu, text selection) interfering with chord playback
+- Replaced inline styles with CSS utility classes for better CSP compliance
+- Enhanced context menu prevention with JavaScript event handlers at multiple levels (individual elements, SVG container, and document-wide)
+
+### Changed
+- Added UnoCSS utilities for iOS touch interaction fixes (`touch-none`, `no-touch-callout`, `no-user-select`)
+- Created `ios-touch-fix` shortcut combining all iOS touch utilities
+- Updated Instrument component to use CSS classes instead of inline styles
+- Added `oncontextmenu` event prevention to all interactive path elements and SVG container
+- Implemented global context menu prevention in layout component for comprehensive coverage
+
 ## [0.3.5] - 2025-01-22
 
 ### Fixed

@@ -43,6 +43,19 @@ const setUp = (node: HTMLDivElement) => {
 			}
 		},
 	});
+
+	// Prevent context menu on the entire document
+	const preventContextMenu = (e: Event) => {
+		e.preventDefault();
+	};
+	document.addEventListener("contextmenu", preventContextMenu);
+
+	// Cleanup
+	return {
+		destroy() {
+			document.removeEventListener("contextmenu", preventContextMenu);
+		},
+	};
 };
 </script>
 
