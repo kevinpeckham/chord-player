@@ -32,14 +32,14 @@ import { processChordEnharmonics } from "$utils/enharmonics";
 
 // Track active playback
 let maxDurationTimeout: ReturnType<typeof setTimeout> | null = null;
+let isPointerDown = $state(false);
+let currentActiveElement: SVGPathElement | null = null;
+let currentActiveId: string | null = null;
+let isSwitchingChord = false;
 
 //- interaction functions
-function onPressStart(event: PointerEvent) {
-	event.preventDefault();
-	event.stopPropagation();
-
-	const target = event.target as SVGPathElement;
-	const index = Number(target.dataset.index) ?? 0;
+function playChordFromElement(element: SVGPathElement) {
+	const index = Number(element.dataset.index) ?? 0;
 
 	if (settings.mode === "notes") {
 		// Individual notes mode
@@ -55,7 +55,7 @@ function onPressStart(event: PointerEvent) {
 		const datum = reorderedChords[index];
 		if (!datum) return;
 
-		const mode = target.dataset.mode ?? "";
+		const mode = element.dataset.mode ?? "";
 
 		// display active chord name
 		if (mode === "major") {
@@ -67,6 +67,7 @@ function onPressStart(event: PointerEvent) {
 			performance.activeChord = chordAdjusted;
 		} else {
 			performance.activeChord = "";
+			return;
 		}
 
 		// start chord using the audio store with selected voicing
@@ -74,6 +75,22 @@ function onPressStart(event: PointerEvent) {
 		const frequencies = voicings[settings.chordVoicing] || voicings.standard;
 		startChord(frequencies, settings.activeVoice as OscillatorType);
 	}
+}
+
+function onPressStart(event: PointerEvent) {
+	event.preventDefault();
+	event.stopPropagation();
+
+	const target = event.target as SVGPathElement;
+	isPointerDown = true;
+	currentActiveElement = target;
+	currentActiveId = target.id;
+
+	// Stop any existing chord first
+	stopChord();
+
+	// Play the new chord
+	playChordFromElement(target);
 
 	// Set a maximum duration timeout as failsafe (5 seconds)
 	if (maxDurationTimeout) {
@@ -86,9 +103,69 @@ function onPressStart(event: PointerEvent) {
 	}, 5000);
 }
 
-function onPressEnd(event: PointerEvent) {
+function onPointerMove(event: PointerEvent) {
+	if (!isPointerDown) return;
+
 	event.preventDefault();
 	event.stopPropagation();
+
+	// Get all elements at the pointer location
+	const elements = document.elementsFromPoint(event.clientX, event.clientY);
+
+	// Find the first path element that's a chord/note button
+	const element = elements.find((el) => {
+		const pathEl = el as SVGPathElement;
+		return (
+			pathEl.tagName === "path" &&
+			pathEl.dataset &&
+			(pathEl.dataset.mode || pathEl.dataset.index !== undefined)
+		);
+	}) as SVGPathElement | undefined;
+
+	if (element) {
+		const elementId = element.id;
+		if (elementId !== currentActiveId) {
+			// Mark that we're switching
+			isSwitchingChord = true;
+
+			// Clear existing timeout
+			if (maxDurationTimeout) {
+				clearTimeout(maxDurationTimeout);
+				maxDurationTimeout = null;
+			}
+
+			// Update active element
+			currentActiveElement = element;
+			currentActiveId = elementId;
+
+			// Play new chord (this will stop the previous one internally)
+			playChordFromElement(element);
+
+			// Set new timeout
+			maxDurationTimeout = setTimeout(() => {
+				stopChord();
+				performance.activeChord = "";
+				maxDurationTimeout = null;
+			}, 5000);
+
+			// Reset switching flag after a brief delay
+			setTimeout(() => {
+				isSwitchingChord = false;
+			}, 100);
+		}
+	}
+}
+
+function onPressEnd(event: PointerEvent) {
+	// Only handle if we're actually tracking a pointer down
+	if (!isPointerDown) return;
+
+	event.preventDefault();
+	event.stopPropagation();
+
+	isPointerDown = false;
+	currentActiveElement = null;
+	currentActiveId = null;
 
 	// Clear any timeout
 	if (maxDurationTimeout) {
@@ -105,9 +182,15 @@ function onPressEnd(event: PointerEvent) {
 
 // Global safety net for pointer events
 function handleGlobalPointerUp(event: PointerEvent) {
+	// Only act as safety net if we were tracking a pointer down and not switching
+	if (!isPointerDown || isSwitchingChord) return;
+
 	// Safety net - stop any playing chord
 	stopChord();
 	performance.activeChord = "";
+	isPointerDown = false;
+	currentActiveElement = null;
+	currentActiveId = null;
 
 	// Clear timeout
 	if (maxDurationTimeout) {
@@ -121,7 +204,20 @@ $effect(() => {
 	// Add global pointer up listener as safety net
 	document.addEventListener("pointerup", handleGlobalPointerUp, {
 		capture: true,
+		passive: false,
 	});
+
+	// Add touch-specific handling for better mobile support
+	document.addEventListener(
+		"touchend",
+		(e) => {
+			if (isPointerDown) {
+				e.preventDefault();
+				onPressEnd(e as unknown as PointerEvent);
+			}
+		},
+		{ passive: false },
+	);
 
 	// Cleanup function
 	return () => {
@@ -236,6 +332,9 @@ function getNoteForPositionWithKeyCenter(position: number) {
 	height="800"
 	width="800"
 	oncontextmenu={(e) => { e.preventDefault() }}
+	onpointermove={onPointerMove}
+	onpointerup={onPressEnd}
+	onpointercancel={onPressEnd}
 >
 	<g class="rotate-[15deg] origin-[200px_200px_0px]">
 		{#if settings.mode === "notes"}
@@ -252,7 +351,6 @@ function getNoteForPositionWithKeyCenter(position: number) {
 					onpointerdown={(e) => { onPressStart(e)}}
 					onpointerup={(e) => { onPressEnd(e)}}
 					onpointercancel={(e) => { onPressEnd(e)}}
-					onpointerleave={(e) => { onPressEnd(e)}}
 					oncontextmenu={(e) => { e.preventDefault() }}
 					id="note-button-{noteData.id}"
 					role="button"
@@ -272,9 +370,6 @@ function getNoteForPositionWithKeyCenter(position: number) {
 						data-chord={item[m.mode + 'Id']}
 						data-index={i}
 						onpointerdown={(e) => { onPressStart(e)}}
-						onpointerup={(e) => { onPressEnd(e)}}
-						onpointercancel={(e) => { onPressEnd(e)}}
-						onpointerleave={(e) => { onPressEnd(e)}}
 						oncontextmenu={(e) => { e.preventDefault() }}
 						id="chord-button-{item[m.mode + 'Id']}"
 						role="button"
