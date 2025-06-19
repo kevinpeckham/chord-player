@@ -82,5 +82,5 @@ import VoicingSelector from "$components/VoicingSelector.svelte";
 	{/if}
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.3.2</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.3.3</div>
 </div>

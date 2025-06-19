@@ -7,6 +7,7 @@ An interactive web application that visualizes and plays musical chords using th
 ## Features
 
 - **Interactive Circle of Fifths** - Click any chord to hear it played
+- **Touch-Responsive Playback** - Press and hold to play chords/notes for as long as you hold
 - **Individual Notes Mode** - Switch between playing chords or individual chromatic notes
 - **Key Center Control** - Rotate the circle to place any note/chord at 12 o'clock position
 - **Multiple Voice Types** - Choose between sine, triangle, square, and sawtooth wave oscillators
@@ -14,7 +15,7 @@ An interactive web application that visualizes and plays musical chords using th
 - **Extended Frequency Range** - Supports 7 octaves (C1 to C7) for fuller sound
 - **Volume Control** - Adjustable master volume with real-time feedback
 - **Visual Feedback** - See which chord or note is currently playing
-- **Responsive Design** - Works on desktop and mobile devices
+- **Responsive Design** - Works on desktop and mobile devices with full touch support
 - **Server-Side Rendering** - Fast initial load with pre-rendered chord data
 - **Optimized for Serverless** - In-memory data generation, no filesystem writes
 

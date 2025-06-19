@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2025-01-22
+
+### Added
+- Touch-responsive chord and note playback - sounds play for the duration of key press
+- Continuous audio playback with startChord() and stopChord() methods in audio store
+- Full touch event support (touchstart, touchend, touchcancel) for mobile devices
+- Mouse leave event handling to stop playback when cursor exits chord/note
+
+### Changed
+- Chords and notes now play continuously while pressed instead of fixed 1.5 second duration
+- Improved audio responsiveness with faster attack (10ms) and release (50ms) times
+- Added touch-none CSS class to prevent touch scrolling interference during playback
+
 ## [0.3.2] - 2025-01-21
 
 ### Added

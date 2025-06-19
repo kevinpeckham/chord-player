@@ -10,6 +10,14 @@ let noteFrequencies: Record<string, number> | null = null;
 // Active oscillators tracking for cleanup
 const activeOscillators = new Set<OscillatorNode>();
 
+// Track currently playing chord for continuous playback
+interface ActiveChord {
+	oscillators: OscillatorNode[];
+	gains: GainNode[];
+	chordGain: GainNode;
+}
+let activeChord: ActiveChord | null = null;
+
 // Reactive state using Svelte 5 runes
 export const audioState = $state({
 	isInitialized: false,
@@ -210,6 +218,140 @@ if (typeof document !== "undefined") {
 			audioContext.resume();
 		}
 	});
+}
+
+// Start playing a chord continuously (until stopChord is called)
+export async function startChord(
+	frequencies: number[],
+	oscillatorType: OscillatorType,
+): Promise<void> {
+	// Stop any currently playing chord
+	stopChord();
+
+	// Ensure audio is initialized and running
+	await ensureAudioRunning();
+
+	if (!audioContext || !masterGainNode) return;
+
+	// Create a gain node for this chord (for envelope and mixing)
+	const chordGain = audioContext.createGain();
+	chordGain.connect(masterGainNode);
+
+	// Normalize volume based on number of notes
+	const noteVolume = 0.3 / Math.sqrt(frequencies.length);
+
+	// Immediate attack for responsive feel
+	chordGain.gain.setValueAtTime(0, audioContext.currentTime);
+	chordGain.gain.linearRampToValueAtTime(
+		noteVolume,
+		audioContext.currentTime + 0.01,
+	);
+
+	const oscillators: OscillatorNode[] = [];
+	const gains: GainNode[] = [];
+
+	// Create oscillators for each note
+	for (const frequency of frequencies) {
+		const oscillator = audioContext.createOscillator();
+		const noteGain = audioContext.createGain();
+
+		// Configure oscillator
+		oscillator.type = oscillatorType;
+		oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+		// Connect: oscillator -> noteGain -> chordGain -> master
+		oscillator.connect(noteGain);
+		noteGain.connect(chordGain);
+
+		// Individual note envelope (slight attack to avoid clicks)
+		noteGain.gain.setValueAtTime(0, audioContext.currentTime);
+		noteGain.gain.linearRampToValueAtTime(1, audioContext.currentTime + 0.01);
+
+		// Start oscillator
+		oscillator.start(audioContext.currentTime);
+
+		// Track for cleanup
+		activeOscillators.add(oscillator);
+		oscillators.push(oscillator);
+		gains.push(noteGain);
+
+		// Don't set up onended handler - we'll handle cleanup manually
+	}
+
+	// Store active chord info
+	activeChord = { oscillators, gains, chordGain };
+
+	audioState.activeNoteCount = activeOscillators.size;
+	audioState.isPlaying = true;
+}
+
+// Stop the currently playing chord
+export function stopChord(): void {
+	if (!activeChord || !audioContext) return;
+
+	// Quick fade out to avoid clicks (50ms)
+	const fadeTime = 0.05;
+	const currentTime = audioContext.currentTime;
+
+	activeChord.chordGain.gain.cancelScheduledValues(currentTime);
+	activeChord.chordGain.gain.setValueAtTime(
+		activeChord.chordGain.gain.value,
+		currentTime,
+	);
+	activeChord.chordGain.gain.exponentialRampToValueAtTime(
+		0.001,
+		currentTime + fadeTime,
+	);
+
+	// Stop all oscillators after fade
+	for (const osc of activeChord.oscillators) {
+		osc.stop(currentTime + fadeTime);
+		activeOscillators.delete(osc);
+	}
+
+	// Clean up connections after fade
+	setTimeout(
+		() => {
+			if (activeChord) {
+				for (const gain of activeChord.gains) {
+					gain.disconnect();
+				}
+				activeChord.chordGain.disconnect();
+				activeChord = null;
+			}
+		},
+		fadeTime * 1000 + 50,
+	);
+
+	audioState.activeNoteCount = activeOscillators.size;
+	audioState.isPlaying = activeOscillators.size > 0;
+}
+
+// Wrapper to start chord by note names
+export async function startChordByNotes(
+	notes: string[],
+	oscillatorType: OscillatorType,
+): Promise<void> {
+	// Initialize frequency map on first use
+	if (!noteFrequencies) {
+		noteFrequencies = generateFrequencyMap(1, 7, true);
+	}
+
+	// Convert note names to frequencies
+	const frequencies: number[] = [];
+	for (const note of notes) {
+		const frequency = noteFrequencies[note];
+		if (frequency) {
+			frequencies.push(frequency);
+		} else {
+			console.warn(`Note "${note}" not found in frequency map`);
+		}
+	}
+
+	// Start the chord if we have valid frequencies
+	if (frequencies.length > 0) {
+		await startChord(frequencies, oscillatorType);
+	}
 }
 
 // Audio state type for external use

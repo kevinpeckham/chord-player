@@ -14,7 +14,7 @@ SVG Circle of Fifths
 // stores
 import { settings } from "$stores/settings.svelte";
 import { performance } from "$stores/performance.svelte";
-import { playChord, playChordByNotes } from "$stores/audio.svelte";
+import { startChord, stopChord } from "$stores/audio.svelte";
 
 // types
 import type { Chord, VoicingFrequencies } from "$lib/types/Chord";
@@ -30,7 +30,8 @@ import { textCoords, wedgePath } from "$utils/circleGeometry";
 import { getNoteForPosition, CHROMATIC_NOTES } from "$utils/noteHelpers";
 
 //- interaction functions
-function onMousedown(event: MouseEvent) {
+function onPressStart(event: MouseEvent | TouchEvent) {
+	event.preventDefault();
 	event.stopPropagation();
 	const target = event.target as SVGPathElement;
 	const index = Number(target.dataset.index) ?? 0;
@@ -40,8 +41,8 @@ function onMousedown(event: MouseEvent) {
 		const noteData = getNoteForPositionWithKeyCenter(index);
 		performance.activeChord = `${noteData.display}${settings.noteOctave}`;
 
-		// Play single note
-		playChord([noteData.frequency], settings.activeVoice as OscillatorType);
+		// Start playing single note
+		startChord([noteData.frequency], settings.activeVoice as OscillatorType);
 	} else {
 		// Chords mode - use reordered chords
 		if (!reorderedChords || reorderedChords.length === 0) return;
@@ -63,18 +64,29 @@ function onMousedown(event: MouseEvent) {
 			performance.activeChord = "";
 		}
 
-		// play chord using the audio store with selected voicing
+		// start chord using the audio store with selected voicing
 		const voicings = datum[`${mode}Voicings`] as VoicingFrequencies;
 		const frequencies = voicings[settings.chordVoicing] || voicings.standard;
-		playChord(frequencies, settings.activeVoice as OscillatorType);
+		startChord(frequencies, settings.activeVoice as OscillatorType);
 	}
 }
-function onMouseup(event: MouseEvent) {
+
+function onPressEnd(event: MouseEvent | TouchEvent) {
+	event.preventDefault();
 	event.stopPropagation();
 
+	// Stop the chord immediately
+	stopChord();
+
+	// Clear the display after a short delay
 	setTimeout(() => {
 		performance.activeChord = "";
-	}, 600);
+	}, 100);
+}
+
+// Handle touch cancellation (e.g., when finger moves off element)
+function onTouchCancel(event: TouchEvent) {
+	onPressEnd(event);
 }
 
 const modes = $derived(
@@ -175,12 +187,16 @@ function getNoteForPositionWithKeyCenter(position: number) {
 				<path
 					aria-pressed="false"
 					aria-labelledby="note-button-label-{noteData.id}"
-					class="!outline-none stroke-primary stroke-[0.1em] transition-opacity hover:opacity-60 fill-accent focus:opacity-60"
+					class="!outline-none stroke-primary stroke-[0.1em] transition-opacity hover:opacity-60 fill-accent focus:opacity-60 touch-none"
 					d={wedgePath(180, 80, i)}
 					data-mode="note"
 					data-index={i}
-					onmousedown={(e) => { onMousedown(e)}}
-					onmouseup={(e) => { onMouseup(e)}}
+					onmousedown={(e) => { onPressStart(e)}}
+					onmouseup={(e) => { onPressEnd(e)}}
+					onmouseleave={(e) => { onPressEnd(e)}}
+					ontouchstart={(e) => { onPressStart(e)}}
+					ontouchend={(e) => { onPressEnd(e)}}
+					ontouchcancel={(e) => { onTouchCancel(e)}}
 					id="note-button-{noteData.id}"
 					role="button"
 					tabindex={i + 100}
@@ -193,13 +209,17 @@ function getNoteForPositionWithKeyCenter(position: number) {
 					<path
 						aria-pressed="false"
 						aria-labelledby="chord-button-label-{item[m.mode + 'Id']}"
-						class="!outline-none stroke-primary stroke-[0.1em] transition-opacity hover:opacity-60 {m.classes} focus:opacity-60"
+						class="!outline-none stroke-primary stroke-[0.1em] transition-opacity hover:opacity-60 {m.classes} focus:opacity-60 touch-none"
 						d={wedgePath(m.r0, m.r1, i)}
 						data-mode={m.mode}
 						data-chord={item[m.mode + 'Id']}
 						data-index={i}
-						onmousedown={(e) => { onMousedown(e)}}
-						onmouseup={(e) => { onMouseup(e)}}
+						onmousedown={(e) => { onPressStart(e)}}
+						onmouseup={(e) => { onPressEnd(e)}}
+						onmouseleave={(e) => { onPressEnd(e)}}
+						ontouchstart={(e) => { onPressStart(e)}}
+						ontouchend={(e) => { onPressEnd(e)}}
+						ontouchcancel={(e) => { onTouchCancel(e)}}
 						id="chord-button-{item[m.mode + 'Id']}"
 						role="button"
 						tabindex={Number(index + 1) * 100 + Number(i)}
