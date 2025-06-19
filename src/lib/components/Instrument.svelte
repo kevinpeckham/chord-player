@@ -80,7 +80,6 @@ function onPressStart(event: PointerEvent) {
 		clearTimeout(maxDurationTimeout);
 	}
 	maxDurationTimeout = setTimeout(() => {
-		activeTouchId = null;
 		stopChord();
 		performance.activeChord = "";
 		maxDurationTimeout = null;
@@ -286,7 +285,7 @@ function getNoteForPositionWithKeyCenter(position: number) {
 	</g>
 
 	<!-- text labels -->
-	<g class="pointer-events-none">
+	<g class="pointer-events-none select-none">
 		{#if settings.mode === "notes"}
 			<!-- Note labels for individual notes mode -->
 			{#each Array(12) as _, i}
@@ -327,7 +326,7 @@ function getNoteForPositionWithKeyCenter(position: number) {
 	</g>
 
 	<!-- center text -->
-	<g class="pointer-events-none">
+	<g class="pointer-events-none select-none">
 		<text
 			class="fill-accent text-20px sm:text-[.8em] text-anchor-middle dominant-baseline-central empty:hidden"
 			x="200"
@@ -336,7 +335,7 @@ function getNoteForPositionWithKeyCenter(position: number) {
 	</g>
 
 	<!-- key center indicator -->
-	<g class="pointer-events-none">
+	<g class="pointer-events-none select-none">
 		<circle
 			cx="200"
 			cy={settings.keyCenterPosition === "top" ? "5" : "395"}
