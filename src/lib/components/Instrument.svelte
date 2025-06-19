@@ -230,11 +230,12 @@ function getNoteForPositionWithKeyCenter(position: number) {
 
 <svg
 	id="instrument-circle-of-fifths"
-	class="w-full h-auto aspect-square z-10 scale-[1.1] max-w-[860px]"
+	class="w-full h-auto aspect-square z-10 scale-[1.1] max-w-[860px] ios-touch-fix"
 	viewBox="0 0 400 400"
 	xmlns="http://www.w3.org/2000/svg"
 	height="800"
 	width="800"
+	oncontextmenu={(e) => { e.preventDefault() }}
 >
 	<g class="rotate-[15deg] origin-[200px_200px_0px]">
 		{#if settings.mode === "notes"}
@@ -252,6 +253,7 @@ function getNoteForPositionWithKeyCenter(position: number) {
 					onpointerup={(e) => { onPressEnd(e)}}
 					onpointercancel={(e) => { onPressEnd(e)}}
 					onpointerleave={(e) => { onPressEnd(e)}}
+					oncontextmenu={(e) => { e.preventDefault() }}
 					id="note-button-{noteData.id}"
 					role="button"
 					tabindex={i + 100}
@@ -273,6 +275,7 @@ function getNoteForPositionWithKeyCenter(position: number) {
 						onpointerup={(e) => { onPressEnd(e)}}
 						onpointercancel={(e) => { onPressEnd(e)}}
 						onpointerleave={(e) => { onPressEnd(e)}}
+						oncontextmenu={(e) => { e.preventDefault() }}
 						id="chord-button-{item[m.mode + 'Id']}"
 						role="button"
 						tabindex={Number(index + 1) * 100 + Number(i)}
