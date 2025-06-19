@@ -75,7 +75,10 @@ export function getEnharmonicChordName(
 /**
  * Process chord data to use correct enharmonic names based on key center
  */
-export function processChordEnharmonics(chord: Chord, keyCenter: string): Chord {
+export function processChordEnharmonics(
+	chord: Chord,
+	keyCenter: string,
+): Chord {
 	const majorDisplay = getEnharmonicChordName(chord.majorDisplay, keyCenter);
 	const minorDisplay = getEnharmonicChordName(chord.minorDisplay, keyCenter);
 

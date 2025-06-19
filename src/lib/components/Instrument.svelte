@@ -30,10 +30,14 @@ import { textCoords, wedgePath } from "$utils/circleGeometry";
 import { getNoteForPosition, CHROMATIC_NOTES } from "$utils/noteHelpers";
 import { processChordEnharmonics } from "$utils/enharmonics";
 
+// Track active playback
+let maxDurationTimeout: ReturnType<typeof setTimeout> | null = null;
+
 //- interaction functions
-function onPressStart(event: MouseEvent | TouchEvent) {
+function onPressStart(event: PointerEvent) {
 	event.preventDefault();
 	event.stopPropagation();
+
 	const target = event.target as SVGPathElement;
 	const index = Number(target.dataset.index) ?? 0;
 
@@ -70,25 +74,70 @@ function onPressStart(event: MouseEvent | TouchEvent) {
 		const frequencies = voicings[settings.chordVoicing] || voicings.standard;
 		startChord(frequencies, settings.activeVoice as OscillatorType);
 	}
+
+	// Set a maximum duration timeout as failsafe (5 seconds)
+	if (maxDurationTimeout) {
+		clearTimeout(maxDurationTimeout);
+	}
+	maxDurationTimeout = setTimeout(() => {
+		activeTouchId = null;
+		stopChord();
+		performance.activeChord = "";
+		maxDurationTimeout = null;
+	}, 5000);
 }
 
-function onPressEnd(event: MouseEvent | TouchEvent) {
+function onPressEnd(event: PointerEvent) {
 	event.preventDefault();
 	event.stopPropagation();
+
+	// Clear any timeout
+	if (maxDurationTimeout) {
+		clearTimeout(maxDurationTimeout);
+		maxDurationTimeout = null;
+	}
 
 	// Stop the chord immediately
 	stopChord();
 
-	// Clear the display after a short delay
-	setTimeout(() => {
-		performance.activeChord = "";
-	}, 100);
+	// Clear the display immediately
+	performance.activeChord = "";
 }
 
-// Handle touch cancellation (e.g., when finger moves off element)
-function onTouchCancel(event: TouchEvent) {
-	onPressEnd(event);
+// Global safety net for pointer events
+function handleGlobalPointerUp(event: PointerEvent) {
+	// Safety net - stop any playing chord
+	stopChord();
+	performance.activeChord = "";
+
+	// Clear timeout
+	if (maxDurationTimeout) {
+		clearTimeout(maxDurationTimeout);
+		maxDurationTimeout = null;
+	}
 }
+
+// Lifecycle - setup global listeners
+$effect(() => {
+	// Add global pointer up listener as safety net
+	document.addEventListener("pointerup", handleGlobalPointerUp, {
+		capture: true,
+	});
+
+	// Cleanup function
+	return () => {
+		// Clean up global listeners
+		document.removeEventListener("pointerup", handleGlobalPointerUp);
+		// Ensure any playing chord is stopped
+		stopChord();
+
+		// Clear any timeout
+		if (maxDurationTimeout) {
+			clearTimeout(maxDurationTimeout);
+			maxDurationTimeout = null;
+		}
+	};
+});
 
 const modes = $derived(
 	settings.mode === "notes"
@@ -196,16 +245,15 @@ function getNoteForPositionWithKeyCenter(position: number) {
 				<path
 					aria-pressed="false"
 					aria-labelledby="note-button-label-{noteData.id}"
-					class="!outline-none stroke-primary stroke-[0.1em] transition-opacity hover:opacity-60 fill-accent focus:opacity-60 touch-none"
+					class="!outline-none stroke-primary stroke-[0.1em] hover:opacity-60 fill-accent focus:opacity-60"
+					style="touch-action: none; pointer-events: all;"
 					d={wedgePath(180, 80, i)}
 					data-mode="note"
 					data-index={i}
-					onmousedown={(e) => { onPressStart(e)}}
-					onmouseup={(e) => { onPressEnd(e)}}
-					onmouseleave={(e) => { onPressEnd(e)}}
-					ontouchstart={(e) => { onPressStart(e)}}
-					ontouchend={(e) => { onPressEnd(e)}}
-					ontouchcancel={(e) => { onTouchCancel(e)}}
+					onpointerdown={(e) => { onPressStart(e)}}
+					onpointerup={(e) => { onPressEnd(e)}}
+					onpointercancel={(e) => { onPressEnd(e)}}
+					onpointerleave={(e) => { onPressEnd(e)}}
 					id="note-button-{noteData.id}"
 					role="button"
 					tabindex={i + 100}
@@ -218,17 +266,16 @@ function getNoteForPositionWithKeyCenter(position: number) {
 					<path
 						aria-pressed="false"
 						aria-labelledby="chord-button-label-{item[m.mode + 'Id']}"
-						class="!outline-none stroke-primary stroke-[0.1em] transition-opacity hover:opacity-60 {m.classes} focus:opacity-60 touch-none"
+						class="!outline-none stroke-primary stroke-[0.1em] hover:opacity-60 {m.classes} focus:opacity-60"
+					style="touch-action: none; pointer-events: all;"
 						d={wedgePath(m.r0, m.r1, i)}
 						data-mode={m.mode}
 						data-chord={item[m.mode + 'Id']}
 						data-index={i}
-						onmousedown={(e) => { onPressStart(e)}}
-						onmouseup={(e) => { onPressEnd(e)}}
-						onmouseleave={(e) => { onPressEnd(e)}}
-						ontouchstart={(e) => { onPressStart(e)}}
-						ontouchend={(e) => { onPressEnd(e)}}
-						ontouchcancel={(e) => { onTouchCancel(e)}}
+						onpointerdown={(e) => { onPressStart(e)}}
+						onpointerup={(e) => { onPressEnd(e)}}
+						onpointercancel={(e) => { onPressEnd(e)}}
+						onpointerleave={(e) => { onPressEnd(e)}}
 						id="chord-button-{item[m.mode + 'Id']}"
 						role="button"
 						tabindex={Number(index + 1) * 100 + Number(i)}

@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.5] - 2025-01-22
+
+### Fixed
+- Critical mobile bug where first chord would play indefinitely in chord mode
+- Improved touch event handling by switching to pointer events API
+- Enhanced stopChord function to properly clean up all active oscillators
+- Removed CSS transition delays for instant visual feedback on touch
+- Added failsafe mechanisms including 5-second timeout and global pointer up listeners
+
+### Changed
+- Replaced mouse/touch events with unified pointer events for better cross-device compatibility
+- Made audio cleanup more robust with try-catch error handling
+- Simplified touch tracking logic for more reliable performance
+
 ## [0.3.4] - 2025-01-22
 
 ### Added
