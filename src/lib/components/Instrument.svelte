@@ -244,8 +244,7 @@ function getNoteForPositionWithKeyCenter(position: number) {
 				<path
 					aria-pressed="false"
 					aria-labelledby="note-button-label-{noteData.id}"
-					class="!outline-none stroke-primary stroke-[0.1em] hover:opacity-60 fill-accent focus:opacity-60"
-					style="touch-action: none; pointer-events: all;"
+					class="!outline-none stroke-primary stroke-[0.1em] hover:opacity-60 fill-accent focus:opacity-60 ios-touch-fix pointer-events-all"
 					d={wedgePath(180, 80, i)}
 					data-mode="note"
 					data-index={i}
@@ -265,8 +264,7 @@ function getNoteForPositionWithKeyCenter(position: number) {
 					<path
 						aria-pressed="false"
 						aria-labelledby="chord-button-label-{item[m.mode + 'Id']}"
-						class="!outline-none stroke-primary stroke-[0.1em] hover:opacity-60 {m.classes} focus:opacity-60"
-					style="touch-action: none; pointer-events: all;"
+						class="!outline-none stroke-primary stroke-[0.1em] hover:opacity-60 {m.classes} focus:opacity-60 ios-touch-fix pointer-events-all"
 						d={wedgePath(m.r0, m.r1, i)}
 						data-mode={m.mode}
 						data-chord={item[m.mode + 'Id']}

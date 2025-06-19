@@ -32,6 +32,7 @@ export default defineConfig({
 	shortcuts: [
 		["page-x-padding", "px-4 sm:px-6 md:px-7 lg:px-8 xl:px-16 2xl:px-24"],
 		["page-y-padding", "pt-8 pb-8"],
+		["ios-touch-fix", "touch-none no-touch-callout no-user-select"],
 	],
 	rules: [
 		// SVG text-anchor utilities
@@ -44,5 +45,14 @@ export default defineConfig({
 		["dominant-baseline-middle", { "dominant-baseline": "middle" }],
 		["dominant-baseline-central", { "dominant-baseline": "central" }],
 		["dominant-baseline-hanging", { "dominant-baseline": "hanging" }],
+
+		// Touch interaction utilities for iOS
+		["touch-manipulation", { "touch-action": "manipulation" }],
+		["touch-none", { "touch-action": "none" }],
+		["no-touch-callout", { "-webkit-touch-callout": "none" }],
+		[
+			"no-user-select",
+			{ "-webkit-user-select": "none", "user-select": "none" },
+		],
 	],
 });
