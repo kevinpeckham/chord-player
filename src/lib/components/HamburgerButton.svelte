@@ -21,11 +21,17 @@ const barClasses = [
 			border-0.1em
 			border-b
 			border-white
+			flex
+			group
 			h-0
+			items-center
+			relative
 			rounded-full
 			transition-transform
 			w-full
-			{menuState === "open" ? barClass : ""}"></div>
+			{menuState === "open" ? barClass : ""}">
+			<div class="w-8px h-8px bg-white rounded-lg overflow-hidden {menuState === "open" ? "hidden" : "group-is-first:ml-1 group-is-last:ml-4"}"></div>
+		</div>
 	{/each}
 
 </button>

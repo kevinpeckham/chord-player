@@ -287,44 +287,65 @@ export async function startChord(
 
 // Stop the currently playing chord
 export function stopChord(): void {
-	if (!activeChord || !audioContext) return;
+	if (!audioContext) return;
 
-	// Quick fade out to avoid clicks (50ms)
-	const fadeTime = 0.05;
-	const currentTime = audioContext.currentTime;
-
-	activeChord.chordGain.gain.cancelScheduledValues(currentTime);
-	activeChord.chordGain.gain.setValueAtTime(
-		activeChord.chordGain.gain.value,
-		currentTime,
-	);
-	activeChord.chordGain.gain.exponentialRampToValueAtTime(
-		0.001,
-		currentTime + fadeTime,
-	);
-
-	// Stop all oscillators after fade
-	for (const osc of activeChord.oscillators) {
-		osc.stop(currentTime + fadeTime);
-		activeOscillators.delete(osc);
+	// Stop all active oscillators immediately, regardless of activeChord tracking
+	if (activeOscillators.size > 0) {
+		const currentTime = audioContext.currentTime;
+		for (const osc of activeOscillators) {
+			try {
+				osc.stop(currentTime + 0.05);
+			} catch (e) {
+				// Already stopped
+			}
+		}
+		activeOscillators.clear();
 	}
 
-	// Clean up connections after fade
-	setTimeout(
-		() => {
-			if (activeChord) {
-				for (const gain of activeChord.gains) {
-					gain.disconnect();
-				}
-				activeChord.chordGain.disconnect();
-				activeChord = null;
-			}
-		},
-		fadeTime * 1000 + 50,
-	);
+	// If we have tracked chord data, clean it up properly
+	if (activeChord) {
+		const fadeTime = 0.05;
+		const currentTime = audioContext.currentTime;
 
-	audioState.activeNoteCount = activeOscillators.size;
-	audioState.isPlaying = activeOscillators.size > 0;
+		try {
+			activeChord.chordGain.gain.cancelScheduledValues(currentTime);
+			activeChord.chordGain.gain.setValueAtTime(
+				activeChord.chordGain.gain.value,
+				currentTime,
+			);
+			activeChord.chordGain.gain.exponentialRampToValueAtTime(
+				0.001,
+				currentTime + fadeTime,
+			);
+		} catch (e) {
+			// Gain might already be disconnected
+		}
+
+		// Clean up connections after fade
+		setTimeout(
+			() => {
+				if (activeChord) {
+					for (const gain of activeChord.gains) {
+						try {
+							gain.disconnect();
+						} catch (e) {
+							// Already disconnected
+						}
+					}
+					try {
+						activeChord.chordGain.disconnect();
+					} catch (e) {
+						// Already disconnected
+					}
+					activeChord = null;
+				}
+			},
+			fadeTime * 1000 + 50,
+		);
+	}
+
+	audioState.activeNoteCount = 0;
+	audioState.isPlaying = false;
 }
 
 // Wrapper to start chord by note names
