@@ -37,7 +37,7 @@ Fifths (chord-player) is an interactive web application that visualizes and play
 
 **Documentation**: All documentation and planning files should be placed in the `/docs` folder
 
-**Current Version**: 0.3.3
+**Current Version**: 0.3.4
 **Feature Roadmap**: See docs/FEATURES.md for planned enhancements
 
 **Frequency Generation**: 

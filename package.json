@@ -1,7 +1,7 @@
 {
 	"author": "Kevin Peckham",
 	"name": "chord-player",
-	"version": "0.3.3",
+	"version": "0.3.4",
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
 		"@sveltejs/adapter-vercel": "^5.7.0",

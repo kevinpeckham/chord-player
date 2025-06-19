@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2025-01-22
+
+### Added
+- Key center position setting - choose between top (12 o'clock) or bottom (6 o'clock) orientation
+- Visual indicator dot showing the current key center position
+- Enharmonic chord labeling based on selected key - shows correct sharp/flat notation per music theory
+- Improved mobile ergonomics with bottom position as default for one-handed use
+
+### Changed
+- Default key center position is now bottom (6 o'clock) for better mobile accessibility
+- Chord labels dynamically adjust to show appropriate enharmonics (e.g., F# in key of G, Gb in key of F)
+- Hamburger menu icon updated for better visual clarity
+
+### Fixed
+- Corrected SVG positioning calculations for both top and bottom orientations
+
 ## [0.3.3] - 2025-01-22
 
 ### Added

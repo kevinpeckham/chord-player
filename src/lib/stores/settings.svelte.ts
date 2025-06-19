@@ -23,6 +23,7 @@ export const settings = $state({
 		| "A"
 		| "A#"
 		| "B",
+	keyCenterPosition: "bottom" as "top" | "bottom",
 });
 
 // functions to change settings

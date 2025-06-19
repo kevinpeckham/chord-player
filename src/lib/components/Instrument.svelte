@@ -28,6 +28,7 @@ let { chords }: Props = $props();
 // import utils
 import { textCoords, wedgePath } from "$utils/circleGeometry";
 import { getNoteForPosition, CHROMATIC_NOTES } from "$utils/noteHelpers";
+import { processChordEnharmonics } from "$utils/enharmonics";
 
 //- interaction functions
 function onPressStart(event: MouseEvent | TouchEvent) {
@@ -141,12 +142,19 @@ const reorderedChords = $derived(
 				// Through testing, we determined that array position 8 appears at 12 o'clock
 				// This is because F (at index 8) naturally appears at the top
 				// To put any key center at 12 o'clock, we need to move it to position 8
-				// Formula: rotateAmount = (keyCenterIndex - 8 + 12) % 12
-				const rotateAmount = (keyCenterIndex - 8 + 12) % 12;
-				return [
+				// For 6 o'clock position, we need to move it to position 2 (opposite of 8)
+				const targetPosition = settings.keyCenterPosition === "top" ? 8 : 2;
+				// Formula: rotateAmount = (keyCenterIndex - targetPosition + 12) % 12
+				const rotateAmount = (keyCenterIndex - targetPosition + 12) % 12;
+				const rotatedChords = [
 					...chords.slice(rotateAmount),
 					...chords.slice(0, rotateAmount),
 				];
+
+				// Process enharmonics based on key center
+				return rotatedChords.map((chord) =>
+					processChordEnharmonics(chord, settings.keyCenter),
+				);
 			})()
 		: chords,
 );
@@ -161,10 +169,11 @@ function getNoteForPositionWithKeyCenter(position: number) {
 			const keyId = settings.keyCenter.replace("#", "s");
 			return note.id === keyId;
 		});
-		// In notes mode, position 8 also appears at 12 o'clock (same as chord mode)
-		// To put our key center at position 8, we need to offset by (8 - keyCenterIndex)
-		// But since we're adjusting the note selection, not the array, we do the opposite
-		const adjustedPosition = (position - 8 + keyCenterIndex + 12) % 12;
+		// In notes mode, position 8 appears at 12 o'clock, position 2 at 6 o'clock
+		// To put our key center at the target position, we need to offset appropriately
+		const targetPosition = settings.keyCenterPosition === "top" ? 8 : 2;
+		const adjustedPosition =
+			(position - targetPosition + keyCenterIndex + 12) % 12;
 		return getNoteForPosition(adjustedPosition, settings.noteOctave);
 	}
 	return getNoteForPosition(position, settings.noteOctave);
@@ -277,5 +286,15 @@ function getNoteForPositionWithKeyCenter(position: number) {
 			x="200"
 			y="200"
 		>{performance.activeChord}</text>
+	</g>
+
+	<!-- key center indicator -->
+	<g class="pointer-events-none">
+		<circle
+			cx="200"
+			cy={settings.keyCenterPosition === "top" ? "5" : "395"}
+			r="2"
+			class="fill-accent opacity-80"
+		/>
 	</g>
 </svg>
