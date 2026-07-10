@@ -14,7 +14,7 @@ SVG Circle of Fifths
 // stores
 import { settings } from "$stores/settings.svelte";
 import { performance } from "$stores/performance.svelte";
-import { startChord, stopChord } from "$stores/audio.svelte";
+import { startChord, stopChord, stopChordById } from "$stores/audio.svelte";
 
 // types
 import type { Chord, VoicingFrequencies } from "$lib/types/Chord";
@@ -30,24 +30,47 @@ import { textCoords, wedgePath } from "$utils/circleGeometry";
 import { getNoteForPosition, CHROMATIC_NOTES } from "$utils/noteHelpers";
 import { processChordEnharmonics } from "$utils/enharmonics";
 
-// Track active playback
-let maxDurationTimeout: ReturnType<typeof setTimeout> | null = null;
-let isPointerDown = $state(false);
-let currentActiveElement: SVGPathElement | null = null;
-let currentActiveId: string | null = null;
-let isSwitchingChord = false;
+// Track active playback - Map pointer IDs to their elements and chord names
+const activePointers = $state(
+	new Map<
+		number,
+		{ element: SVGPathElement; elementId: string; chordName: string }
+	>(),
+);
+let currentPointerId = $state<number | null>(null);
+
+// Derived state for displaying all active chords
+const activeChordNames = $derived(() => {
+	const names = Array.from(activePointers.values())
+		.map((p) => p.chordName)
+		.filter((n) => n);
+	return names.length > 0 ? names.join(" + ") : "";
+});
 
 //- interaction functions
-function playChordFromElement(element: SVGPathElement) {
+function playChordFromElement(element: SVGPathElement, pointerId: number) {
 	const index = Number(element.dataset.index) ?? 0;
 
 	if (settings.mode === "notes") {
 		// Individual notes mode
 		const noteData = getNoteForPositionWithKeyCenter(index);
-		performance.activeChord = `${noteData.display}${settings.noteOctave}`;
+		const chordName = `${noteData.display}${settings.noteOctave}`;
+
+		// Update the chord name for this pointer
+		const pointerInfo = activePointers.get(pointerId);
+		if (pointerInfo) {
+			pointerInfo.chordName = chordName;
+		}
+
+		// Update display
+		performance.activeChord = activeChordNames();
 
 		// Start playing single note
-		startChord([noteData.frequency], settings.activeVoice as OscillatorType);
+		startChord(
+			[noteData.frequency],
+			settings.activeVoice as OscillatorType,
+			pointerId,
+		);
 	} else {
 		// Chords mode - use reordered chords
 		if (!reorderedChords || reorderedChords.length === 0) return;
@@ -57,54 +80,100 @@ function playChordFromElement(element: SVGPathElement) {
 
 		const mode = element.dataset.mode ?? "";
 
-		// display active chord name
+		// determine chord name
+		let chordName = "";
 		if (mode === "major") {
 			const chord = datum.majorDisplay;
-			performance.activeChord = `${chord} major`;
+			chordName = `${chord} major`;
 		} else if (mode === "minor") {
 			const chord = datum.minorDisplay;
-			const chordAdjusted = chord.replace("m", " minor");
-			performance.activeChord = chordAdjusted;
+			chordName = chord.replace("m", " minor");
 		} else {
-			performance.activeChord = "";
 			return;
 		}
+
+		// Update the chord name for this pointer
+		const pointerInfo = activePointers.get(pointerId);
+		if (pointerInfo) {
+			pointerInfo.chordName = chordName;
+		}
+
+		// Update display
+		performance.activeChord = activeChordNames();
 
 		// start chord using the audio store with selected voicing
 		const voicings = datum[`${mode}Voicings`] as VoicingFrequencies;
 		const frequencies = voicings[settings.chordVoicing] || voicings.standard;
-		startChord(frequencies, settings.activeVoice as OscillatorType);
+		startChord(frequencies, settings.activeVoice as OscillatorType, pointerId);
 	}
 }
+
+// Flag to track if we've had first user interaction
+let hasInitializedAudio = false;
 
 function onPressStart(event: PointerEvent) {
 	event.preventDefault();
 	event.stopPropagation();
 
 	const target = event.target as SVGPathElement;
-	isPointerDown = true;
-	currentActiveElement = target;
-	currentActiveId = target.id;
+	const pointerId = event.pointerId;
 
-	// Stop any existing chord first
-	stopChord();
+	// Initialize audio on very first interaction
+	if (!hasInitializedAudio) {
+		hasInitializedAudio = true;
+		// Create a silent oscillator to unlock audio
+		try {
+			const ctx = new (
+				window.AudioContext || 
+				(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+			)();
+			const osc = ctx.createOscillator();
+			const gain = ctx.createGain();
+			gain.gain.value = 0; // Silent
+			osc.connect(gain);
+			gain.connect(ctx.destination);
+			osc.start();
+			osc.stop(ctx.currentTime + 0.01);
+			// Resume if needed
+			if (ctx.state === "suspended") {
+				ctx.resume();
+			}
+		} catch (e) {
+			console.error("Failed to initialize audio:", e);
+		}
 
-	// Play the new chord
-	playChordFromElement(target);
-
-	// Set a maximum duration timeout as failsafe (5 seconds)
-	if (maxDurationTimeout) {
-		clearTimeout(maxDurationTimeout);
+		// Delay first chord to let audio initialize
+		setTimeout(() => {
+			// Track this pointer
+			activePointers.set(pointerId, {
+				element: target,
+				elementId: target.id,
+				chordName: "",
+			});
+			currentPointerId = pointerId;
+			playChordFromElement(target, pointerId);
+		}, 150);
+		return;
 	}
-	maxDurationTimeout = setTimeout(() => {
-		stopChord();
-		performance.activeChord = "";
-		maxDurationTimeout = null;
-	}, 5000);
+
+	// Track this pointer with empty chord name initially
+	activePointers.set(pointerId, {
+		element: target,
+		elementId: target.id,
+		chordName: "",
+	});
+	currentPointerId = pointerId;
+
+	// Play the new chord with this pointer ID
+	playChordFromElement(target, pointerId);
 }
 
 function onPointerMove(event: PointerEvent) {
-	if (!isPointerDown) return;
+	const pointerId = event.pointerId;
+	const pointerInfo = activePointers.get(pointerId);
+
+	// Only process if we're tracking this pointer
+	if (!pointerInfo) return;
 
 	event.preventDefault();
 	event.stopPropagation();
@@ -122,80 +191,62 @@ function onPointerMove(event: PointerEvent) {
 		);
 	}) as SVGPathElement | undefined;
 
-	if (element) {
-		const elementId = element.id;
-		if (elementId !== currentActiveId) {
-			// Mark that we're switching
-			isSwitchingChord = true;
+	if (element && element.id !== pointerInfo.elementId) {
+		// Update the tracked element for this pointer (keep the chord name)
+		activePointers.set(pointerId, {
+			element,
+			elementId: element.id,
+			chordName: pointerInfo.chordName,
+		});
 
-			// Clear existing timeout
-			if (maxDurationTimeout) {
-				clearTimeout(maxDurationTimeout);
-				maxDurationTimeout = null;
-			}
-
-			// Update active element
-			currentActiveElement = element;
-			currentActiveId = elementId;
-
-			// Play new chord (this will stop the previous one internally)
-			playChordFromElement(element);
-
-			// Set new timeout
-			maxDurationTimeout = setTimeout(() => {
-				stopChord();
-				performance.activeChord = "";
-				maxDurationTimeout = null;
-			}, 5000);
-
-			// Reset switching flag after a brief delay
-			setTimeout(() => {
-				isSwitchingChord = false;
-			}, 100);
-		}
+		// Play new chord (this will stop the previous chord for this pointer)
+		playChordFromElement(element, pointerId);
 	}
 }
 
 function onPressEnd(event: PointerEvent) {
-	// Only handle if we're actually tracking a pointer down
-	if (!isPointerDown) return;
+	const pointerId = event.pointerId;
+
+	// Only handle if we're tracking this pointer
+	if (!activePointers.has(pointerId)) return;
 
 	event.preventDefault();
 	event.stopPropagation();
 
-	isPointerDown = false;
-	currentActiveElement = null;
-	currentActiveId = null;
+	// Stop the chord for this pointer
+	stopChordById(pointerId);
 
-	// Clear any timeout
-	if (maxDurationTimeout) {
-		clearTimeout(maxDurationTimeout);
-		maxDurationTimeout = null;
+	// Remove this pointer from tracking
+	activePointers.delete(pointerId);
+
+	// Update display
+	performance.activeChord = activeChordNames();
+
+	// Clear current pointer if it was this one
+	if (currentPointerId === pointerId) {
+		currentPointerId = null;
 	}
-
-	// Stop the chord immediately
-	stopChord();
-
-	// Clear the display immediately
-	performance.activeChord = "";
 }
 
 // Global safety net for pointer events
 function handleGlobalPointerUp(event: PointerEvent) {
-	// Only act as safety net if we were tracking a pointer down and not switching
-	if (!isPointerDown || isSwitchingChord) return;
+	const pointerId = event.pointerId;
 
-	// Safety net - stop any playing chord
-	stopChord();
-	performance.activeChord = "";
-	isPointerDown = false;
-	currentActiveElement = null;
-	currentActiveId = null;
+	// Only act if we're tracking this pointer
+	if (!activePointers.has(pointerId)) return;
 
-	// Clear timeout
-	if (maxDurationTimeout) {
-		clearTimeout(maxDurationTimeout);
-		maxDurationTimeout = null;
+	// Safety net - stop the chord for this pointer
+	stopChordById(pointerId);
+
+	// Remove this pointer from tracking
+	activePointers.delete(pointerId);
+
+	// Update display
+	performance.activeChord = activeChordNames();
+
+	// Clear current pointer if it was this one
+	if (currentPointerId === pointerId) {
+		currentPointerId = null;
 	}
 }
 
@@ -211,9 +262,10 @@ $effect(() => {
 	document.addEventListener(
 		"touchend",
 		(e) => {
-			if (isPointerDown) {
+			if (activePointers.size > 0) {
 				e.preventDefault();
-				onPressEnd(e as unknown as PointerEvent);
+				// Touch events don't have pointerId, so we can't directly map them
+				// The pointer events should handle this
 			}
 		},
 		{ passive: false },
@@ -225,12 +277,6 @@ $effect(() => {
 		document.removeEventListener("pointerup", handleGlobalPointerUp);
 		// Ensure any playing chord is stopped
 		stopChord();
-
-		// Clear any timeout
-		if (maxDurationTimeout) {
-			clearTimeout(maxDurationTimeout);
-			maxDurationTimeout = null;
-		}
 	};
 });
 
@@ -325,6 +371,8 @@ function getNoteForPositionWithKeyCenter(position: number) {
 </script>
 
 <svg
+	aria-label="Circle of Fifths"
+	role="application"
 	id="instrument-circle-of-fifths"
 	class="w-full h-auto aspect-square z-10 scale-[1.1] max-w-[860px] ios-touch-fix"
 	viewBox="0 0 400 400"
