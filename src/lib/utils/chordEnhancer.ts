@@ -67,7 +67,7 @@ export function generateChordEnhancements(
 		];
 
 		// Generate rich voicing for major/minor chords
-		if (chordName.match(/^[A-G][b#]?m?$/)) {
+		if (chordName.match(/^[A-G][sb#]?m?$/)) {
 			enhanced[chordName].rich = [
 				transposeNoteByOctaves(rootNote, -2), // Sub bass
 				transposeNoteByOctaves(rootNote, -1), // Bass
@@ -88,7 +88,7 @@ export function generateChordEnhancements(
 		}
 
 		// Add inversions for major/minor triads
-		if (notes.length === 3 && chordName.match(/^[A-G][b#]?m?$/)) {
+		if (notes.length === 3 && chordName.match(/^[A-G][sb#]?m?$/)) {
 			enhanced[chordName].inversions = {
 				// First inversion: 3rd in bass
 				first: [
