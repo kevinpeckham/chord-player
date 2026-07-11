@@ -1,20 +1,27 @@
 {
 	"author": "Kevin Peckham",
 	"name": "chord-player",
-	"version": "0.3.6",
+	"version": "0.4.0",
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
-		"@sveltejs/adapter-vercel": "^5.7.0",
-		"@sveltejs/kit": "^2.20.8",
-		"@sveltejs/vite-plugin-svelte": "^5.0.0",
-		"@unocss/extractor-svelte": "^66.1.2",
-		"@unocss/preset-wind3": "^66.1.2",
-		"svelte": "^5.0.0",
-		"svelte-check": "^4.0.0",
-		"typescript": "^5.8.3",
-		"unocss": "^66.1.2",
-		"vite": "^6.3.5",
-		"vite-plugin-devtools-json": "^0.2.0"
+		"@biomejs/biome": "2.5.1",
+		"@sveltejs/adapter-vercel": "6.3.4",
+		"@sveltejs/kit": "2.67.0",
+		"@sveltejs/vite-plugin-svelte": "7.1.2",
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/svelte": "^5.4.2",
+		"@testing-library/user-event": "^14.6.1",
+		"@types/node": "^24",
+		"@unocss/extractor-svelte": "66.7.2",
+		"@unocss/preset-wind3": "66.7.2",
+		"@vitest/coverage-v8": "4.1.9",
+		"fallow": "^2.102.0",
+		"jsdom": "^29.1.1",
+		"svelte": "5.56.4",
+		"svelte-check": "4.7.1",
+		"typescript": "^6.0.3",
+		"unocss": "66.7.2",
+		"vite": "8.1.0",
+		"vitest": "4.1.9"
 	},
 	"license": "MIT",
 	"private": true,
@@ -26,12 +33,22 @@
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test": "bun test",
-		"test:watch": "bun test --watch"
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
+		"audit": "bunx fallow audit",
+		"audit:all": "bunx fallow audit --gate all",
+		"dead-code": "bunx fallow dead-code",
+		"dupes": "bunx fallow dupes",
+		"health": "bunx fallow health",
+		"fallow:fix": "bunx fallow fix --yes"
 	},
 	"engines": {
 		"bun": "1.x",
-		"node": "22.x"
+		"node": "24.x"
 	},
+	"trustedDependencies": [
+		"@biomejs/biome"
+	],
 	"type": "module"
 }

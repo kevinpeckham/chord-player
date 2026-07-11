@@ -12,9 +12,10 @@ SVG Circle of Fifths
 
 <script lang='ts'>
 // stores
-import { settings } from "$stores/settings.svelte";
-import { performance } from "$stores/performance.svelte";
+
 import { startChord, stopChord, stopChordById } from "$stores/audio.svelte";
+import { performance } from "$stores/performance.svelte";
+import { settings } from "$stores/settings.svelte";
 
 // types
 import type { Chord, VoicingFrequencies } from "$lib/types/Chord";
@@ -27,8 +28,8 @@ let { chords }: Props = $props();
 
 // import utils
 import { textCoords, wedgePath } from "$utils/circleGeometry";
-import { getNoteForPosition, CHROMATIC_NOTES } from "$utils/noteHelpers";
 import { processChordEnharmonics } from "$utils/enharmonics";
+import { CHROMATIC_NOTES, getNoteForPosition } from "$utils/noteHelpers";
 
 // Track active playback - Map pointer IDs to their elements and chord names
 const activePointers = $state(
@@ -124,8 +125,9 @@ function onPressStart(event: PointerEvent) {
 		// Create a silent oscillator to unlock audio
 		try {
 			const ctx = new (
-				window.AudioContext || 
-				(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+				window.AudioContext ||
+				(window as unknown as { webkitAudioContext: typeof AudioContext })
+					.webkitAudioContext
 			)();
 			const osc = ctx.createOscillator();
 			const gain = ctx.createGain();

@@ -42,7 +42,7 @@ function calculateFrequency(note: string): number {
 	if (!match) throw new Error(`Invalid note format: ${note}`);
 
 	let [, noteName, octaveStr] = match;
-	const octave = Number.parseInt(octaveStr);
+	const octave = Number.parseInt(octaveStr, 10);
 
 	// Handle enharmonic equivalents
 	if (noteName in ENHARMONIC_MAP) {

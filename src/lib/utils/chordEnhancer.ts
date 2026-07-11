@@ -25,7 +25,7 @@ function transposeNoteByOctaves(note: string, octaveShift: number): string {
 	const match = note.match(/^([A-G][b#]?)(\d+)$/);
 	if (!match) return note;
 	const [, noteName, octaveStr] = match;
-	const newOctave = Number.parseInt(octaveStr) + octaveShift;
+	const newOctave = Number.parseInt(octaveStr, 10) + octaveShift;
 	return `${noteName}${newOctave}`;
 }
 
@@ -45,7 +45,6 @@ export function generateChordEnhancements(
 		const rootNote = notes[0];
 		const rootMatch = rootNote.match(/^([A-G][b#]?)/);
 		if (!rootMatch) continue;
-		const rootNoteName = rootMatch[1];
 
 		// Basic structure
 		enhanced[chordName] = {

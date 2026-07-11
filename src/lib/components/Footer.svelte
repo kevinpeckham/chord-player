@@ -8,6 +8,7 @@ Web footer component
 -->
 <script lang="ts">
 import type { Snippet } from "svelte";
+
 // Props type
 interface Props {
 	authorLink: string;

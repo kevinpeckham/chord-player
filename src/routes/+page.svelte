@@ -1,10 +1,11 @@
 <!-- Example Svelte Page / Starter Web Page-->
 <script lang="ts">
 // components
+
+import HamburgerButton from "$components/HamburgerButton.svelte";
 import Instrument from "$components/Instrument.svelte";
 import SettingsPanel from "$components/SettingsPanel.svelte";
 import VolumeControl from "$components/VolumeControl.svelte";
-import HamburgerButton from "$components/HamburgerButton.svelte";
 
 // props, including data from load function
 let { data } = $props();

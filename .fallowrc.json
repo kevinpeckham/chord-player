@@ -1,0 +1,46 @@
+{
+	"$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+	"duplicates": {
+		"minOccurrences": 3
+	},
+	"entry": [
+		"src/routes/**/+page.{svelte,ts,js}",
+		"src/routes/**/+page.server.{ts,js}",
+		"src/routes/**/+layout.{svelte,ts,js}",
+		"src/routes/**/+layout.server.{ts,js}",
+		"src/routes/**/+server.{ts,js}",
+		"src/routes/**/+error.svelte",
+		"src/hooks.client.{ts,js}",
+		"src/hooks.server.{ts,js}",
+		"src/app.d.ts",
+		"src/app.html",
+		"svelte.config.js",
+		"vite.config.ts",
+		"vitest.config.ts",
+		"uno.config.ts"
+	],
+	"health": {
+		"maxCrap": 40
+	},
+	"ignoreDependencies": [
+		"@biomejs/biome",
+		"@unocss/extractor-svelte",
+		"@unocss/preset-wind3",
+		"@vitest/coverage-v8",
+		"fallow",
+		"svelte-check",
+		"uno.css"
+	],
+	"ignoreExportsUsedInFile": true,
+	"ignorePatterns": [
+		".svelte-kit/**",
+		"src/**/*.spec.ts",
+		"src/**/*.test.ts",
+		"static/**"
+	],
+	"ignoreUnresolvedImports": ["/plausible.js"],
+	"rules": {
+		"unused-dependencies": "warn",
+		"unused-dev-dependencies": "warn"
+	}
+}

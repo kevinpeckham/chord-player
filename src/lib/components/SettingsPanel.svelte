@@ -1,7 +1,9 @@
 <script lang="ts">
 // import settings
-import { settings } from "$stores/settings.svelte";
+
 import VoicingSelector from "$components/VoicingSelector.svelte";
+
+import { settings } from "$stores/settings.svelte";
 </script>
 
 <div class="grid grid-cols-1 gap-6 page-x-padding pt-4">
@@ -95,5 +97,5 @@ import VoicingSelector from "$components/VoicingSelector.svelte";
 	{/if}
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.3.6</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.4.0</div>
 </div>

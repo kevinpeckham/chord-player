@@ -1,13 +1,14 @@
 // types
-import type { ChordDatum, Chord } from "$types/Chord";
 
-// data
-import { default as circleRaw } from "$data/circle-of-fifths-data.json";
-import { default as chordsRaw } from "$data/chords.json";
-
+import { generateChordEnhancements } from "$utils/chordEnhancer";
 // utilities
 import { generateFrequencyMap } from "$utils/frequencyGenerator";
-import { generateChordEnhancements } from "$utils/chordEnhancer";
+
+import type { Chord, ChordDatum } from "$types/Chord";
+
+import { default as chordsRaw } from "$data/chords.json";
+// data
+import { default as circleRaw } from "$data/circle-of-fifths-data.json";
 
 // typed data
 const circle: ChordDatum[] = circleRaw;
@@ -28,14 +29,18 @@ function getFrequencies(noteList: string[]): number[] {
 export const chordsData = circle.reduce((acc, chord) => {
 	const majorId = chord.majorId;
 	const minorId = chord.minorId;
-	
+
 	// Get all voicings for major chord
-	const majorVoicings = chordsEnhanced[majorId] || { standard: chords[majorId] };
+	const majorVoicings = chordsEnhanced[majorId] || {
+		standard: chords[majorId],
+	};
 	const majorNotes = majorVoicings.standard;
 	const majorFrequencies = getFrequencies(majorNotes);
-	
+
 	// Get all voicings for minor chord
-	const minorVoicings = chordsEnhanced[minorId] || { standard: chords[minorId] };
+	const minorVoicings = chordsEnhanced[minorId] || {
+		standard: chords[minorId],
+	};
 	const minorNotes = minorVoicings.standard;
 	const minorFrequencies = getFrequencies(minorNotes);
 
@@ -48,18 +53,34 @@ export const chordsData = circle.reduce((acc, chord) => {
 		// Add enhanced voicings
 		majorVoicings: {
 			standard: majorFrequencies,
-			spread: majorVoicings.spread ? getFrequencies(majorVoicings.spread) : majorFrequencies,
-			rich: majorVoicings.rich ? getFrequencies(majorVoicings.rich) : majorFrequencies,
-			bass: majorVoicings.bass ? getFrequencies(majorVoicings.bass) : majorFrequencies,
-			rootBass: majorVoicings.rootBass ? getFrequencies(majorVoicings.rootBass) : majorFrequencies,
+			spread: majorVoicings.spread
+				? getFrequencies(majorVoicings.spread)
+				: majorFrequencies,
+			rich: majorVoicings.rich
+				? getFrequencies(majorVoicings.rich)
+				: majorFrequencies,
+			bass: majorVoicings.bass
+				? getFrequencies(majorVoicings.bass)
+				: majorFrequencies,
+			rootBass: majorVoicings.rootBass
+				? getFrequencies(majorVoicings.rootBass)
+				: majorFrequencies,
 		},
 		minorVoicings: {
 			standard: minorFrequencies,
-			spread: minorVoicings.spread ? getFrequencies(minorVoicings.spread) : minorFrequencies,
-			rich: minorVoicings.rich ? getFrequencies(minorVoicings.rich) : minorFrequencies,
-			bass: minorVoicings.bass ? getFrequencies(minorVoicings.bass) : minorFrequencies,
-			rootBass: minorVoicings.rootBass ? getFrequencies(minorVoicings.rootBass) : minorFrequencies,
-		}
+			spread: minorVoicings.spread
+				? getFrequencies(minorVoicings.spread)
+				: minorFrequencies,
+			rich: minorVoicings.rich
+				? getFrequencies(minorVoicings.rich)
+				: minorFrequencies,
+			bass: minorVoicings.bass
+				? getFrequencies(minorVoicings.bass)
+				: minorFrequencies,
+			rootBass: minorVoicings.rootBass
+				? getFrequencies(minorVoicings.rootBass)
+				: minorFrequencies,
+		},
 	});
 
 	return acc;

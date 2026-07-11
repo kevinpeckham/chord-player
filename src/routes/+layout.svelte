@@ -18,7 +18,7 @@ interface Props {
 let { children = null, data }: Props = $props();
 
 // setup action
-const setUp = (node: HTMLDivElement) => {
+const setUp = (_node: HTMLDivElement) => {
 	// intercept innerHTML invocation
 	// to catch svelte-announcer being created and strip inline style
 	// to prevent CSP violation

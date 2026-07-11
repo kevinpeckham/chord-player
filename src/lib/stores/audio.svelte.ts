@@ -199,7 +199,7 @@ export function cleanup(): void {
 	for (const osc of activeOscillators) {
 		try {
 			osc.stop();
-		} catch (e) {
+		} catch {
 			// Already stopped
 		}
 	}
@@ -342,7 +342,7 @@ export function stopChordById(pointerId: number): void {
 		try {
 			osc.stop(currentTime + fadeTime);
 			activeOscillators.delete(osc);
-		} catch (e) {
+		} catch {
 			// Already stopped
 		}
 	}
@@ -358,7 +358,7 @@ export function stopChordById(pointerId: number): void {
 			0.001,
 			currentTime + fadeTime,
 		);
-	} catch (e) {
+	} catch {
 		// Gain might already be disconnected
 	}
 
@@ -368,13 +368,13 @@ export function stopChordById(pointerId: number): void {
 			for (const gain of chord.gains) {
 				try {
 					gain.disconnect();
-				} catch (e) {
+				} catch {
 					// Already disconnected
 				}
 			}
 			try {
 				chord.chordGain.disconnect();
-			} catch (e) {
+			} catch {
 				// Already disconnected
 			}
 			activeChords.delete(pointerId);

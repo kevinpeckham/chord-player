@@ -4,9 +4,8 @@
 
 import type { Chord } from "$lib/types/Chord";
 
-// Define which keys prefer sharps vs flats
+// Keys that prefer sharps; all others (F, Bb, Eb, Ab, Db, Gb) prefer flats
 const SHARP_KEYS = ["G", "D", "A", "E", "B", "F#", "C#"];
-const FLAT_KEYS = ["F", "Bb", "Eb", "Ab", "Db", "Gb"];
 
 // Enharmonic equivalents (using ♭ and ♯ symbols)
 const ENHARMONIC_MAP: Record<string, string> = {
@@ -37,9 +36,6 @@ const ENHARMONIC_MAP: Record<string, string> = {
  * Determine if a key center prefers sharps or flats
  */
 export function prefersSharp(keyCenter: string): boolean {
-	// Handle enharmonic key centers
-	const normalizedKey = keyCenter.replace("#", "").replace("b", "");
-
 	// C can go either way, but we'll default to flats for better readability
 	if (keyCenter === "C") return false;
 
