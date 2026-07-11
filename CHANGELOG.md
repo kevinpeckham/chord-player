@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-07-11
+
+### Fixed
+- The on-screen "7" pad was confusing on desktop — with a single mouse there is no way to hold it and click a chord at the same time. Mouse/trackpad users (detected via `hover: hover` and `pointer: fine`) now see a "hold ⇧ Shift" hint beside the pad, and the pad lights up while Shift is held, acting as an indicator. Touch devices are unchanged (the hint is hidden; holding the pad remains the mechanism).
+
 ## [0.5.1] - 2026-07-11
 
 ### Fixed
