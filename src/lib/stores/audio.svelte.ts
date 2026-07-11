@@ -23,7 +23,6 @@ export const audioState = $state({
 	masterVolume: 0.8,
 	activeNoteCount: 0,
 	contextState: "suspended" as AudioContextState,
-	hasHadFirstInteraction: false,
 });
 
 // Initialize audio context lazily (on first user interaction)

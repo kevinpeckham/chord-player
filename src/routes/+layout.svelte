@@ -37,22 +37,17 @@ const setUp = (_node: HTMLDivElement) => {
 			}
 		},
 	});
-
-	// Prevent context menu on the entire document
-	const preventContextMenu = (e: Event) => {
-		e.preventDefault();
-	};
-	document.addEventListener("contextmenu", preventContextMenu);
-
-	// Cleanup
-	return {
-		destroy() {
-			document.removeEventListener("contextmenu", preventContextMenu);
-		},
-	};
 };
+
+// Prevent context menu on the entire document (iOS long-press protection);
+// attached via <svelte:document> so Svelte manages the listener lifecycle
+function preventContextMenu(e: Event) {
+	e.preventDefault();
+}
 </script>
 
+
+<svelte:document oncontextmenu={preventContextMenu} />
 
 <!-- slot -->
 {#if children}

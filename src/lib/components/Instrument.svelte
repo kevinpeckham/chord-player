@@ -50,7 +50,7 @@ const activeChordNames = $derived(() => {
 
 //- interaction functions
 function playChordFromElement(element: SVGPathElement, pointerId: number) {
-	const index = Number(element.dataset.index) ?? 0;
+	const index = Number(element.dataset.index ?? 0);
 
 	if (settings.mode === "notes") {
 		// Individual notes mode
@@ -252,32 +252,17 @@ function handleGlobalPointerUp(event: PointerEvent) {
 	}
 }
 
-// Lifecycle - setup global listeners
+// Prevent browser touch defaults (e.g. double-tap zoom) while chords are held
+function handleGlobalTouchEnd(e: TouchEvent) {
+	if (activePointers.size > 0) {
+		e.preventDefault();
+	}
+}
+
+// Global listeners live on <svelte:document> below; here we only ensure
+// any playing chord is silenced when the component unmounts.
 $effect(() => {
-	// Add global pointer up listener as safety net
-	document.addEventListener("pointerup", handleGlobalPointerUp, {
-		capture: true,
-		passive: false,
-	});
-
-	// Add touch-specific handling for better mobile support
-	document.addEventListener(
-		"touchend",
-		(e) => {
-			if (activePointers.size > 0) {
-				e.preventDefault();
-				// Touch events don't have pointerId, so we can't directly map them
-				// The pointer events should handle this
-			}
-		},
-		{ passive: false },
-	);
-
-	// Cleanup function
 	return () => {
-		// Clean up global listeners
-		document.removeEventListener("pointerup", handleGlobalPointerUp);
-		// Ensure any playing chord is stopped
 		stopChord();
 	};
 });
@@ -371,6 +356,13 @@ function getNoteForPositionWithKeyCenter(position: number) {
 	return getNoteForPosition(position, settings.noteOctave);
 }
 </script>
+
+<!-- Safety net for releases that happen outside the SVG; Svelte manages
+     add/remove of these document listeners with the component lifecycle -->
+<svelte:document
+	onpointerupcapture={handleGlobalPointerUp}
+	ontouchend={handleGlobalTouchEnd}
+/>
 
 <svg
 	aria-label="Circle of Fifths"
