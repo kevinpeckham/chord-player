@@ -17,6 +17,7 @@
 		"svelte.config.js",
 		"vite.config.ts",
 		"vitest.config.ts",
+		"vitest-setup.ts",
 		"uno.config.ts"
 	],
 	"health": {
@@ -31,6 +32,7 @@
 		"svelte-check",
 		"uno.css"
 	],
+	"ignoreExports": [{ "file": "src/hooks.server.ts", "exports": ["config"] }],
 	"ignoreExportsUsedInFile": true,
 	"ignorePatterns": [
 		".svelte-kit/**",

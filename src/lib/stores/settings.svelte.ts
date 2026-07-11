@@ -25,11 +25,3 @@ export const settings = $state({
 		| "B",
 	keyCenterPosition: "bottom" as "top" | "bottom",
 });
-
-// functions to change settings
-export function changeVoice(newVoice: typeof settings.activeVoice) {
-	settings.activeVoice = newVoice;
-}
-
-// type for settings
-export type Settings = typeof settings;

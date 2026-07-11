@@ -111,7 +111,6 @@ Components are organized in a flat structure:
   - `VoicingSelector.svelte` - Dropdown for selecting chord voicing styles
   - `HamburgerButton.svelte` - Mobile menu toggle button
   - `LinkButton.svelte` - Reusable link button component
-  - `Footer.svelte` - Page footer component with Fifths branding
 
 ### Data Flow
 1. **Server-Side Data Loading**: 
@@ -132,8 +131,9 @@ Components are organized in a flat structure:
      - `settings.svelte.ts` - Audio settings (oscillator voice selection, chord voicing)
      - `performance.svelte.ts` - Performance state (active chord display)
      - `audio.svelte.ts` - Audio engine with singleton AudioContext, reactive state, and volume control
-       - Exports `playChord(frequencies, oscillatorType, duration)` for frequency-based playback
-       - Exports `playChordByNotes(notes, oscillatorType, duration)` for note-name-based playback
+       - Exports `startChord(frequencies, oscillatorType, pointerId)` for continuous per-pointer playback
+       - Exports `stopChordById(pointerId)` and `stopChord()` to end playback
+       - Exports `setMasterVolume(volume)` and the reactive `audioState`
 
 4. **Audio Generation**: Uses Web Audio API with oscillator types (sine, triangle, square, sawtooth)
 
