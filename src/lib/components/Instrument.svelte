@@ -181,26 +181,6 @@ function onPressStart(event: PointerEvent) {
 		}
 	}
 
-	// Initialize audio on very first interaction
-	if (!hasInitializedAudio) {
-		hasInitializedAudio = true;
-		unlockAudio();
-
-		// Delay first chord to let audio initialize
-		setTimeout(() => {
-			// Track this pointer
-			activePointers.set(pointerId, {
-				element: target,
-				elementId: target.id,
-				chordName: "",
-				seventh: false,
-			});
-			currentPointerId = pointerId;
-			playChordFromElement(target, pointerId);
-		}, 150);
-		return;
-	}
-
 	// Track this pointer with empty chord name initially
 	activePointers.set(pointerId, {
 		element: target,
@@ -209,6 +189,21 @@ function onPressStart(event: PointerEvent) {
 		seventh: false,
 	});
 	currentPointerId = pointerId;
+
+	// Initialize audio on very first interaction, delaying the first chord
+	// to let the context unlock. The pointer is already tracked above, so a
+	// release during the delay removes it and the pending chord never plays
+	// (otherwise it would start after the finger lifted and stick on).
+	if (!hasInitializedAudio) {
+		hasInitializedAudio = true;
+		unlockAudio();
+		setTimeout(() => {
+			if (activePointers.has(pointerId)) {
+				playChordFromElement(target, pointerId);
+			}
+		}, 150);
+		return;
+	}
 
 	// Play the new chord with this pointer ID
 	playChordFromElement(target, pointerId);
