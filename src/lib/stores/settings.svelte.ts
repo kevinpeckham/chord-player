@@ -9,6 +9,7 @@ export const settings = $state({
 		| "bass"
 		| "rootBass",
 	mode: "chords" as "chords" | "notes",
+	seventhType: "dominant" as "dominant" | "major7",
 	noteOctave: 4,
 	keyCenter: "C" as
 		| "C"

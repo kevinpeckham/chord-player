@@ -8,6 +8,7 @@ import { settings } from "$stores/settings.svelte";
 import { render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
+import { version } from "../../../package.json";
 
 describe("SettingsPanel", () => {
 	beforeEach(() => {
@@ -126,8 +127,10 @@ describe("SettingsPanel", () => {
 		expect(settings.chordVoicing).toBe("bass");
 	});
 
-	it("displays the current version", () => {
+	// The UI version is maintained by hand (per CLAUDE.md versioning steps);
+	// asserting against package.json catches the two drifting apart
+	it("displays the current package version", () => {
 		render(SettingsPanel);
-		expect(screen.getByText("v0.4.0")).toBeInTheDocument();
+		expect(screen.getByText(`v${version}`)).toBeInTheDocument();
 	});
 });

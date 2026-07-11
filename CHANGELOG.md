@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-07-11
+
+### Added
+- Seventh chords as a momentary performance modifier:
+  - **Desktop**: hold Shift while clicking (or while chords are sounding — held chords re-voice live)
+  - **Touch**: hold the new on-screen "7" pad, or land a second finger on an already-sounding wedge to upgrade just that chord (lifting it returns to the triad)
+  - Major wedges play dominant 7ths by default; a new "Seventh Type" setting switches them to major 7ths (Cmaj7). Minor wedges always play m7.
+  - Center display shows chord symbols while active (C7, Cmaj7, Am7)
+- `SeventhPad` component (hold-to-activate, keyboard accessible, shown in chords mode)
+- `sevenths` utility computing seventh frequencies from the chord root at play time (works with every voicing style, 2-decimal precision)
+
 ## [0.4.0] - 2026-07-10
 
 ### Added

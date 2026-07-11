@@ -5,7 +5,10 @@
 import HamburgerButton from "$components/HamburgerButton.svelte";
 import Instrument from "$components/Instrument.svelte";
 import SettingsPanel from "$components/SettingsPanel.svelte";
+import SeventhPad from "$components/SeventhPad.svelte";
 import VolumeControl from "$components/VolumeControl.svelte";
+
+import { settings } from "$stores/settings.svelte";
 
 // props, including data from load function
 let { data } = $props();
@@ -34,11 +37,15 @@ let menuState: "closed" | "open" = $state("closed");
 <main class="relative grid grid-cols-1 gap-y-12 place-items-center page-x-padding pb-36 text-neutral-50 max-w-full max-h-full z-0">
 
 		<!-- toolbar -->
-		<div data-toolbar>
+		<div data-toolbar class="flex items-center gap-6">
 			<!-- volume control -->
 			<div class="">
 				<VolumeControl />
 			</div>
+			<!-- seventh modifier (chords mode only) -->
+			{#if settings.mode === "chords"}
+				<SeventhPad />
+			{/if}
 		</div>
 
 	<!-- outer circle container -->

@@ -88,8 +88,10 @@ describe("Instrument", () => {
 		vi.useFakeTimers();
 		vi.clearAllMocks();
 		performanceStore.activeChord = "";
+		performanceStore.seventhHeld = false;
 		settings.activeVoice = "sine";
 		settings.chordVoicing = "standard";
+		settings.seventhType = "dominant";
 		settings.mode = "chords";
 		settings.noteOctave = 4;
 		settings.keyCenter = "C";
@@ -339,6 +341,111 @@ describe("Instrument", () => {
 			const { unmount } = render(Instrument, { chords: chordsData });
 			unmount();
 			expect(stopChord).toHaveBeenCalled();
+		});
+	});
+
+	describe("seventh chords", () => {
+		function wedge(container: HTMLElement, id: string): Element {
+			const el = container.querySelector(`[id="chord-button-${id}"]`);
+			if (!el) throw new Error(`wedge ${id} not found`);
+			return el;
+		}
+		function lastStartChordCall() {
+			const calls = vi.mocked(startChord).mock.calls;
+			return calls[calls.length - 1];
+		}
+
+		it("adds a dominant seventh to a major chord while the modifier is held", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			performanceStore.seventhHeld = true;
+			await tick();
+
+			await pressChord(wedge(container, "C"), 1);
+
+			const [frequencies] = lastStartChordCall();
+			expect(frequencies).toHaveLength(4);
+			expect(frequencies[3]).toBeCloseTo(466.16, 1); // Bb4
+			expect(performanceStore.activeChord).toBe("C7");
+		});
+
+		it("adds a major seventh when the seventh type setting is major7", async () => {
+			settings.seventhType = "major7";
+			const { container } = render(Instrument, { chords: chordsData });
+			performanceStore.seventhHeld = true;
+			await tick();
+
+			await pressChord(wedge(container, "C"), 1);
+
+			const [frequencies] = lastStartChordCall();
+			expect(frequencies[3]).toBeCloseTo(493.88, 1); // B4
+			expect(performanceStore.activeChord).toBe("Cmaj7");
+		});
+
+		it("always uses the minor seventh for minor wedges", async () => {
+			settings.seventhType = "major7";
+			const { container } = render(Instrument, { chords: chordsData });
+			performanceStore.seventhHeld = true;
+			await tick();
+
+			await pressChord(wedge(container, "Am"), 1);
+
+			const [frequencies] = lastStartChordCall();
+			const root = chordsData.find((c) => c.minorId === "Am")
+				?.minorFrequencies[0] as number;
+			expect(frequencies).toHaveLength(4);
+			expect(frequencies[3]).toBeCloseTo(root * 2 ** (10 / 12), 1);
+			expect(performanceStore.activeChord).toBe("Am7");
+		});
+
+		it("re-voices a held chord live when the modifier is pressed and released", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			await pressChord(wedge(container, "C"), 1);
+			expect(lastStartChordCall()[0]).toHaveLength(3);
+
+			performanceStore.seventhHeld = true;
+			await tick();
+			expect(lastStartChordCall()[0]).toHaveLength(4);
+			expect(performanceStore.activeChord).toBe("C7");
+
+			performanceStore.seventhHeld = false;
+			await tick();
+			expect(lastStartChordCall()[0]).toHaveLength(3);
+			expect(performanceStore.activeChord).toBe("C major");
+		});
+
+		it("upgrades a sounding chord when a second finger lands on the same wedge", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			const cWedge = wedge(container, "C");
+			await pressChord(cWedge, 1);
+			expect(lastStartChordCall()[0]).toHaveLength(3);
+
+			// Second finger on the same wedge: same chord pointer, now a seventh
+			cWedge.dispatchEvent(pointerEvent("pointerdown", 2));
+			await tick();
+			const [frequencies, , pointerId] = lastStartChordCall();
+			expect(pointerId).toBe(1);
+			expect(frequencies).toHaveLength(4);
+			expect(performanceStore.activeChord).toBe("C7");
+
+			// Lifting the second finger drops back to the triad; the chord
+			// itself keeps sounding (no stop for pointer 1)
+			cWedge.dispatchEvent(pointerEvent("pointerup", 2));
+			await tick();
+			expect(lastStartChordCall()[0]).toHaveLength(3);
+			expect(performanceStore.activeChord).toBe("C major");
+			expect(stopChordById).not.toHaveBeenCalledWith(1);
+		});
+
+		it("plays two chords when two fingers press different wedges (no upgrade)", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			await pressChord(wedge(container, "C"), 1);
+			wedge(container, "G").dispatchEvent(pointerEvent("pointerdown", 2));
+			await tick();
+
+			const [frequencies, , pointerId] = lastStartChordCall();
+			expect(pointerId).toBe(2);
+			expect(frequencies).toHaveLength(3);
+			expect(performanceStore.activeChord).toBe("C major + G major");
 		});
 	});
 
