@@ -1,24 +1,20 @@
 // Audio engine store - manages AudioContext and sound generation
-import { generateFrequencyMap } from "$utils/frequencyGenerator";
-
 let audioContext: AudioContext | null = null;
 let masterGainNode: GainNode | null = null;
-
-// Lazily generate frequency map when needed
-let noteFrequencies: Record<string, number> | null = null;
 
 // Active oscillators tracking for cleanup
 const activeOscillators = new Set<OscillatorNode>();
 
-// Track currently playing chord for continuous playback
+// Track currently playing chords for continuous playback
 interface ActiveChord {
 	oscillators: OscillatorNode[];
 	gains: GainNode[];
 	chordGain: GainNode;
 	frequencies: number[];
+	pointerId: number;
 }
-let activeChord: ActiveChord | null = null;
-let stopTimeout: ReturnType<typeof setTimeout> | null = null;
+// Map to track multiple active chords by pointer ID
+const activeChords = new Map<number, ActiveChord>();
 
 // Reactive state using Svelte 5 runes
 export const audioState = $state({
@@ -28,11 +24,6 @@ export const audioState = $state({
 	activeNoteCount: 0,
 	contextState: "suspended" as AudioContextState,
 });
-
-// Function to check if audio can play
-export function canPlayAudio(): boolean {
-	return audioState.isInitialized && audioState.contextState === "running";
-}
 
 // Initialize audio context lazily (on first user interaction)
 function initializeAudio(): AudioContext {
@@ -72,112 +63,24 @@ function updateMasterGainVolume(): void {
 	}
 }
 
-// Ensure audio context is running (handle browser autoplay policies)
-export async function ensureAudioRunning(): Promise<void> {
-	const ctx = initializeAudio();
-	if (ctx.state === "suspended") {
-		await ctx.resume();
-	}
-}
-
-// Clean up finished oscillators
-function cleanupOscillator(osc: OscillatorNode, gainNode: GainNode): void {
-	osc.disconnect();
-	gainNode.disconnect();
-	activeOscillators.delete(osc);
-	audioState.activeNoteCount = activeOscillators.size;
-	audioState.isPlaying = activeOscillators.size > 0;
-}
-
-// Main chord playing function
-export async function playChord(
-	frequencies: number[],
-	oscillatorType: OscillatorType,
-	duration = 1.5,
-): Promise<void> {
-	// Ensure audio is initialized and running
-	await ensureAudioRunning();
-
-	if (!audioContext || !masterGainNode) return;
-
-	// Create a gain node for this chord (for envelope and mixing)
-	const chordGain = audioContext.createGain();
-	chordGain.connect(masterGainNode);
-
-	// Normalize volume based on number of notes
-	const noteVolume = 0.3 / Math.sqrt(frequencies.length);
-	chordGain.gain.setValueAtTime(noteVolume, audioContext.currentTime);
-
-	// Create oscillators for each note
-	for (const frequency of frequencies) {
-		const oscillator = audioContext.createOscillator();
-		const noteGain = audioContext.createGain();
-
-		// Configure oscillator
-		oscillator.type = oscillatorType;
-		oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-
-		// Connect: oscillator -> noteGain -> chordGain -> master
-		oscillator.connect(noteGain);
-		noteGain.connect(chordGain);
-
-		// Individual note envelope (slight attack to avoid clicks)
-		noteGain.gain.setValueAtTime(0, audioContext.currentTime);
-		noteGain.gain.linearRampToValueAtTime(1, audioContext.currentTime + 0.01);
-
-		// Start and schedule stop
-		oscillator.start(audioContext.currentTime);
-		oscillator.stop(audioContext.currentTime + duration);
-
-		// Track for cleanup
-		activeOscillators.add(oscillator);
-		audioState.activeNoteCount = activeOscillators.size;
-		audioState.isPlaying = true;
-
-		// Clean up when done
-		oscillator.onended = () => cleanupOscillator(oscillator, noteGain);
-	}
-
-	// Fade out to avoid clicks
-	const fadeStart = audioContext.currentTime + duration * 0.5;
-	const fadeEnd = audioContext.currentTime + duration;
-	chordGain.gain.setValueAtTime(noteVolume, fadeStart);
-	chordGain.gain.exponentialRampToValueAtTime(0.001, fadeEnd);
-
-	// Clean up chord gain after fade
-	setTimeout(
-		() => {
-			chordGain.disconnect();
-		},
-		duration * 1000 + 100,
-	);
-}
-
-// Wrapper function to play chord by note names
-export async function playChordByNotes(
-	notes: string[],
-	oscillatorType: OscillatorType,
-	duration = 1.5,
-): Promise<void> {
-	// Initialize frequency map on first use
-	if (!noteFrequencies) {
-		noteFrequencies = generateFrequencyMap(1, 7, true);
-	}
-
-	// Convert note names to frequencies
-	const frequencies: number[] = [];
-	for (const note of notes) {
-		const frequency = noteFrequencies[note];
-		if (frequency) {
-			frequencies.push(frequency);
-		} else {
-			console.warn(`Note "${note}" not found in frequency map`);
+// Unlock audio on the first user gesture (iOS Safari requires a sound to be
+// scheduled inside the gesture before the context will produce audio). Plays
+// a 10ms silent oscillator on the store's own context and resumes it.
+export function unlockAudio(): void {
+	try {
+		const ctx = initializeAudio();
+		const osc = ctx.createOscillator();
+		const gain = ctx.createGain();
+		gain.gain.value = 0; // Silent
+		osc.connect(gain);
+		gain.connect(ctx.destination);
+		osc.start();
+		osc.stop(ctx.currentTime + 0.01);
+		if (ctx.state === "suspended") {
+			ctx.resume();
 		}
-	}
-
-	// Play the chord if we have valid frequencies
-	if (frequencies.length > 0) {
-		await playChord(frequencies, oscillatorType, duration);
+	} catch (e) {
+		console.error("Failed to unlock audio:", e);
 	}
 }
 
@@ -187,233 +90,195 @@ export function setMasterVolume(volume: number): void {
 	updateMasterGainVolume();
 }
 
-// Clean up all audio resources
-export function cleanup(): void {
-	// Stop all active oscillators
-	for (const osc of activeOscillators) {
-		try {
-			osc.stop();
-		} catch (e) {
-			// Already stopped
-		}
-	}
-	activeOscillators.clear();
-	audioState.activeNoteCount = 0;
-	audioState.isPlaying = false;
-
-	// Close audio context
-	if (audioContext && audioContext.state !== "closed") {
-		audioContext.close();
-		audioContext = null;
-		masterGainNode = null;
-		audioState.isInitialized = false;
-		audioState.contextState = "closed";
+// Suspend audio while the page is hidden, resume when it returns
+function handleVisibilityChange(): void {
+	if (!audioContext) return;
+	if (document.hidden) {
+		audioContext.suspend();
+	} else if (audioContext.state === "suspended") {
+		audioContext.resume();
 	}
 }
 
-// Handle page visibility to suspend/resume audio
+// Module-level listener: this store is a singleton that outlives any
+// component, so <svelte:document> is not applicable here
 if (typeof document !== "undefined") {
-	document.addEventListener("visibilitychange", () => {
-		if (document.hidden && audioContext) {
-			audioContext.suspend();
-		} else if (!document.hidden && audioContext?.state === "suspended") {
-			audioContext.resume();
-		}
-	});
+	document.addEventListener("visibilitychange", handleVisibilityChange);
 }
 
-// Start playing a chord continuously (until stopChord is called)
-export async function startChord(
+// True when the pointer is already sounding exactly these frequencies
+function isAlreadyPlaying(pointerId: number, frequencies: number[]): boolean {
+	const existing = activeChords.get(pointerId);
+	return (
+		existing !== undefined &&
+		existing.frequencies.length === frequencies.length &&
+		existing.frequencies.every((f, i) => f === frequencies[i])
+	);
+}
+
+// Resume a suspended context; false if playback should be abandoned
+async function resumeIfSuspended(ctx: AudioContext): Promise<boolean> {
+	if (ctx.state !== "suspended") return true;
+	try {
+		await ctx.resume();
+		// Small delay after resume
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		return true;
+	} catch (e) {
+		console.error("Failed to resume audio context:", e);
+		return false;
+	}
+}
+
+// Create, connect, and start one oscillator + envelope gain per frequency.
+// Cleanup is handled manually by stopChordById (no onended handlers).
+function startOscillators(
+	ctx: AudioContext,
+	chordGain: GainNode,
 	frequencies: number[],
 	oscillatorType: OscillatorType,
-): Promise<void> {
-	// Clear any pending stop timeout
-	if (stopTimeout) {
-		clearTimeout(stopTimeout);
-		stopTimeout = null;
-	}
-
-	// Check if we're already playing these exact frequencies
-	if (
-		activeChord &&
-		activeChord.frequencies.length === frequencies.length &&
-		activeChord.frequencies.every((f, i) => f === frequencies[i])
-	) {
-		// Same chord, don't restart
-		return;
-	}
-
-	// Stop any currently playing chord immediately
-	stopChord(true);
-
-	// Ensure audio is initialized and running
-	await ensureAudioRunning();
-
-	if (!audioContext || !masterGainNode) {
-		return;
-	}
-
-	// Create a gain node for this chord (for envelope and mixing)
-	const chordGain = audioContext.createGain();
-	chordGain.connect(masterGainNode);
-
-	// Normalize volume based on number of notes
-	const noteVolume = 0.3 / Math.sqrt(frequencies.length);
-
-	// Immediate attack for responsive feel
-	chordGain.gain.setValueAtTime(0, audioContext.currentTime);
-	chordGain.gain.linearRampToValueAtTime(
-		noteVolume,
-		audioContext.currentTime + 0.01,
-	);
-
+): { oscillators: OscillatorNode[]; gains: GainNode[] } {
 	const oscillators: OscillatorNode[] = [];
 	const gains: GainNode[] = [];
 
-	// Create oscillators for each note
 	for (const frequency of frequencies) {
-		const oscillator = audioContext.createOscillator();
-		const noteGain = audioContext.createGain();
+		const oscillator = ctx.createOscillator();
+		const noteGain = ctx.createGain();
 
-		// Configure oscillator
 		oscillator.type = oscillatorType;
-		oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+		oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
 
 		// Connect: oscillator -> noteGain -> chordGain -> master
 		oscillator.connect(noteGain);
 		noteGain.connect(chordGain);
 
 		// Individual note envelope (slight attack to avoid clicks)
-		noteGain.gain.setValueAtTime(0, audioContext.currentTime);
-		noteGain.gain.linearRampToValueAtTime(1, audioContext.currentTime + 0.01);
+		noteGain.gain.setValueAtTime(0, ctx.currentTime);
+		noteGain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.01);
 
-		// Start oscillator
-		oscillator.start(audioContext.currentTime);
+		oscillator.start(ctx.currentTime);
 
-		// Track for cleanup
 		activeOscillators.add(oscillator);
 		oscillators.push(oscillator);
 		gains.push(noteGain);
-
-		// Don't set up onended handler - we'll handle cleanup manually
 	}
 
-	// Store active chord info
-	activeChord = { oscillators, gains, chordGain, frequencies };
+	return { oscillators, gains };
+}
+
+// Start playing a chord continuously (until stopped)
+export async function startChord(
+	frequencies: number[],
+	oscillatorType: OscillatorType,
+	pointerId: number,
+): Promise<void> {
+	// Same chord on the same pointer: don't restart
+	if (isAlreadyPlaying(pointerId, frequencies)) return;
+
+	// Stop any chord currently playing with this pointer ID
+	stopChordById(pointerId);
+
+	// Initialize audio if needed (synchronously during user gesture)
+	if (!audioContext) {
+		initializeAudio();
+	}
+	if (!audioContext || !masterGainNode) return;
+	if (!(await resumeIfSuspended(audioContext))) return;
+
+	// Gain node for this chord (envelope + mixing), volume normalized by
+	// note count, with an immediate attack for responsive feel
+	const chordGain = audioContext.createGain();
+	chordGain.connect(masterGainNode);
+	const noteVolume = 0.3 / Math.sqrt(frequencies.length);
+	chordGain.gain.setValueAtTime(0, audioContext.currentTime);
+	chordGain.gain.linearRampToValueAtTime(
+		noteVolume,
+		audioContext.currentTime + 0.01,
+	);
+
+	const { oscillators, gains } = startOscillators(
+		audioContext,
+		chordGain,
+		frequencies,
+		oscillatorType,
+	);
+
+	activeChords.set(pointerId, {
+		oscillators,
+		gains,
+		chordGain,
+		frequencies,
+		pointerId,
+	});
 
 	audioState.activeNoteCount = activeOscillators.size;
 	audioState.isPlaying = true;
 }
 
-// Stop the currently playing chord
-export function stopChord(immediate = false): void {
+// Stop a specific chord by pointer ID
+export function stopChordById(pointerId: number): void {
 	if (!audioContext) return;
 
-	// If not immediate, add a small delay to allow for smooth transitions
-	if (!immediate && activeChord) {
-		// Clear any existing stop timeout
-		if (stopTimeout) {
-			clearTimeout(stopTimeout);
-		}
+	const chord = activeChords.get(pointerId);
+	if (!chord) return;
 
-		// Set a new timeout
-		stopTimeout = setTimeout(() => {
-			stopChord(true);
-		}, 50);
-		return;
-	}
+	const fadeTime = 0.05;
+	const currentTime = audioContext.currentTime;
 
-	// Clear stop timeout if we're stopping immediately
-	if (stopTimeout) {
-		clearTimeout(stopTimeout);
-		stopTimeout = null;
-	}
-
-	// Stop all active oscillators immediately, regardless of activeChord tracking
-	if (activeOscillators.size > 0) {
-		const currentTime = audioContext.currentTime;
-		for (const osc of activeOscillators) {
-			try {
-				osc.stop(currentTime + 0.05);
-			} catch (e) {
-				// Already stopped
-			}
-		}
-		activeOscillators.clear();
-	}
-
-	// If we have tracked chord data, clean it up properly
-	if (activeChord) {
-		const fadeTime = 0.05;
-		const currentTime = audioContext.currentTime;
-
+	// Stop oscillators
+	for (const osc of chord.oscillators) {
 		try {
-			activeChord.chordGain.gain.cancelScheduledValues(currentTime);
-			activeChord.chordGain.gain.setValueAtTime(
-				activeChord.chordGain.gain.value,
-				currentTime,
-			);
-			activeChord.chordGain.gain.exponentialRampToValueAtTime(
-				0.001,
-				currentTime + fadeTime,
-			);
-		} catch (e) {
-			// Gain might already be disconnected
+			osc.stop(currentTime + fadeTime);
+			activeOscillators.delete(osc);
+		} catch {
+			// Already stopped
 		}
+	}
 
-		// Clean up connections after fade
-		setTimeout(
-			() => {
-				if (activeChord) {
-					for (const gain of activeChord.gains) {
-						try {
-							gain.disconnect();
-						} catch (e) {
-							// Already disconnected
-						}
-					}
-					try {
-						activeChord.chordGain.disconnect();
-					} catch (e) {
-						// Already disconnected
-					}
-					activeChord = null;
-				}
-			},
-			fadeTime * 1000 + 50,
+	try {
+		// Fade out for smooth stop
+		chord.chordGain.gain.cancelScheduledValues(currentTime);
+		chord.chordGain.gain.setValueAtTime(
+			chord.chordGain.gain.value,
+			currentTime,
 		);
+		chord.chordGain.gain.exponentialRampToValueAtTime(
+			0.001,
+			currentTime + fadeTime,
+		);
+	} catch {
+		// Gain might already be disconnected
 	}
 
-	audioState.activeNoteCount = 0;
-	audioState.isPlaying = false;
+	// Clean up connections after fade
+	setTimeout(
+		() => {
+			for (const gain of chord.gains) {
+				try {
+					gain.disconnect();
+				} catch {
+					// Already disconnected
+				}
+			}
+			try {
+				chord.chordGain.disconnect();
+			} catch {
+				// Already disconnected
+			}
+			activeChords.delete(pointerId);
+			audioState.activeNoteCount = activeOscillators.size;
+			audioState.isPlaying = activeOscillators.size > 0;
+		},
+		fadeTime * 1000 + 50,
+	);
 }
 
-// Wrapper to start chord by note names
-export async function startChordByNotes(
-	notes: string[],
-	oscillatorType: OscillatorType,
-): Promise<void> {
-	// Initialize frequency map on first use
-	if (!noteFrequencies) {
-		noteFrequencies = generateFrequencyMap(1, 7, true);
-	}
+// Stop all currently playing chords
+export function stopChord(): void {
+	if (!audioContext) return;
 
-	// Convert note names to frequencies
-	const frequencies: number[] = [];
-	for (const note of notes) {
-		const frequency = noteFrequencies[note];
-		if (frequency) {
-			frequencies.push(frequency);
-		} else {
-			console.warn(`Note "${note}" not found in frequency map`);
-		}
-	}
-
-	// Start the chord if we have valid frequencies
-	if (frequencies.length > 0) {
-		await startChord(frequencies, oscillatorType);
+	// Stop each chord individually
+	for (const [pointerId] of activeChords) {
+		stopChordById(pointerId);
 	}
 }
-
-// Audio state type for external use
-export type AudioState = typeof audioState;

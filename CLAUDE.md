@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Default branch is `main`** - The primary branch is `main` (not `master`)
 - **When bumping versions**, always:
   1. Update version in `package.json`
-  2. Update version in the UI (`src/routes/+page.svelte`)
+  2. Update version in the UI (`src/lib/components/SettingsPanel.svelte`)
   3. Update `CHANGELOG.md` with changes
   4. Update documentation as needed
   5. Create a version bump commit
@@ -37,7 +37,7 @@ Fifths (chord-player) is an interactive web application that visualizes and play
 
 **Documentation**: All documentation and planning files should be placed in the `/docs` folder
 
-**Current Version**: 0.3.6
+**Current Version**: 0.5.0
 **Feature Roadmap**: See docs/FEATURES.md for planned enhancements
 
 **Frequency Generation**: 
@@ -52,13 +52,17 @@ Fifths (chord-player) is an interactive web application that visualizes and play
 
 **Package Manager**: Bun 1.x
 **Framework**: Svelte 5 with runes API, SvelteKit 2.x
-**Language**: TypeScript 5.x
+**Language**: TypeScript 6.x
 **Styling**: UnoCSS with Wind preset (Tailwind-compatible)
 **Code Quality**: 
-  - Biome for formatting and linting (`bun run format` and `bun run lint`)
+  - Biome 2.x for formatting and linting (`bun run format` and `bun run lint`)
   - svelte-check for type checking
   - cspell for spell checking
-**Testing**: Bun test runner (`bun test`)
+  - fallow for dead-code/duplication/dependency audits (`bun run audit`, `bun run health`)
+**Testing**: Vitest 4 with Testing Library
+  - Unit tests: `src/**/*.test.ts` (node environment)
+  - Component tests: `src/**/*.svelte.test.ts` (jsdom + @testing-library/svelte)
+  - `bun run test`, `bun run test:watch`, `bun run test:coverage`
 **Deployment**: Vercel
 
 ## Key Commands
@@ -75,8 +79,16 @@ Fifths (chord-player) is an interactive web application that visualizes and play
 - `bun check:watch` - Type-check in watch mode
 
 ### Testing
-- `bun test` - Run tests with Bun test runner
-- `bun test:watch` - Run tests in watch mode
+- `bun run test` - Run tests with Vitest (both node and components projects)
+- `bun run test:watch` - Run tests in watch mode
+- `bun run test:coverage` - Run tests with v8 coverage
+
+### Code Health (fallow)
+- `bun run audit` - Full fallow audit
+- `bun run dead-code` - Find unused exports/files
+- `bun run dupes` - Find duplicated code
+- `bun run health` - Complexity/health report
+- `bun run fallow:fix` - Auto-fix fallow findings
 
 ## Project Structure
 
@@ -99,7 +111,6 @@ Components are organized in a flat structure:
   - `VoicingSelector.svelte` - Dropdown for selecting chord voicing styles
   - `HamburgerButton.svelte` - Mobile menu toggle button
   - `LinkButton.svelte` - Reusable link button component
-  - `Footer.svelte` - Page footer component with Fifths branding
 
 ### Data Flow
 1. **Server-Side Data Loading**: 
@@ -120,8 +131,9 @@ Components are organized in a flat structure:
      - `settings.svelte.ts` - Audio settings (oscillator voice selection, chord voicing)
      - `performance.svelte.ts` - Performance state (active chord display)
      - `audio.svelte.ts` - Audio engine with singleton AudioContext, reactive state, and volume control
-       - Exports `playChord(frequencies, oscillatorType, duration)` for frequency-based playback
-       - Exports `playChordByNotes(notes, oscillatorType, duration)` for note-name-based playback
+       - Exports `startChord(frequencies, oscillatorType, pointerId)` for continuous per-pointer playback
+       - Exports `stopChordById(pointerId)` and `stopChord()` to end playback
+       - Exports `setMasterVolume(volume)` and the reactive `audioState`
 
 4. **Audio Generation**: Uses Web Audio API with oscillator types (sine, triangle, square, sawtooth)
 
@@ -165,7 +177,7 @@ The project follows [Semantic Versioning](https://semver.org/):
 
 ### Files to Update When Versioning
 1. **package.json** - `version` field
-2. **src/routes/+page.svelte** - Version display in UI (bottom right)
+2. **src/lib/components/SettingsPanel.svelte** - Version display in UI (bottom right)
 3. **CHANGELOG.md** - Document all changes with date
 4. **README.md** - Update if there are user-facing changes
 5. **CLAUDE.md** - Update current version reference
@@ -201,10 +213,3 @@ Follow [Keep a Changelog](https://keepachangelog.com/) format:
 - Example: `GH_TOKEN="github_pat_..." gh pr view 8`
 - For merging with admin privileges: `GH_TOKEN="token_value" gh pr merge 8 --merge --admin`
 
-## Development Tools
-
-### Chrome DevTools Integration
-- Project includes `vite-plugin-devtools-json` for enhanced debugging
-- Automatically configures Chrome DevTools workspace settings
-- Improves source map integration and debugging experience
-- No additional configuration needed - works out of the box

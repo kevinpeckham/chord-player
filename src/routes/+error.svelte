@@ -4,6 +4,7 @@
 
 // import from svelte
 import { page } from "$app/state";
+
 import LinkButton from "$components/LinkButton.svelte";
 </script>
 

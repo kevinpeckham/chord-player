@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.9.1/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.1/schema.json",
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
@@ -7,35 +7,36 @@
 	},
 	"files": {
 		"maxSize": 2097152,
-		"ignoreUnknown": false,
-		"ignore": [
-			"**/~partytown/**",
-			"**/vite.config.js",
-			"**/.svelte-kit/**",
-			"**/output/**",
-			"**/.vercel/**",
-			"**/build/**",
-			"**/package/**",
-			"**/yarn.lock",
-			"**/package-lock.json",
-			"**/pnpm-lock.yaml",
-			"**/bun.lockb",
-			"**/npm-debug.log*",
-			"pnpm-debug.log*",
-			"**/static/**",
-			"**/dist/**",
-			"node_modules",
-			"out",
-			".vscode",
-			".DS_Store",
-			".env",
-			".env.local",
-			".env.development",
-			".env.test",
-			".env.production",
-			".env.*.local",
-			"data/",
-			"output"
+		"ignoreUnknown": true,
+		"includes": [
+			"**",
+			"!**/.claude",
+			"!**/~partytown",
+			"!**/vite.config.js",
+			"!**/.svelte-kit",
+			"!**/output",
+			"!**/.vercel",
+			"!**/build",
+			"!**/package",
+			"!**/yarn.lock",
+			"!**/package-lock.json",
+			"!**/pnpm-lock.yaml",
+			"!**/bun.lockb",
+			"!**/npm-debug.log*",
+			"!**/pnpm-debug.log*",
+			"!**/static",
+			"!**/dist",
+			"!**/node_modules",
+			"!**/out",
+			"!**/.vscode",
+			"!**/coverage",
+			"!**/.DS_Store",
+			"!**/.env",
+			"!**/.env.local",
+			"!**/.env.development",
+			"!**/.env.test",
+			"!**/.env.production",
+			"!**/.env.*.local"
 		]
 	},
 	"formatter": {
@@ -43,17 +44,75 @@
 		"indentStyle": "tab",
 		"indentWidth": 2
 	},
-	"organizeImports": {
-		"enabled": true
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": {
+					"level": "on",
+					"options": {
+						"groups": [
+							{ "type": false, "source": ["$app/**", "$env/**"] },
+							":BLANK_LINE:",
+							{
+								"type": false,
+								"source": [
+									"svelte",
+									"svelte/**",
+									"@sveltejs/kit",
+									"@sveltejs/kit/**",
+									"vite",
+									"vite/**"
+								]
+							},
+							":BLANK_LINE:",
+							{
+								"type": false,
+								"source": ["unocss", "unocss/**", "uno.css", "@unocss/**"]
+							},
+							":BLANK_LINE:",
+							{
+								"type": false,
+								"source": ["$components/**", "$lib/components/**"]
+							},
+							":BLANK_LINE:",
+							{
+								"type": false,
+								"source": ["$stores/**", "$lib/stores/**"]
+							},
+							":BLANK_LINE:",
+							{
+								"type": false,
+								"source": ["$utils", "$utils/**", "$lib/utils/**"]
+							},
+							":BLANK_LINE:",
+							{ "type": true, "source": ["**"] },
+							":BLANK_LINE:",
+							{ "type": false, "source": ["$data/**", "$lib/data/**"] },
+							":BLANK_LINE:",
+							{ "type": false, "source": ["$assets/**", "$lib/assets/**"] },
+							[":ALIAS:"]
+						]
+					}
+				}
+			}
+		}
 	},
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true,
+			"preset": "recommended",
+			"a11y": {
+				"noSvgWithoutTitle": "off"
+			},
 			"style": {
 				"useConst": "off",
 				"useImportType": "off"
 			}
+		}
+	},
+	"html": {
+		"formatter": {
+			"enabled": true
 		}
 	},
 	"javascript": {
@@ -75,9 +134,13 @@
 	},
 	"overrides": [
 		{
-			"include": ["*.svelte", "*.astro", "*.vue"],
+			"includes": ["**/*.svelte", "**/*.astro", "**/*.vue"],
 			"linter": {
 				"rules": {
+					"correctness": {
+						"noUnusedVariables": "off",
+						"noUnusedImports": "off"
+					},
 					"style": {
 						"useConst": "off",
 						"useImportType": "off"
@@ -86,14 +149,11 @@
 			}
 		},
 		{
-			"include": ["tests/**/*", "**/*.test.*", "**/*.spec.*"],
+			"includes": ["**/*.test.*", "**/*.spec.*"],
 			"linter": {
 				"rules": {
 					"suspicious": {
 						"noExplicitAny": "off"
-					},
-					"performance": {
-						"noDelete": "off"
 					}
 				}
 			}

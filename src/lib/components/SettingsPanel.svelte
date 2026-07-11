@@ -1,7 +1,9 @@
 <script lang="ts">
 // import settings
-import { settings } from "$stores/settings.svelte";
+
 import VoicingSelector from "$components/VoicingSelector.svelte";
+
+import { settings } from "$stores/settings.svelte";
 </script>
 
 <div class="grid grid-cols-1 gap-6 page-x-padding pt-4">
@@ -78,6 +80,22 @@ import VoicingSelector from "$components/VoicingSelector.svelte";
 		<VoicingSelector />
 	{/if}
 
+	<!-- Seventh Type (only in chords mode) -->
+	{#if settings.mode === "chords"}
+		<div class="flex flex-col gap-2">
+			<label for="seventh-type-select" class="text-sm opacity-80">Seventh Type</label>
+			<select
+				id="seventh-type-select"
+				bind:value={settings.seventhType}
+				class="bg-primary/20 border border-neutral-100/20 rounded px-3 py-2 text-sm"
+			>
+				<option value="dominant">Dominant 7th (C7)</option>
+				<option value="major7">Major 7th (Cmaj7)</option>
+			</select>
+			<p class="text-xs opacity-60">Hold Shift or the 7 pad while playing to add sevenths. Minor chords always use m7.</p>
+		</div>
+	{/if}
+
 	<!-- Octave Selection (only in notes mode) -->
 	{#if settings.mode === "notes"}
 		<div class="flex flex-col gap-2">
@@ -95,5 +113,5 @@ import VoicingSelector from "$components/VoicingSelector.svelte";
 	{/if}
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.3.6</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.5.0</div>
 </div>

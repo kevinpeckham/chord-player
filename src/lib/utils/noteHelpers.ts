@@ -56,16 +56,3 @@ export function getNoteForPosition(position: number, octave = 4) {
 		noteWithOctave,
 	};
 }
-
-/**
- * Play a single note (wrapper around the chord player)
- */
-export function playNote(
-	frequency: number,
-	oscillatorType: OscillatorType,
-	duration?: number,
-) {
-	// We'll import and use the playChord function with a single frequency
-	// This will be called from the Instrument component
-	return { frequency, oscillatorType, duration };
-}

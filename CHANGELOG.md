@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-07-11
+
+### Added
+- Seventh chords as a momentary performance modifier:
+  - **Desktop**: hold Shift while clicking (or while chords are sounding — held chords re-voice live)
+  - **Touch**: hold the new on-screen "7" pad, or land a second finger on an already-sounding wedge to upgrade just that chord (lifting it returns to the triad)
+  - Major wedges play dominant 7ths by default; a new "Seventh Type" setting switches them to major 7ths (Cmaj7). Minor wedges always play m7.
+  - Center display shows chord symbols while active (C7, Cmaj7, Am7)
+- `SeventhPad` component (hold-to-activate, keyboard accessible, shown in chords mode)
+- `sevenths` utility computing seventh frequencies from the chord root at play time (works with every voicing style, 2-decimal precision)
+
+## [0.4.0] - 2026-07-10
+
+### Added
+- Multi-pointer chord playback: multiple simultaneous touches each play and display their own chord, with per-pointer audio tracking (`stopChordById`)
+- Vitest 4 test infrastructure with two projects: `node` (unit tests, `*.test.ts`) and `components` (jsdom + Testing Library, `*.svelte.test.ts`)
+- Testing Library stack: `@testing-library/svelte`, `@testing-library/jest-dom`, `@testing-library/user-event`
+- Coverage via `@vitest/coverage-v8` (`bun run test:coverage`)
+- fallow code-quality tooling with `.fallowrc.json` config and scripts: `audit`, `audit:all`, `dead-code`, `dupes`, `health`, `fallow:fix`
+- GitHub Actions `fallow.yml` workflow uploading SARIF to Code Scanning
+
+### Changed
+- Upgraded toolchain to match current project standards: Biome 2.5, Vite 8, TypeScript 6, Svelte 5.56, SvelteKit 2.67, UnoCSS 66.7, adapter-vercel 6
+- Replaced Bun test runner with Vitest (`bun run test` now runs `vitest run`)
+- Rewrote `biome.json` for the Biome 2 schema, with import organization groups
+- Split CI into parallel typecheck / biome / vitest / build jobs using `biome ci` and `--frozen-lockfile`
+- Node engine requirement raised to 24.x
+
+### Removed
+- `vite-plugin-devtools-json` (unmaintained fit with Vite 8; not part of the standard toolchain)
+
+### Fixed
+- Sharp minor chords (F♯m, C♯m, G♯m) never received their rich voicing or inversions — the voicing gate regex rejected the project's `s`-spelled chord ids, silently falling back to the standard triad
+- Global pointer/touch safety-net listeners leaked on component destroy (capture-flag mismatch on removal, anonymous handler); listeners now attach via `<svelte:document>` so Svelte manages their lifecycle
+- Dead `?? 0` fallback on wedge index lookup (`Number(undefined)` is `NaN`, which `??` does not catch)
+- Lint cleanups: dead variables in `enharmonics.ts` and `chordEnhancer.ts`, missing `parseInt` radix arguments, unused catch bindings in the audio store
+
+### Testing
+- 161-test suite: unit tests for all music utilities and server chord data (voicing math, SVG geometry, enharmonic spelling, interval-ratio proofs) plus jsdom component tests for every component and rune store, including a fully stubbed Web Audio engine
+- Coverage reporting across all source (91% statements); fallow health accepts the coverage report for exact CRAP scores
+
+### Code Health
+- Refactored all fallow complexity hot-spots: `chordsData` (major/minor voicing duplication extracted to one helper), `generateChordEnhancements` (one small builder per voicing), `startChord` (dedup check, resume, and oscillator construction extracted), `playChordFromElement` (split into notes-mode and chords-mode paths), `LinkButton` (attribute fallbacks moved to `$derived`)
+- Audio unlock consolidated into the store (`unlockAudio`); the Instrument no longer constructs a throwaway AudioContext
+- Layout `use:` action converted to an `{@attach}` attachment; document listeners use `<svelte:document>`
+- fallow audit gate is clean; the one remaining health note (Instrument's single-SVG template size) is suppressed with rationale pending planned componentization
+
 ## [0.3.6] - 2025-01-22
 
 ### Fixed

@@ -1,4 +1,9 @@
 <!--
+The template is one cohesive SVG instrument — 24 wedges + labels drawn from
+the same geometry; splitting it into subcomponents is planned feature work.
+-->
+<!-- fallow-ignore-next-line complexity -->
+<!--
 @component
 SVG Circle of Fifths
 - This component renders a circle of fifths svg element
@@ -12,9 +17,15 @@ SVG Circle of Fifths
 
 <script lang='ts'>
 // stores
-import { settings } from "$stores/settings.svelte";
+
+import {
+	startChord,
+	stopChord,
+	stopChordById,
+	unlockAudio,
+} from "$stores/audio.svelte";
 import { performance } from "$stores/performance.svelte";
-import { startChord, stopChord } from "$stores/audio.svelte";
+import { settings } from "$stores/settings.svelte";
 
 // types
 import type { Chord, VoicingFrequencies } from "$lib/types/Chord";
@@ -25,86 +36,190 @@ interface Props {
 }
 let { chords }: Props = $props();
 
+import { untrack } from "svelte";
+
 // import utils
 import { textCoords, wedgePath } from "$utils/circleGeometry";
-import { getNoteForPosition, CHROMATIC_NOTES } from "$utils/noteHelpers";
 import { processChordEnharmonics } from "$utils/enharmonics";
+import { CHROMATIC_NOTES, getNoteForPosition } from "$utils/noteHelpers";
+import { seventhChordName, withSeventh } from "$utils/sevenths";
 
-// Track active playback
-let maxDurationTimeout: ReturnType<typeof setTimeout> | null = null;
-let isPointerDown = $state(false);
-let currentActiveElement: SVGPathElement | null = null;
-let currentActiveId: string | null = null;
-let isSwitchingChord = false;
+// Track active playback - Map pointer IDs to their elements and chord names
+const activePointers = $state(
+	new Map<
+		number,
+		{
+			element: SVGPathElement;
+			elementId: string;
+			chordName: string;
+			// Per-pointer seventh upgrade (a second finger on this wedge)
+			seventh: boolean;
+		}
+	>(),
+);
+let currentPointerId = $state<number | null>(null);
+
+// Second-finger seventh upgrades: upgrade pointer ID -> chord pointer ID.
+// Not reactive state — consulted only inside event handlers.
+const seventhUpgrades = new Map<number, number>();
+
+// Derived state for displaying all active chords
+const activeChordNames = $derived(() => {
+	const names = Array.from(activePointers.values())
+		.map((p) => p.chordName)
+		.filter((n) => n);
+	return names.length > 0 ? names.join(" + ") : "";
+});
 
 //- interaction functions
-function playChordFromElement(element: SVGPathElement) {
-	const index = Number(element.dataset.index) ?? 0;
 
+// Record what this pointer is sounding and refresh the center display
+function setPointerChordName(pointerId: number, chordName: string) {
+	const pointerInfo = activePointers.get(pointerId);
+	if (pointerInfo) {
+		pointerInfo.chordName = chordName;
+	}
+	performance.activeChord = activeChordNames();
+}
+
+// Notes mode: play the single note at this wedge position
+function playNoteAtIndex(index: number, pointerId: number) {
+	const noteData = getNoteForPositionWithKeyCenter(index);
+	setPointerChordName(pointerId, `${noteData.display}${settings.noteOctave}`);
+	startChord(
+		[noteData.frequency],
+		settings.activeVoice as OscillatorType,
+		pointerId,
+	);
+}
+
+// True when this pointer should sound a seventh: the global momentary
+// modifier (Shift / the 7 pad) or a second finger held on this wedge
+function seventhIsActive(pointerId: number): boolean {
+	return (
+		performance.seventhHeld || (activePointers.get(pointerId)?.seventh ?? false)
+	);
+}
+
+// Display name for a wedge chord ("C major", or "C7"/"Cmaj7"/"Am7" with the
+// seventh modifier)
+function chordDisplayName(
+	datum: Chord,
+	mode: "major" | "minor",
+	seventh: boolean,
+): string {
+	const display = mode === "major" ? datum.majorDisplay : datum.minorDisplay;
+	if (seventh) return seventhChordName(display, mode, settings.seventhType);
+	return mode === "major" ? `${display} major` : display.replace("m", " minor");
+}
+
+// Frequencies for a wedge chord in the selected voicing, seventh-aware
+function chordFrequencies(
+	datum: Chord,
+	mode: "major" | "minor",
+	seventh: boolean,
+): number[] {
+	const voicings = datum[`${mode}Voicings`] as VoicingFrequencies;
+	const base = voicings[settings.chordVoicing] || voicings.standard;
+	if (!seventh) return base;
+	const rootFrequency = (datum[`${mode}Frequencies`] as number[])[0];
+	return withSeventh(base, rootFrequency, mode, settings.seventhType);
+}
+
+// Chords mode: play the major/minor chord at this wedge position using the
+// selected voicing, adding the seventh when the modifier is active
+function playChordAtIndex(index: number, mode: string, pointerId: number) {
+	if (!reorderedChords || reorderedChords.length === 0) return;
+	const datum = reorderedChords[index];
+	if (!datum) return;
+	if (mode !== "major" && mode !== "minor") return;
+
+	const seventh = seventhIsActive(pointerId);
+	setPointerChordName(pointerId, chordDisplayName(datum, mode, seventh));
+	startChord(
+		chordFrequencies(datum, mode, seventh),
+		settings.activeVoice as OscillatorType,
+		pointerId,
+	);
+}
+
+function playChordFromElement(element: SVGPathElement, pointerId: number) {
+	const index = Number(element.dataset.index ?? 0);
 	if (settings.mode === "notes") {
-		// Individual notes mode
-		const noteData = getNoteForPositionWithKeyCenter(index);
-		performance.activeChord = `${noteData.display}${settings.noteOctave}`;
-
-		// Start playing single note
-		startChord([noteData.frequency], settings.activeVoice as OscillatorType);
+		playNoteAtIndex(index, pointerId);
 	} else {
-		// Chords mode - use reordered chords
-		if (!reorderedChords || reorderedChords.length === 0) return;
-
-		const datum = reorderedChords[index];
-		if (!datum) return;
-
-		const mode = element.dataset.mode ?? "";
-
-		// display active chord name
-		if (mode === "major") {
-			const chord = datum.majorDisplay;
-			performance.activeChord = `${chord} major`;
-		} else if (mode === "minor") {
-			const chord = datum.minorDisplay;
-			const chordAdjusted = chord.replace("m", " minor");
-			performance.activeChord = chordAdjusted;
-		} else {
-			performance.activeChord = "";
-			return;
-		}
-
-		// start chord using the audio store with selected voicing
-		const voicings = datum[`${mode}Voicings`] as VoicingFrequencies;
-		const frequencies = voicings[settings.chordVoicing] || voicings.standard;
-		startChord(frequencies, settings.activeVoice as OscillatorType);
+		playChordAtIndex(index, element.dataset.mode ?? "", pointerId);
 	}
 }
 
+// Flag to track if we've had first user interaction
+let hasInitializedAudio = false;
+
 function onPressStart(event: PointerEvent) {
+	// Delegated from the SVG root — only wedge paths carry data-index;
+	// presses on the background or non-interactive layers are ignored
+	const target = event.target as SVGPathElement;
+	if (!target.dataset?.index) return;
+
 	event.preventDefault();
 	event.stopPropagation();
 
-	const target = event.target as SVGPathElement;
-	isPointerDown = true;
-	currentActiveElement = target;
-	currentActiveId = target.id;
+	const pointerId = event.pointerId;
 
-	// Stop any existing chord first
-	stopChord();
-
-	// Play the new chord
-	playChordFromElement(target);
-
-	// Set a maximum duration timeout as failsafe (5 seconds)
-	if (maxDurationTimeout) {
-		clearTimeout(maxDurationTimeout);
+	// A second finger on a wedge that is already sounding upgrades that
+	// chord to its seventh (released again, it drops back to the triad)
+	if (settings.mode === "chords") {
+		const upgradeTarget = Array.from(activePointers.entries()).find(
+			([id, info]) => id !== pointerId && info.elementId === target.id,
+		);
+		if (upgradeTarget) {
+			const [targetPointerId, targetInfo] = upgradeTarget;
+			seventhUpgrades.set(pointerId, targetPointerId);
+			targetInfo.seventh = true;
+			playChordFromElement(targetInfo.element, targetPointerId);
+			return;
+		}
 	}
-	maxDurationTimeout = setTimeout(() => {
-		stopChord();
-		performance.activeChord = "";
-		maxDurationTimeout = null;
-	}, 5000);
+
+	// Initialize audio on very first interaction
+	if (!hasInitializedAudio) {
+		hasInitializedAudio = true;
+		unlockAudio();
+
+		// Delay first chord to let audio initialize
+		setTimeout(() => {
+			// Track this pointer
+			activePointers.set(pointerId, {
+				element: target,
+				elementId: target.id,
+				chordName: "",
+				seventh: false,
+			});
+			currentPointerId = pointerId;
+			playChordFromElement(target, pointerId);
+		}, 150);
+		return;
+	}
+
+	// Track this pointer with empty chord name initially
+	activePointers.set(pointerId, {
+		element: target,
+		elementId: target.id,
+		chordName: "",
+		seventh: false,
+	});
+	currentPointerId = pointerId;
+
+	// Play the new chord with this pointer ID
+	playChordFromElement(target, pointerId);
 }
 
 function onPointerMove(event: PointerEvent) {
-	if (!isPointerDown) return;
+	const pointerId = event.pointerId;
+	const pointerInfo = activePointers.get(pointerId);
+
+	// Only process if we're tracking this pointer
+	if (!pointerInfo) return;
 
 	event.preventDefault();
 	event.stopPropagation();
@@ -122,115 +237,105 @@ function onPointerMove(event: PointerEvent) {
 		);
 	}) as SVGPathElement | undefined;
 
-	if (element) {
-		const elementId = element.id;
-		if (elementId !== currentActiveId) {
-			// Mark that we're switching
-			isSwitchingChord = true;
+	if (element && element.id !== pointerInfo.elementId) {
+		// Update the tracked element for this pointer (keep the chord name
+		// and any seventh upgrade)
+		activePointers.set(pointerId, {
+			element,
+			elementId: element.id,
+			chordName: pointerInfo.chordName,
+			seventh: pointerInfo.seventh,
+		});
 
-			// Clear existing timeout
-			if (maxDurationTimeout) {
-				clearTimeout(maxDurationTimeout);
-				maxDurationTimeout = null;
-			}
-
-			// Update active element
-			currentActiveElement = element;
-			currentActiveId = elementId;
-
-			// Play new chord (this will stop the previous one internally)
-			playChordFromElement(element);
-
-			// Set new timeout
-			maxDurationTimeout = setTimeout(() => {
-				stopChord();
-				performance.activeChord = "";
-				maxDurationTimeout = null;
-			}, 5000);
-
-			// Reset switching flag after a brief delay
-			setTimeout(() => {
-				isSwitchingChord = false;
-			}, 100);
-		}
+		// Play new chord (this will stop the previous chord for this pointer)
+		playChordFromElement(element, pointerId);
 	}
+}
+
+// Shared release logic for chord pointers and seventh-upgrade pointers.
+// Returns true when the pointer was one of ours.
+function releasePointer(pointerId: number): boolean {
+	// Lifting a seventh-upgrade finger drops its chord back to the triad
+	const targetPointerId = seventhUpgrades.get(pointerId);
+	if (targetPointerId !== undefined) {
+		seventhUpgrades.delete(pointerId);
+		const targetInfo = activePointers.get(targetPointerId);
+		if (targetInfo) {
+			targetInfo.seventh = false;
+			playChordFromElement(targetInfo.element, targetPointerId);
+		}
+		return true;
+	}
+
+	if (!activePointers.has(pointerId)) return false;
+
+	// Stop the chord for this pointer and drop any upgrade aimed at it
+	stopChordById(pointerId);
+	activePointers.delete(pointerId);
+	for (const [upgradeId, chordId] of seventhUpgrades) {
+		if (chordId === pointerId) seventhUpgrades.delete(upgradeId);
+	}
+
+	// Update display
+	performance.activeChord = activeChordNames();
+
+	// Clear current pointer if it was this one
+	if (currentPointerId === pointerId) {
+		currentPointerId = null;
+	}
+	return true;
 }
 
 function onPressEnd(event: PointerEvent) {
-	// Only handle if we're actually tracking a pointer down
-	if (!isPointerDown) return;
-
-	event.preventDefault();
-	event.stopPropagation();
-
-	isPointerDown = false;
-	currentActiveElement = null;
-	currentActiveId = null;
-
-	// Clear any timeout
-	if (maxDurationTimeout) {
-		clearTimeout(maxDurationTimeout);
-		maxDurationTimeout = null;
+	if (releasePointer(event.pointerId)) {
+		event.preventDefault();
+		event.stopPropagation();
 	}
-
-	// Stop the chord immediately
-	stopChord();
-
-	// Clear the display immediately
-	performance.activeChord = "";
 }
 
-// Global safety net for pointer events
+// Global safety net for pointer events that end outside the SVG
 function handleGlobalPointerUp(event: PointerEvent) {
-	// Only act as safety net if we were tracking a pointer down and not switching
-	if (!isPointerDown || isSwitchingChord) return;
+	releasePointer(event.pointerId);
+}
 
-	// Safety net - stop any playing chord
-	stopChord();
-	performance.activeChord = "";
-	isPointerDown = false;
-	currentActiveElement = null;
-	currentActiveId = null;
+// Shift is the desktop seventh modifier: held = sevenths, released = triads
+function onWindowKeyDown(event: KeyboardEvent) {
+	if (event.key === "Shift") performance.seventhHeld = true;
+}
+function onWindowKeyUp(event: KeyboardEvent) {
+	if (event.key === "Shift") performance.seventhHeld = false;
+}
+// Don't leave the modifier stuck on when focus leaves (e.g. cmd-tab)
+function onWindowBlur() {
+	performance.seventhHeld = false;
+}
 
-	// Clear timeout
-	if (maxDurationTimeout) {
-		clearTimeout(maxDurationTimeout);
-		maxDurationTimeout = null;
+// Re-voice held chords when the seventh modifier or quality changes, so
+// pressing/releasing Shift (or the 7 pad) upgrades sounding chords live.
+// Legitimate effect: it drives the external audio engine; untrack keeps the
+// replay's own state reads/writes out of the dependency set.
+$effect(() => {
+	const _seventhHeld = performance.seventhHeld;
+	const _seventhType = settings.seventhType;
+	untrack(() => {
+		for (const [pointerId, info] of activePointers) {
+			playChordFromElement(info.element, pointerId);
+		}
+	});
+});
+
+// Prevent browser touch defaults (e.g. double-tap zoom) while chords are held
+function handleGlobalTouchEnd(e: TouchEvent) {
+	if (activePointers.size > 0) {
+		e.preventDefault();
 	}
 }
 
-// Lifecycle - setup global listeners
+// Global listeners live on <svelte:document> below; here we only ensure
+// any playing chord is silenced when the component unmounts.
 $effect(() => {
-	// Add global pointer up listener as safety net
-	document.addEventListener("pointerup", handleGlobalPointerUp, {
-		capture: true,
-		passive: false,
-	});
-
-	// Add touch-specific handling for better mobile support
-	document.addEventListener(
-		"touchend",
-		(e) => {
-			if (isPointerDown) {
-				e.preventDefault();
-				onPressEnd(e as unknown as PointerEvent);
-			}
-		},
-		{ passive: false },
-	);
-
-	// Cleanup function
 	return () => {
-		// Clean up global listeners
-		document.removeEventListener("pointerup", handleGlobalPointerUp);
-		// Ensure any playing chord is stopped
 		stopChord();
-
-		// Clear any timeout
-		if (maxDurationTimeout) {
-			clearTimeout(maxDurationTimeout);
-			maxDurationTimeout = null;
-		}
 	};
 });
 
@@ -324,7 +429,23 @@ function getNoteForPositionWithKeyCenter(position: number) {
 }
 </script>
 
+<!-- Safety net for releases that happen outside the SVG; Svelte manages
+     add/remove of these document listeners with the component lifecycle -->
+<svelte:document
+	onpointerupcapture={handleGlobalPointerUp}
+	ontouchend={handleGlobalTouchEnd}
+/>
+
+<!-- Shift = momentary seventh modifier -->
+<svelte:window
+	onkeydown={onWindowKeyDown}
+	onkeyup={onWindowKeyUp}
+	onblur={onWindowBlur}
+/>
+
 <svg
+	aria-label="Circle of Fifths"
+	role="application"
 	id="instrument-circle-of-fifths"
 	class="w-full h-auto aspect-square z-10 scale-[1.1] max-w-[860px] ios-touch-fix"
 	viewBox="0 0 400 400"
@@ -332,6 +453,7 @@ function getNoteForPositionWithKeyCenter(position: number) {
 	height="800"
 	width="800"
 	oncontextmenu={(e) => { e.preventDefault() }}
+	onpointerdown={onPressStart}
 	onpointermove={onPointerMove}
 	onpointerup={onPressEnd}
 	onpointercancel={onPressEnd}
@@ -348,10 +470,6 @@ function getNoteForPositionWithKeyCenter(position: number) {
 					d={wedgePath(180, 80, i)}
 					data-mode="note"
 					data-index={i}
-					onpointerdown={(e) => { onPressStart(e)}}
-					onpointerup={(e) => { onPressEnd(e)}}
-					onpointercancel={(e) => { onPressEnd(e)}}
-					oncontextmenu={(e) => { e.preventDefault() }}
 					id="note-button-{noteData.id}"
 					role="button"
 					tabindex={i + 100}
@@ -369,8 +487,6 @@ function getNoteForPositionWithKeyCenter(position: number) {
 						data-mode={m.mode}
 						data-chord={item[m.mode + 'Id']}
 						data-index={i}
-						onpointerdown={(e) => { onPressStart(e)}}
-						oncontextmenu={(e) => { e.preventDefault() }}
 						id="chord-button-{item[m.mode + 'Id']}"
 						role="button"
 						tabindex={Number(index + 1) * 100 + Number(i)}

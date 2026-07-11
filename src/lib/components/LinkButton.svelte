@@ -33,12 +33,24 @@ let {
 	classes = null,
 	format = "outline", // solid | outline
 }: Props = $props();
+
+// derived attribute values (kept out of the template)
+const href = $derived(link?.href ?? link?.url ?? null);
+const rel = $derived(link?.rel ?? null);
+const target = $derived(link?.target ?? null);
+const title = $derived(link?.title ?? null);
+const show = $derived(Boolean(link && (link.label || children)));
+const formatClasses = $derived(
+	format === "outline"
+		? "border-current hover:text-accent"
+		: "text-primary font-500 bg-accent border-accent hover:opacity-90",
+);
 </script>
 
-{#if link && (link.label || children)}
-<a
-			data-component="LinkButton"
-			class="
+{#if show && link}
+	<a
+		data-component="LinkButton"
+		class="
 			border
 			border-[.1rem]
 			flex-none
@@ -51,24 +63,22 @@ let {
 			rounded-md
 			text-0.85rem
 			w-fit
-			{format === 'outline' ? 'border-current hover:text-accent' : 'text-primary font-500 bg-accent border-accent hover:opacity-90'}
-
-
 			focus-visible:outline-offset-4
+			{formatClasses}
 			{classes}"
-			href={link?.href ?? link.url ?? null}
-			rel={link.rel ?? null}
-			target={link.target ?? null}
-			title={link.title ?? null}
-		>
-			<!-- label -->
-			{#if link.label}
-				<span class="truncate">{link.label}</span>
-			{/if}
+		{href}
+		{rel}
+		{target}
+		{title}
+	>
+		<!-- label -->
+		{#if link.label}
+			<span class="truncate">{link.label}</span>
+		{/if}
 
-			<!-- children -->
-			{#if children}
-				{@render children()}
-			{/if}
-		</a>
+		<!-- children -->
+		{#if children}
+			{@render children()}
+		{/if}
+	</a>
 {/if}

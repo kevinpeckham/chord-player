@@ -4,21 +4,15 @@ import "uno.css";
 
 // types
 import type { Snippet } from "svelte";
-import type { LayoutServerData } from "./$types";
 
 interface Props {
 	children?: Snippet | null;
-	data: LayoutServerData;
 }
 
-// import child page data
-// import { page } from "$app/state";
+let { children = null }: Props = $props();
 
-// get data from load via props
-let { children = null, data }: Props = $props();
-
-// setup action
-const setUp = (node: HTMLDivElement) => {
+// attachment: runs once when the wrapper div mounts in the browser
+const setUp = (_node: Element) => {
 	// intercept innerHTML invocation
 	// to catch svelte-announcer being created and strip inline style
 	// to prevent CSP violation
@@ -43,26 +37,21 @@ const setUp = (node: HTMLDivElement) => {
 			}
 		},
 	});
-
-	// Prevent context menu on the entire document
-	const preventContextMenu = (e: Event) => {
-		e.preventDefault();
-	};
-	document.addEventListener("contextmenu", preventContextMenu);
-
-	// Cleanup
-	return {
-		destroy() {
-			document.removeEventListener("contextmenu", preventContextMenu);
-		},
-	};
 };
+
+// Prevent context menu on the entire document (iOS long-press protection);
+// attached via <svelte:document> so Svelte manages the listener lifecycle
+function preventContextMenu(e: Event) {
+	e.preventDefault();
+}
 </script>
 
 
+<svelte:document oncontextmenu={preventContextMenu} />
+
 <!-- slot -->
 {#if children}
-	<div use:setUp class="contents">
+	<div {@attach setUp} class="contents">
 		{@render children()}
 	</div>
 {/if}

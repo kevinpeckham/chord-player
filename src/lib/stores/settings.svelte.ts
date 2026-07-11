@@ -9,6 +9,7 @@ export const settings = $state({
 		| "bass"
 		| "rootBass",
 	mode: "chords" as "chords" | "notes",
+	seventhType: "dominant" as "dominant" | "major7",
 	noteOctave: 4,
 	keyCenter: "C" as
 		| "C"
@@ -25,11 +26,3 @@ export const settings = $state({
 		| "B",
 	keyCenterPosition: "bottom" as "top" | "bottom",
 });
-
-// functions to change settings
-export function changeVoice(newVoice: typeof settings.activeVoice) {
-	settings.activeVoice = newVoice;
-}
-
-// type for settings
-export type Settings = typeof settings;

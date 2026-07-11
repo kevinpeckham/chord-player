@@ -1,38 +1,73 @@
-name: CI
+name: ci
 
 on:
   pull_request:
-    branches: [ main ]
   push:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
-  quality:
+  check:
+    name: typecheck
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      
       - name: Install dependencies
-        run: bun install
-      
-      - name: Format check
-        run: bun run format
-      
-      - name: Lint
-        run: bun run lint
-      
-      - name: Type check
-        run: bun check
-      
-      - name: Build
+        run: bun install --frozen-lockfile
+      - name: svelte-check
+        run: bun run check
+
+  lint:
+    name: biome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      # `biome ci` = lint + format + import-organize check, no `--write`.
+      # Fails on anything not already clean (run `bun run lint` / `bunx biome
+      # check --write .` locally to fix).
+      - name: biome ci
+        run: bunx biome ci .
+
+  test:
+    name: vitest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      # tsconfig.json extends ./.svelte-kit/tsconfig.json, which `svelte-kit
+      # sync` generates. Without it, vitest's transform fails with "Tsconfig not
+      # found". (Locally it exists from dev/build; a clean runner has neither.)
+      - name: Sync SvelteKit
+        run: bunx svelte-kit sync
+      # GitHub sets CI=true, so vitest.config.ts configures only the `node`
+      # project here. The jsdom `components` project is excluded in CI — see the
+      # comment in vitest.config.ts. It runs locally via `bun run test`.
+      - name: vitest --run
+        run: bun run test
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: vite build
         run: bun run build
-      
-      - name: Test
-        run: bun test
