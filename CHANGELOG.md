@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-07-11
+
+### Fixed
+- Sliding from a held chord to another wedge left the second chord stuck on (unstoppable even after release): the first chord's fade-out cleanup deleted the pointer's tracking entry after the replacement chord had reused it, orphaning the new oscillators. The cleanup now only removes the entry if it still belongs to the chord being cleaned up.
+- Releasing the very first press before the 150ms audio-unlock delay elapsed started the chord after the pointer was already up, sticking it on. The pointer is now tracked immediately, so an early release cancels the pending chord.
+
 ## [0.5.0] - 2026-07-11
 
 ### Added

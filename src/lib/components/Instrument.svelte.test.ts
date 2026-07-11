@@ -210,6 +210,22 @@ describe("Instrument", () => {
 			expect(performanceStore.activeChord).toBe("");
 		});
 
+		// Regression: releasing before the 150ms unlock delay elapsed used to
+		// start the chord after the pointer was already up, sticking it on
+		it("does not start a chord if the pointer is released during the unlock delay", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			const cWedge = container.querySelector('[id="chord-button-C"]');
+			if (!cWedge) throw new Error("C wedge not found");
+
+			cWedge.dispatchEvent(pointerEvent("pointerdown", 1));
+			cWedge.dispatchEvent(pointerEvent("pointerup", 1));
+			vi.advanceTimersByTime(FIRST_INTERACTION_DELAY_MS);
+			await tick();
+
+			expect(startChord).not.toHaveBeenCalled();
+			expect(performanceStore.activeChord).toBe("");
+		});
+
 		it("first pointerdown delays playback by 150ms (audio unlock), then starts the chord", async () => {
 			const { container } = render(Instrument, { chords: chordsData });
 			const cWedge = container.querySelector('[id="chord-button-C"]');

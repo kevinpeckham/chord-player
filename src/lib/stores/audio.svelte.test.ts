@@ -275,6 +275,33 @@ describe("audio store", () => {
 			expect(audio.audioState.isPlaying).toBe(false);
 		});
 
+		// Regression: sliding between wedges restarts the chord under the same
+		// pointer ID while the previous chord's fade cleanup is still pending.
+		// That cleanup used to delete the pointer's map entry unconditionally,
+		// orphaning the replacement chord as an unstoppable drone.
+		it("does not orphan a replacement chord started during the fade cleanup window", async () => {
+			const audio = await freshStore();
+			await audio.startChord(C_MAJOR, "sine", 1); // press chord A
+			await audio.startChord(A_MINOR, "sine", 1); // slide to chord B
+
+			// Chord A's cleanup timer fires while B is sounding
+			vi.advanceTimersByTime(CLEANUP_MS);
+
+			// Releasing the pointer must still stop chord B
+			const ctx = FakeAudioContext.instances[0];
+			const chordBOscillators = ctx.createdOscillators.slice(C_MAJOR.length);
+			expect(chordBOscillators).toHaveLength(A_MINOR.length);
+
+			audio.stopChordById(1);
+			for (const osc of chordBOscillators) {
+				expect(osc.stop).toHaveBeenCalled();
+			}
+
+			vi.advanceTimersByTime(CLEANUP_MS);
+			expect(audio.audioState.isPlaying).toBe(false);
+			expect(audio.audioState.activeNoteCount).toBe(0);
+		});
+
 		it("keeps other pointers' chords playing", async () => {
 			const audio = await freshStore();
 			await audio.startChord(C_MAJOR, "sine", 1);

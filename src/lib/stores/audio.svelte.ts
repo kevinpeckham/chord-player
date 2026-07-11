@@ -265,7 +265,13 @@ export function stopChordById(pointerId: number): void {
 			} catch {
 				// Already disconnected
 			}
-			activeChords.delete(pointerId);
+			// Only remove the map entry if it still belongs to the chord being
+			// cleaned up — a replacement chord (e.g. sliding between wedges)
+			// may have reused this pointer ID while the fade was in flight,
+			// and deleting its entry would orphan it as an unstoppable drone
+			if (activeChords.get(pointerId) === chord) {
+				activeChords.delete(pointerId);
+			}
 			audioState.activeNoteCount = activeOscillators.size;
 			audioState.isPlaying = activeOscillators.size > 0;
 		},
