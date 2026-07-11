@@ -11,8 +11,8 @@ interface Props {
 
 let { children = null }: Props = $props();
 
-// setup action
-const setUp = (_node: HTMLDivElement) => {
+// attachment: runs once when the wrapper div mounts in the browser
+const setUp = (_node: Element) => {
 	// intercept innerHTML invocation
 	// to catch svelte-announcer being created and strip inline style
 	// to prevent CSP violation
@@ -51,7 +51,7 @@ function preventContextMenu(e: Event) {
 
 <!-- slot -->
 {#if children}
-	<div use:setUp class="contents">
+	<div {@attach setUp} class="contents">
 		{@render children()}
 	</div>
 {/if}

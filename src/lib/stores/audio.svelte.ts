@@ -63,6 +63,27 @@ function updateMasterGainVolume(): void {
 	}
 }
 
+// Unlock audio on the first user gesture (iOS Safari requires a sound to be
+// scheduled inside the gesture before the context will produce audio). Plays
+// a 10ms silent oscillator on the store's own context and resumes it.
+export function unlockAudio(): void {
+	try {
+		const ctx = initializeAudio();
+		const osc = ctx.createOscillator();
+		const gain = ctx.createGain();
+		gain.gain.value = 0; // Silent
+		osc.connect(gain);
+		gain.connect(ctx.destination);
+		osc.start();
+		osc.stop(ctx.currentTime + 0.01);
+		if (ctx.state === "suspended") {
+			ctx.resume();
+		}
+	} catch (e) {
+		console.error("Failed to unlock audio:", e);
+	}
+}
+
 // Reactive volume control (0-1)
 export function setMasterVolume(volume: number): void {
 	audioState.masterVolume = Math.max(0, Math.min(1, volume));

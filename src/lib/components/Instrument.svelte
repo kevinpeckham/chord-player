@@ -13,7 +13,12 @@ SVG Circle of Fifths
 <script lang='ts'>
 // stores
 
-import { startChord, stopChord, stopChordById } from "$stores/audio.svelte";
+import {
+	startChord,
+	stopChord,
+	stopChordById,
+	unlockAudio,
+} from "$stores/audio.svelte";
 import { performance } from "$stores/performance.svelte";
 import { settings } from "$stores/settings.svelte";
 
@@ -122,27 +127,7 @@ function onPressStart(event: PointerEvent) {
 	// Initialize audio on very first interaction
 	if (!hasInitializedAudio) {
 		hasInitializedAudio = true;
-		// Create a silent oscillator to unlock audio
-		try {
-			const ctx = new (
-				window.AudioContext ||
-				(window as unknown as { webkitAudioContext: typeof AudioContext })
-					.webkitAudioContext
-			)();
-			const osc = ctx.createOscillator();
-			const gain = ctx.createGain();
-			gain.gain.value = 0; // Silent
-			osc.connect(gain);
-			gain.connect(ctx.destination);
-			osc.start();
-			osc.stop(ctx.currentTime + 0.01);
-			// Resume if needed
-			if (ctx.state === "suspended") {
-				ctx.resume();
-			}
-		} catch (e) {
-			console.error("Failed to initialize audio:", e);
-		}
+		unlockAudio();
 
 		// Delay first chord to let audio initialize
 		setTimeout(() => {

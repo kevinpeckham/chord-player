@@ -37,29 +37,15 @@ vi.mock("$stores/audio.svelte", () => ({
 	startChord: vi.fn(),
 	stopChord: vi.fn(),
 	stopChordById: vi.fn(),
+	unlockAudio: vi.fn(),
 }));
 
-import { startChord, stopChord, stopChordById } from "$stores/audio.svelte";
-
-// Minimal AudioContext stub for the component's own "silent oscillator"
-// audio-unlock path on first interaction.
-class FakeAudioContext {
-	state = "running";
-	currentTime = 0;
-	destination = {};
-	createGain() {
-		return { gain: { value: 0 }, connect: vi.fn(), disconnect: vi.fn() };
-	}
-	createOscillator() {
-		return {
-			connect: vi.fn(),
-			start: vi.fn(),
-			stop: vi.fn(),
-			frequency: { setValueAtTime: vi.fn() },
-		};
-	}
-	resume = vi.fn(async () => {});
-}
+import {
+	startChord,
+	stopChord,
+	stopChordById,
+	unlockAudio,
+} from "$stores/audio.svelte";
 
 const FIRST_INTERACTION_DELAY_MS = 150;
 
@@ -100,7 +86,6 @@ function chordByMajorId(majorId: string) {
 describe("Instrument", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
-		vi.stubGlobal("AudioContext", FakeAudioContext);
 		vi.clearAllMocks();
 		performanceStore.activeChord = "";
 		settings.activeVoice = "sine";
@@ -215,6 +200,7 @@ describe("Instrument", () => {
 			if (!cWedge) throw new Error("C wedge not found");
 
 			cWedge.dispatchEvent(pointerEvent("pointerdown", 1));
+			expect(unlockAudio).toHaveBeenCalledTimes(1);
 			expect(startChord).not.toHaveBeenCalled();
 
 			vi.advanceTimersByTime(FIRST_INTERACTION_DELAY_MS);

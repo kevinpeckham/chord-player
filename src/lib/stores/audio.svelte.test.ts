@@ -147,6 +147,37 @@ describe("audio store", () => {
 		});
 	});
 
+	describe("unlockAudio", () => {
+		it("initializes the store's own context and plays a silent oscillator", async () => {
+			const audio = await freshStore();
+			audio.unlockAudio();
+
+			expect(FakeAudioContext.instances).toHaveLength(1);
+			const ctx = FakeAudioContext.instances[0];
+			expect(ctx.createdOscillators).toHaveLength(1);
+			const osc = ctx.createdOscillators[0];
+			expect(osc.start).toHaveBeenCalledTimes(1);
+			expect(osc.stop).toHaveBeenCalledWith(ctx.currentTime + 0.01);
+			// The unlock gain is muted — no audible blip
+			const unlockGain = ctx.createdGains.at(-1);
+			expect(unlockGain?.gain.value).toBe(0);
+		});
+
+		it("shares the singleton context with later playback", async () => {
+			const audio = await freshStore();
+			audio.unlockAudio();
+			await audio.startChord(C_MAJOR, "sine", 1);
+			expect(FakeAudioContext.instances).toHaveLength(1);
+		});
+
+		it("resumes a suspended context", async () => {
+			FakeAudioContext.initialState = "suspended";
+			const audio = await freshStore();
+			audio.unlockAudio();
+			expect(FakeAudioContext.instances[0].resume).toHaveBeenCalled();
+		});
+	});
+
 	describe("startChord", () => {
 		it("creates one oscillator per frequency with the requested type", async () => {
 			const audio = await freshStore();
