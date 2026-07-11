@@ -194,6 +194,20 @@ describe("Instrument", () => {
 	});
 
 	describe("chord playback", () => {
+		it("ignores presses outside a wedge (delegated pointerdown on the svg background)", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			const svg = container.querySelector("svg");
+			if (!svg) throw new Error("svg not found");
+
+			svg.dispatchEvent(pointerEvent("pointerdown", 1));
+			vi.advanceTimersByTime(FIRST_INTERACTION_DELAY_MS);
+			await tick();
+
+			expect(unlockAudio).not.toHaveBeenCalled();
+			expect(startChord).not.toHaveBeenCalled();
+			expect(performanceStore.activeChord).toBe("");
+		});
+
 		it("first pointerdown delays playback by 150ms (audio unlock), then starts the chord", async () => {
 			const { container } = render(Instrument, { chords: chordsData });
 			const cWedge = container.querySelector('[id="chord-button-C"]');

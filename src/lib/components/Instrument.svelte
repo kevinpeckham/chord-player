@@ -110,10 +110,14 @@ function playChordFromElement(element: SVGPathElement, pointerId: number) {
 let hasInitializedAudio = false;
 
 function onPressStart(event: PointerEvent) {
+	// Delegated from the SVG root — only wedge paths carry data-index;
+	// presses on the background or non-interactive layers are ignored
+	const target = event.target as SVGPathElement;
+	if (!target.dataset?.index) return;
+
 	event.preventDefault();
 	event.stopPropagation();
 
-	const target = event.target as SVGPathElement;
 	const pointerId = event.pointerId;
 
 	// Initialize audio on very first interaction
@@ -351,6 +355,7 @@ function getNoteForPositionWithKeyCenter(position: number) {
 	height="800"
 	width="800"
 	oncontextmenu={(e) => { e.preventDefault() }}
+	onpointerdown={onPressStart}
 	onpointermove={onPointerMove}
 	onpointerup={onPressEnd}
 	onpointercancel={onPressEnd}
@@ -367,10 +372,6 @@ function getNoteForPositionWithKeyCenter(position: number) {
 					d={wedgePath(180, 80, i)}
 					data-mode="note"
 					data-index={i}
-					onpointerdown={(e) => { onPressStart(e)}}
-					onpointerup={(e) => { onPressEnd(e)}}
-					onpointercancel={(e) => { onPressEnd(e)}}
-					oncontextmenu={(e) => { e.preventDefault() }}
 					id="note-button-{noteData.id}"
 					role="button"
 					tabindex={i + 100}
@@ -388,8 +389,6 @@ function getNoteForPositionWithKeyCenter(position: number) {
 						data-mode={m.mode}
 						data-chord={item[m.mode + 'Id']}
 						data-index={i}
-						onpointerdown={(e) => { onPressStart(e)}}
-						oncontextmenu={(e) => { e.preventDefault() }}
 						id="chord-button-{item[m.mode + 'Id']}"
 						role="button"
 						tabindex={Number(index + 1) * 100 + Number(i)}
