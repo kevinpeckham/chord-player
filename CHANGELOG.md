@@ -26,7 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `vite-plugin-devtools-json` (unmaintained fit with Vite 8; not part of the standard toolchain)
 
 ### Fixed
+- Sharp minor chords (F♯m, C♯m, G♯m) never received their rich voicing or inversions — the voicing gate regex rejected the project's `s`-spelled chord ids, silently falling back to the standard triad
+- Global pointer/touch safety-net listeners leaked on component destroy (capture-flag mismatch on removal, anonymous handler); listeners now attach via `<svelte:document>` so Svelte manages their lifecycle
+- Dead `?? 0` fallback on wedge index lookup (`Number(undefined)` is `NaN`, which `??` does not catch)
 - Lint cleanups: dead variables in `enharmonics.ts` and `chordEnhancer.ts`, missing `parseInt` radix arguments, unused catch bindings in the audio store
+
+### Testing
+- 158-test suite: unit tests for all music utilities and server chord data (voicing math, SVG geometry, enharmonic spelling, interval-ratio proofs) plus jsdom component tests for every component and rune store, including a fully stubbed Web Audio engine
 
 ## [0.3.6] - 2025-01-22
 
