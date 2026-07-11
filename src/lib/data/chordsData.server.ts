@@ -1,13 +1,12 @@
-// types
-
-import { generateChordEnhancements } from "$utils/chordEnhancer";
 // utilities
+import { generateChordEnhancements } from "$utils/chordEnhancer";
 import { generateFrequencyMap } from "$utils/frequencyGenerator";
 
-import type { Chord, ChordDatum } from "$types/Chord";
+// types
+import type { Chord, ChordDatum, VoicingFrequencies } from "$types/Chord";
 
-import { default as chordsRaw } from "$data/chords.json";
 // data
+import { default as chordsRaw } from "$data/chords.json";
 import { default as circleRaw } from "$data/circle-of-fifths-data.json";
 
 // typed data
@@ -25,63 +24,45 @@ function getFrequencies(noteList: string[]): number[] {
 	return noteList.map((note) => notes[note]);
 }
 
+// Resolve one chord id to its notes and frequency voicings. Voicings the
+// enhancer did not generate fall back to the standard triad frequencies.
+function buildChordVoicings(chordId: string): {
+	notes: string[];
+	frequencies: number[];
+	voicings: VoicingFrequencies;
+} {
+	const noteVoicings = chordsEnhanced[chordId] || {
+		standard: chords[chordId],
+	};
+	const standard = getFrequencies(noteVoicings.standard);
+	const toFrequencies = (noteList?: string[]): number[] =>
+		noteList ? getFrequencies(noteList) : standard;
+
+	return {
+		notes: noteVoicings.standard,
+		frequencies: standard,
+		voicings: {
+			standard,
+			spread: toFrequencies(noteVoicings.spread),
+			rich: toFrequencies(noteVoicings.rich),
+			bass: toFrequencies(noteVoicings.bass),
+			rootBass: toFrequencies(noteVoicings.rootBass),
+		},
+	};
+}
+
 // derived data
-export const chordsData = circle.reduce((acc, chord) => {
-	const majorId = chord.majorId;
-	const minorId = chord.minorId;
+export const chordsData: Chord[] = circle.map((chord) => {
+	const major = buildChordVoicings(chord.majorId);
+	const minor = buildChordVoicings(chord.minorId);
 
-	// Get all voicings for major chord
-	const majorVoicings = chordsEnhanced[majorId] || {
-		standard: chords[majorId],
-	};
-	const majorNotes = majorVoicings.standard;
-	const majorFrequencies = getFrequencies(majorNotes);
-
-	// Get all voicings for minor chord
-	const minorVoicings = chordsEnhanced[minorId] || {
-		standard: chords[minorId],
-	};
-	const minorNotes = minorVoicings.standard;
-	const minorFrequencies = getFrequencies(minorNotes);
-
-	acc.push({
+	return {
 		...chord,
-		majorNotes,
-		majorFrequencies,
-		minorNotes,
-		minorFrequencies,
-		// Add enhanced voicings
-		majorVoicings: {
-			standard: majorFrequencies,
-			spread: majorVoicings.spread
-				? getFrequencies(majorVoicings.spread)
-				: majorFrequencies,
-			rich: majorVoicings.rich
-				? getFrequencies(majorVoicings.rich)
-				: majorFrequencies,
-			bass: majorVoicings.bass
-				? getFrequencies(majorVoicings.bass)
-				: majorFrequencies,
-			rootBass: majorVoicings.rootBass
-				? getFrequencies(majorVoicings.rootBass)
-				: majorFrequencies,
-		},
-		minorVoicings: {
-			standard: minorFrequencies,
-			spread: minorVoicings.spread
-				? getFrequencies(minorVoicings.spread)
-				: minorFrequencies,
-			rich: minorVoicings.rich
-				? getFrequencies(minorVoicings.rich)
-				: minorFrequencies,
-			bass: minorVoicings.bass
-				? getFrequencies(minorVoicings.bass)
-				: minorFrequencies,
-			rootBass: minorVoicings.rootBass
-				? getFrequencies(minorVoicings.rootBass)
-				: minorFrequencies,
-		},
-	});
-
-	return acc;
-}, [] as Chord[]);
+		majorNotes: major.notes,
+		majorFrequencies: major.frequencies,
+		majorVoicings: major.voicings,
+		minorNotes: minor.notes,
+		minorFrequencies: minor.frequencies,
+		minorVoicings: minor.voicings,
+	};
+});

@@ -29,6 +29,76 @@ function transposeNoteByOctaves(note: string, octaveShift: number): string {
 	return `${noteName}${newOctave}`;
 }
 
+// Simple major/minor triad names ("C", "Bbm", "Csm"); other qualities
+// (7ths, dyads) only get the voicings that don't assume a triad shape
+const TRIAD_NAME = /^[A-G][sb#]?m?$/;
+
+// Spread voicing: root down 1 octave, 3rd in place, 5th up 1 octave
+function spreadVoicing(notes: string[]): string[] {
+	return [
+		transposeNoteByOctaves(notes[0], -1),
+		notes[1],
+		transposeNoteByOctaves(notes[2], 1),
+	];
+}
+
+// Bass voicing: the original chord under a bass note 2 octaves down
+function bassVoicing(notes: string[], rootNote: string): string[] {
+	return [transposeNoteByOctaves(rootNote, -2), ...notes];
+}
+
+// Rich voicing: sub-bass, bass, 3rd, 5th, and the root doubled up
+function richVoicing(notes: string[], rootNote: string): string[] {
+	return [
+		transposeNoteByOctaves(rootNote, -2),
+		transposeNoteByOctaves(rootNote, -1),
+		notes[1],
+		notes[2],
+		transposeNoteByOctaves(rootNote, 1),
+	];
+}
+
+// Root bass: root down an octave under the first inversion, root doubled up
+function rootBassVoicing(notes: string[]): string[] {
+	return [
+		transposeNoteByOctaves(notes[0], -1),
+		notes[1],
+		notes[2],
+		transposeNoteByOctaves(notes[0], 1),
+	];
+}
+
+// First inversion (3rd in bass) and second inversion (5th in bass)
+function triadInversions(notes: string[]): ChordDefinition["inversions"] {
+	return {
+		first: [notes[1], notes[2], transposeNoteByOctaves(notes[0], 1)],
+		second: [
+			notes[2],
+			transposeNoteByOctaves(notes[0], 1),
+			transposeNoteByOctaves(notes[1], 1),
+		],
+	};
+}
+
+// Build every applicable voicing for one chord
+function enhanceChord(chordName: string, notes: string[]): ChordDefinition {
+	const rootNote = notes[0];
+	const isTriadName = TRIAD_NAME.test(chordName);
+	const hasThreeNotes = notes.length === 3;
+
+	const definition: ChordDefinition = {
+		standard: notes,
+		bass: bassVoicing(notes, rootNote),
+	};
+	if (notes.length >= 3) definition.spread = spreadVoicing(notes);
+	if (isTriadName) definition.rich = richVoicing(notes, rootNote);
+	if (hasThreeNotes) definition.rootBass = rootBassVoicing(notes);
+	if (hasThreeNotes && isTriadName) {
+		definition.inversions = triadInversions(notes);
+	}
+	return definition;
+}
+
 /**
  * Generate enhanced chord voicings from standard chord definitions
  * Creates multiple voicing options (spread, rich, bass) for each chord
@@ -41,69 +111,9 @@ export function generateChordEnhancements(
 	const enhanced: Record<string, ChordDefinition> = {};
 
 	for (const [chordName, notes] of Object.entries(standardChords)) {
-		// Extract root note for bass/rich voicings
-		const rootNote = notes[0];
-		const rootMatch = rootNote.match(/^([A-G][b#]?)/);
-		if (!rootMatch) continue;
-
-		// Basic structure
-		enhanced[chordName] = {
-			standard: notes,
-		};
-
-		// Generate spread voicing (root down 1 octave, 5th up 1 octave)
-		if (notes.length >= 3) {
-			enhanced[chordName].spread = [
-				transposeNoteByOctaves(notes[0], -1), // Root down 1 octave
-				notes[1], // 3rd stays same
-				transposeNoteByOctaves(notes[2], 1), // 5th up 1 octave
-			];
-		}
-
-		// Generate bass voicing (add bass note 2 octaves down)
-		enhanced[chordName].bass = [
-			transposeNoteByOctaves(rootNote, -2), // Bass note
-			...notes, // Original chord
-		];
-
-		// Generate rich voicing for major/minor chords
-		if (chordName.match(/^[A-G][sb#]?m?$/)) {
-			enhanced[chordName].rich = [
-				transposeNoteByOctaves(rootNote, -2), // Sub bass
-				transposeNoteByOctaves(rootNote, -1), // Bass
-				notes[1], // 3rd
-				notes[2], // 5th
-				transposeNoteByOctaves(rootNote, 1), // Root doubled up
-			];
-		}
-
-		// Add root bass with first inversion (root one octave down + first inversion)
-		if (notes.length === 3) {
-			enhanced[chordName].rootBass = [
-				transposeNoteByOctaves(notes[0], -1), // Root down 1 octave
-				notes[1], // 3rd (now lowest of the triad)
-				notes[2], // 5th
-				transposeNoteByOctaves(notes[0], 1), // Root up an octave
-			];
-		}
-
-		// Add inversions for major/minor triads
-		if (notes.length === 3 && chordName.match(/^[A-G][sb#]?m?$/)) {
-			enhanced[chordName].inversions = {
-				// First inversion: 3rd in bass
-				first: [
-					notes[1], // 3rd
-					notes[2], // 5th
-					transposeNoteByOctaves(notes[0], 1), // Root up an octave
-				],
-				// Second inversion: 5th in bass
-				second: [
-					notes[2], // 5th
-					transposeNoteByOctaves(notes[0], 1), // Root up an octave
-					transposeNoteByOctaves(notes[1], 1), // 3rd up an octave
-				],
-			};
-		}
+		// Skip entries whose root note is not parseable
+		if (!notes[0]?.match(/^([A-G][b#]?)/)) continue;
+		enhanced[chordName] = enhanceChord(chordName, notes);
 	}
 
 	return enhanced;

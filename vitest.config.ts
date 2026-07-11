@@ -56,7 +56,12 @@ export default defineConfig({
 	test: {
 		coverage: {
 			provider: "v8",
-			include: ["src/lib/utils/**/*.ts", "src/lib/stores/**/*.ts"],
+			// Route .svelte files are excluded: they have no tests, and the
+			// uncovered-files pass feeds raw (uncompiled) .svelte source to
+			// rolldown, which cannot parse it. Tested components are remapped
+			// from their compiled form and report fine.
+			include: ["src/**/*.ts", "src/lib/**/*.svelte"],
+			exclude: ["src/**/*.test.ts", "src/**/*.d.ts"],
 		},
 		projects,
 	},

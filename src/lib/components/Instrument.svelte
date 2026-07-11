@@ -1,4 +1,7 @@
 <!--
+The template is one cohesive SVG instrument — 24 wedges + labels drawn from
+the same geometry; splitting it into subcomponents is planned feature work.
+fallow-ignore-next-line complexity
 @component
 SVG Circle of Fifths
 - This component renders a circle of fifths svg element
@@ -54,63 +57,52 @@ const activeChordNames = $derived(() => {
 });
 
 //- interaction functions
+
+// Record what this pointer is sounding and refresh the center display
+function setPointerChordName(pointerId: number, chordName: string) {
+	const pointerInfo = activePointers.get(pointerId);
+	if (pointerInfo) {
+		pointerInfo.chordName = chordName;
+	}
+	performance.activeChord = activeChordNames();
+}
+
+// Notes mode: play the single note at this wedge position
+function playNoteAtIndex(index: number, pointerId: number) {
+	const noteData = getNoteForPositionWithKeyCenter(index);
+	setPointerChordName(pointerId, `${noteData.display}${settings.noteOctave}`);
+	startChord(
+		[noteData.frequency],
+		settings.activeVoice as OscillatorType,
+		pointerId,
+	);
+}
+
+// Chords mode: play the major/minor chord at this wedge position using the
+// selected voicing
+function playChordAtIndex(index: number, mode: string, pointerId: number) {
+	if (!reorderedChords || reorderedChords.length === 0) return;
+	const datum = reorderedChords[index];
+	if (!datum) return;
+	if (mode !== "major" && mode !== "minor") return;
+
+	const chordName =
+		mode === "major"
+			? `${datum.majorDisplay} major`
+			: datum.minorDisplay.replace("m", " minor");
+	setPointerChordName(pointerId, chordName);
+
+	const voicings = datum[`${mode}Voicings`] as VoicingFrequencies;
+	const frequencies = voicings[settings.chordVoicing] || voicings.standard;
+	startChord(frequencies, settings.activeVoice as OscillatorType, pointerId);
+}
+
 function playChordFromElement(element: SVGPathElement, pointerId: number) {
 	const index = Number(element.dataset.index ?? 0);
-
 	if (settings.mode === "notes") {
-		// Individual notes mode
-		const noteData = getNoteForPositionWithKeyCenter(index);
-		const chordName = `${noteData.display}${settings.noteOctave}`;
-
-		// Update the chord name for this pointer
-		const pointerInfo = activePointers.get(pointerId);
-		if (pointerInfo) {
-			pointerInfo.chordName = chordName;
-		}
-
-		// Update display
-		performance.activeChord = activeChordNames();
-
-		// Start playing single note
-		startChord(
-			[noteData.frequency],
-			settings.activeVoice as OscillatorType,
-			pointerId,
-		);
+		playNoteAtIndex(index, pointerId);
 	} else {
-		// Chords mode - use reordered chords
-		if (!reorderedChords || reorderedChords.length === 0) return;
-
-		const datum = reorderedChords[index];
-		if (!datum) return;
-
-		const mode = element.dataset.mode ?? "";
-
-		// determine chord name
-		let chordName = "";
-		if (mode === "major") {
-			const chord = datum.majorDisplay;
-			chordName = `${chord} major`;
-		} else if (mode === "minor") {
-			const chord = datum.minorDisplay;
-			chordName = chord.replace("m", " minor");
-		} else {
-			return;
-		}
-
-		// Update the chord name for this pointer
-		const pointerInfo = activePointers.get(pointerId);
-		if (pointerInfo) {
-			pointerInfo.chordName = chordName;
-		}
-
-		// Update display
-		performance.activeChord = activeChordNames();
-
-		// start chord using the audio store with selected voicing
-		const voicings = datum[`${mode}Voicings`] as VoicingFrequencies;
-		const frequencies = voicings[settings.chordVoicing] || voicings.standard;
-		startChord(frequencies, settings.activeVoice as OscillatorType, pointerId);
+		playChordAtIndex(index, element.dataset.mode ?? "", pointerId);
 	}
 }
 

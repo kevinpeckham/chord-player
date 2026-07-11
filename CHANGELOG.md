@@ -32,7 +32,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lint cleanups: dead variables in `enharmonics.ts` and `chordEnhancer.ts`, missing `parseInt` radix arguments, unused catch bindings in the audio store
 
 ### Testing
-- 158-test suite: unit tests for all music utilities and server chord data (voicing math, SVG geometry, enharmonic spelling, interval-ratio proofs) plus jsdom component tests for every component and rune store, including a fully stubbed Web Audio engine
+- 161-test suite: unit tests for all music utilities and server chord data (voicing math, SVG geometry, enharmonic spelling, interval-ratio proofs) plus jsdom component tests for every component and rune store, including a fully stubbed Web Audio engine
+- Coverage reporting across all source (91% statements); fallow health accepts the coverage report for exact CRAP scores
+
+### Code Health
+- Refactored all fallow complexity hot-spots: `chordsData` (major/minor voicing duplication extracted to one helper), `generateChordEnhancements` (one small builder per voicing), `startChord` (dedup check, resume, and oscillator construction extracted), `playChordFromElement` (split into notes-mode and chords-mode paths), `LinkButton` (attribute fallbacks moved to `$derived`)
+- Audio unlock consolidated into the store (`unlockAudio`); the Instrument no longer constructs a throwaway AudioContext
+- Layout `use:` action converted to an `{@attach}` attachment; document listeners use `<svelte:document>`
+- fallow audit gate is clean; the one remaining health note (Instrument's single-SVG template size) is suppressed with rationale pending planned componentization
 
 ## [0.3.6] - 2025-01-22
 
