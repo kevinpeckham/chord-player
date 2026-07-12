@@ -7,6 +7,7 @@ import {
 	clearProgression,
 	progression,
 	recordChord,
+	setEntryBeats,
 } from "$stores/progression.svelte";
 import { player, setBpm, stopPlayback } from "$stores/progressionPlayer.svelte";
 import { settings } from "$stores/settings.svelte";
@@ -22,8 +23,10 @@ describe("ProgressionPad", () => {
 		progression.recording = true;
 		progression.suspended = false;
 		player.loop = false;
+		player.clickAlong = false;
 		setBpm(120);
 		settings.showProgressionPad = true;
+		settings.timeSignature = "4/4";
 	});
 
 	it("renders nothing while the pad is empty", () => {
@@ -103,6 +106,53 @@ describe("ProgressionPad", () => {
 		expect(loop).toHaveAttribute("aria-pressed", "false");
 		await user.click(loop);
 		expect(player.loop).toBe(true);
+	});
+
+	it("separates measures with pipes per the time signature", () => {
+		settings.timeSignature = "4/4";
+		// Four 1-beat chords fill a bar; the fifth starts a new one
+		for (const label of ["C", "F", "G", "Am", "C"]) {
+			recordChord(label, [60]);
+		}
+		render(ProgressionPad);
+		const row = screen
+			.getByLabelText("Jotted progression")
+			.querySelector(":scope > div");
+		const chips = Array.from(row?.querySelectorAll("span") ?? []).map(
+			(span) => span.textContent,
+		);
+		expect(chips).toEqual(["C", "F", "G", "Am", "|", "C"]);
+	});
+
+	it("counts multi-beat chords toward the bar and resets bars per line", async () => {
+		settings.timeSignature = "4/4";
+		recordChord("C", [60]);
+		setEntryBeats(0, 2);
+		recordChord("G", [55]);
+		setEntryBeats(1, 2);
+		recordChord("Am", [57]); // bar boundary before this chord
+		addLineBreak();
+		recordChord("F", [53]); // new line: bar count restarts, no pipe
+		render(ProgressionPad);
+
+		const rows = screen
+			.getByLabelText("Jotted progression")
+			.querySelectorAll(":scope > div");
+		const rowChips = (row: Element) =>
+			Array.from(row.querySelectorAll("span")).map((span) => span.textContent);
+		expect(rowChips(rows[0])).toEqual(["C", "G", "|", "Am"]);
+		expect(rowChips(rows[1])).toEqual(["F"]);
+	});
+
+	it("binds the playback click checkbox", async () => {
+		const user = userEvent.setup();
+		recordChord("C", [60, 64, 67]);
+		render(ProgressionPad);
+
+		const clickAlong = screen.getByLabelText("Click during playback");
+		expect(clickAlong).not.toBeChecked();
+		await user.click(clickAlong);
+		expect(player.clickAlong).toBe(true);
 	});
 
 	it("no longer hosts the tempo input (moved to the toolbar)", () => {

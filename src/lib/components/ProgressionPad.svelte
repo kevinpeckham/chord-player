@@ -27,18 +27,33 @@ import {
 	stopPlayback,
 	toggleLoop,
 } from "$stores/progressionPlayer.svelte";
-import { settings } from "$stores/settings.svelte";
+import { beatsPerBar, settings } from "$stores/settings.svelte";
+
+type Chip = { kind: "chord"; label: string; index: number } | { kind: "bar" };
 
 // Group flat entries into visual lines at each break, keeping each chord's
-// index into progression.entries so the sounding chord can be highlighted
+// index into progression.entries so the sounding chord can be highlighted.
+// Measures are separated with a pipe when accumulated beats cross a bar
+// boundary (per the time signature); the bar count restarts on each line,
+// like a lead sheet.
 const lines = $derived.by(() => {
-	const grouped: { label: string; index: number }[][] = [[]];
+	const barBeats = beatsPerBar();
+	const grouped: Chip[][] = [[]];
+	let beatsInBar = 0;
+
 	progression.entries.forEach((entry, index) => {
 		if (entry.kind === "break") {
 			grouped.push([]);
-		} else {
-			grouped[grouped.length - 1].push({ label: entry.label, index });
+			beatsInBar = 0;
+			return;
 		}
+		const line = grouped[grouped.length - 1];
+		if (beatsInBar >= barBeats) {
+			line.push({ kind: "bar" });
+			beatsInBar = beatsInBar % barBeats;
+		}
+		line.push({ kind: "chord", label: entry.label, index });
+		beatsInBar += entry.beats;
 	});
 	return grouped;
 });
@@ -87,11 +102,15 @@ const activeClasses = "text-accent border-accent/60";
 			{#each lines as line}
 				<div class="flex flex-wrap gap-x-3 gap-y-1 min-h-5">
 					{#each line as chip}
-						<span
-							class={player.position === chip.index
-								? "text-accent"
-								: "opacity-90"}
-						>{chip.label}</span>
+						{#if chip.kind === "bar"}
+							<span class="opacity-40 select-none" aria-hidden="true">|</span>
+						{:else}
+							<span
+								class={player.position === chip.index
+									? "text-accent"
+									: "opacity-90"}
+							>{chip.label}</span>
+						{/if}
 					{/each}
 				</div>
 			{/each}
@@ -128,6 +147,20 @@ const activeClasses = "text-accent border-accent/60";
 			>
 				loop
 			</button>
+
+			<!-- playback click (the live metronome yields during playback) -->
+			<label
+				class="flex items-center gap-1.5 text-xs opacity-80 cursor-pointer"
+				title="Play a click during playback"
+			>
+				<input
+					type="checkbox"
+					bind:checked={player.clickAlong}
+					class="w-3.5 h-3.5 accent-accent cursor-pointer"
+					aria-label="Click during playback"
+				/>
+				click
+			</label>
 
 			<!-- recorder -->
 			<button

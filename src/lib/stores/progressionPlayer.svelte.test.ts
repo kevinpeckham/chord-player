@@ -3,11 +3,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$stores/audio.svelte", () => ({
+	audioTime: vi.fn(() => Date.now() / 1000),
+	scheduleClick: vi.fn(),
 	startChord: vi.fn(),
 	stopChordById: vi.fn(),
+	unlockAudio: vi.fn(),
 }));
 
-import { startChord, stopChordById } from "$stores/audio.svelte";
+import { scheduleClick, startChord, stopChordById } from "$stores/audio.svelte";
+import {
+	metronome,
+	startMetronome,
+	stopMetronome,
+} from "$stores/metronome.svelte";
 import {
 	addLineBreak,
 	clearProgression,
@@ -36,13 +44,17 @@ describe("progression player", () => {
 		// Reset player state BEFORE clearing mocks — stopPlayback itself
 		// calls the mocked stopChordById
 		stopPlayback();
+		stopMetronome();
 		player.loop = false;
+		player.clickAlong = false;
 		setBpm(120);
 		vi.clearAllMocks();
 		clearProgression();
 		progression.recording = true;
 		progression.suspended = false;
 		settings.activeVoice = "sine";
+		settings.metronomeAccent = false;
+		settings.timeSignature = "4/4";
 	});
 
 	afterEach(() => {
@@ -176,6 +188,63 @@ describe("progression player", () => {
 
 		stopPlayback();
 		expect(progression.suspended).toBe(false);
+	});
+
+	it("plays no click during playback by default", () => {
+		recordChord("C", C_NOTES);
+		playProgression();
+		vi.advanceTimersByTime(STEP_MS);
+		expect(scheduleClick).not.toHaveBeenCalled();
+	});
+
+	it("schedules beat-aligned clicks during playback when clickAlong is on", () => {
+		player.clickAlong = true;
+		recordChord("C", C_NOTES);
+		setEntryBeats(0, 2);
+		recordChord("G", G_NOTES);
+		playProgression();
+		vi.advanceTimersByTime(STEP_MS * 3);
+
+		// 2 beats for C + 1 for G
+		const times = vi.mocked(scheduleClick).mock.calls.map(([time]) => time);
+		expect(times).toHaveLength(3);
+		// C's two beats are half a second apart on the audio clock
+		expect(times[1] - times[0]).toBeCloseTo(0.5, 3);
+	});
+
+	it("accents playback clicks per the time signature when enabled", () => {
+		player.clickAlong = true;
+		settings.metronomeAccent = true;
+		settings.timeSignature = "2/4";
+		for (let i = 0; i < 4; i++) recordChord("C", C_NOTES);
+		playProgression();
+		vi.advanceTimersByTime(STEP_MS * 4);
+
+		const accents = vi
+			.mocked(scheduleClick)
+			.mock.calls.map(([, accent]) => accent);
+		expect(accents).toEqual([true, false, true, false]);
+	});
+
+	it("stops the live click for playback and restores it after", () => {
+		recordChord("C", C_NOTES);
+		startMetronome();
+		expect(metronome.running).toBe(true);
+
+		playProgression();
+		expect(metronome.running).toBe(false); // live click yields
+
+		vi.advanceTimersByTime(STEP_MS); // natural end
+		expect(player.playing).toBe(false);
+		expect(metronome.running).toBe(true); // restored for punch-in
+		stopMetronome();
+	});
+
+	it("does not restore the live click if it was not running before", () => {
+		recordChord("C", C_NOTES);
+		playProgression();
+		vi.advanceTimersByTime(STEP_MS);
+		expect(metronome.running).toBe(false);
 	});
 
 	it("rests on line breaks", () => {
