@@ -103,7 +103,7 @@ function clearTimers(): void {
 }
 
 function entryBeats(entry: (typeof progression.entries)[number]): number {
-	return entry.kind === "chord" ? entry.beats : 1; // breaks rest one beat
+	return entry.beats;
 }
 
 // --- playback click ---------------------------------------------------------
@@ -156,7 +156,7 @@ function step(index: number): void {
 		scheduleStepClicks(entryBeats(entry));
 	}
 
-	if (entry.kind === "chord" && entry.notes.length > 0) {
+	if (entry.notes.length > 0) {
 		startChord(
 			entry.notes.map(midiToFrequency),
 			settings.activeVoice as OscillatorType,
@@ -166,7 +166,7 @@ function step(index: number): void {
 			stopChordById(PLAYBACK_POINTER_ID);
 		}, durationMs * GATE);
 	}
-	// Breaks (and legacy note-less chords) simply rest for their duration
+	// Legacy note-less chords simply rest for their duration
 
 	stepTimeout = setTimeout(() => step(index + 1), durationMs);
 }

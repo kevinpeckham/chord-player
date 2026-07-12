@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-07-12
+
+### Fixed
+- Playback measures no longer drift from the displayed measures: line breaks silently played as one-beat rests and shifted every following bar off the grid, so a pad showing four chords per measure could play back misaligned
+
+### Removed
+- The "new line" control and break entries — breaks were visual organization but had musical side effects; legacy break entries are dropped on load
+
+### Changed
+- The pad now wraps by whole measures: chords group into measures per the time signature, each measure is an unbreakable unit with its pipe, and lines wrap naturally between measures
+
 ## [0.13.1] - 2026-07-12
 
 ### Changed

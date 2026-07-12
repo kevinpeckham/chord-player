@@ -7,14 +7,15 @@ Progression pad
   transport is engaged, live jotting is suspended — when playback ends
   naturally with rec on, the next chord played appends (punch-in)
 - ● rec toggles jotting
-- Line break / undo / clear; the X hides the pad (re-enable from settings);
-  content persists in localStorage; hidden until the first chord is played
+- Chords group into measures (per the time signature) separated by pipes;
+  measures wrap as whole units and are never split across lines
+- undo / clear; the X hides the pad (re-enable from settings); content
+  persists in localStorage; hidden until the first chord is played
 - (.mid export exists in $utils/midi but is not surfaced in the UI for now)
 -->
 
 <script lang="ts">
 import {
-	addLineBreak,
 	clearProgression,
 	deleteLast,
 	progression,
@@ -29,30 +30,20 @@ import {
 } from "$stores/progressionPlayer.svelte";
 import { beatsPerBar, settings } from "$stores/settings.svelte";
 
-type Chip = { kind: "chord"; label: string; index: number } | { kind: "bar" };
-
-// Group flat entries into visual lines at each break, keeping each chord's
+// Group chords into measures (per the time signature), keeping each chord's
 // index into progression.entries so the sounding chord can be highlighted.
-// Measures are separated with a pipe when accumulated beats cross a bar
-// boundary (per the time signature); the bar count restarts on each line,
-// like a lead sheet.
-const lines = $derived.by(() => {
+// Each measure renders as an unbreakable unit, so wrapping never splits one.
+const measures = $derived.by(() => {
 	const barBeats = beatsPerBar();
-	const grouped: Chip[][] = [[]];
+	const grouped: { label: string; index: number }[][] = [[]];
 	let beatsInBar = 0;
 
 	progression.entries.forEach((entry, index) => {
-		if (entry.kind === "break") {
-			grouped.push([]);
-			beatsInBar = 0;
-			return;
-		}
-		const line = grouped[grouped.length - 1];
 		if (beatsInBar >= barBeats) {
-			line.push({ kind: "bar" });
+			grouped.push([]);
 			beatsInBar = beatsInBar % barBeats;
 		}
-		line.push({ kind: "chord", label: entry.label, index });
+		grouped[grouped.length - 1].push({ label: entry.label, index });
 		beatsInBar += entry.beats;
 	});
 	return grouped;
@@ -96,22 +87,21 @@ const activeClasses = "text-accent border-accent/60";
 		>&times;</button>
 
 		<div
-			class="grid gap-1 max-h-28 overflow-y-auto font-mono text-sm"
+			class="flex flex-wrap gap-x-2 gap-y-1 max-h-28 overflow-y-auto font-mono text-sm"
 			aria-label="Jotted progression"
 		>
-			{#each lines as line}
-				<div class="flex flex-wrap gap-x-3 gap-y-1 min-h-5">
-					{#each line as chip}
-						{#if chip.kind === "bar"}
-							<span class="opacity-40 select-none" aria-hidden="true">|</span>
-						{:else}
-							<span
-								class={player.position === chip.index
-									? "text-accent"
-									: "opacity-90"}
-							>{chip.label}</span>
-						{/if}
+			{#each measures as measure, m}
+				<div data-measure class="flex gap-x-3 whitespace-nowrap">
+					{#each measure as chip}
+						<span
+							class={player.position === chip.index
+								? "text-accent"
+								: "opacity-90"}
+						>{chip.label}</span>
 					{/each}
+					{#if m < measures.length - 1}
+						<span class="opacity-40 select-none" aria-hidden="true">|</span>
+					{/if}
 				</div>
 			{/each}
 		</div>
@@ -177,9 +167,6 @@ const activeClasses = "text-accent border-accent/60";
 		</div>
 
 		<div class="flex flex-wrap gap-2">
-			<button type="button" class={buttonClasses} onclick={addLineBreak}>
-				new line
-			</button>
 			<button type="button" class={buttonClasses} onclick={deleteLast}>
 				undo
 			</button>
