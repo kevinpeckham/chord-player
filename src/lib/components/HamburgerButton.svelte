@@ -10,6 +10,7 @@ const barClasses = [
 </script>
 
 <button
+	data-hamburger
 	onclick={() => menuState = menuState === "open" ? "closed" : "open"}
 	class="grid grid-cols-1 place-content-start gap-y-2 w-8 h-4 hover:text-accent" aria-label="Toggle menu" aria-expanded={menuState === "open"}>
 

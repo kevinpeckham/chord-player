@@ -133,4 +133,14 @@ describe("SettingsPanel", () => {
 		render(SettingsPanel);
 		expect(screen.getByText(`v${version}`)).toBeInTheDocument();
 	});
+
+	it("displays the maker attribution with a link to Lightning Jar", () => {
+		render(SettingsPanel);
+		const link = screen.getByRole("link", { name: "Lightning Jar" });
+		expect(link).toHaveAttribute("href", "https://www.lightningjar.com");
+		expect(link).toHaveAttribute("target", "_blank");
+		expect(link.parentElement).toHaveTextContent(
+			"Made by Kevin Peckham @ Lightning Jar in Philadelphia",
+		);
+	});
 });
