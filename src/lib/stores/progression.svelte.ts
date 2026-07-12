@@ -37,12 +37,20 @@ function persist(): void {
 
 export const progression = $state({
 	entries: loadEntries(),
+	// While paused, played chords are not jotted (session-only, not persisted)
+	paused: false,
 });
 
 // Append a played chord (called by the Instrument on each distinct chord)
 export function recordChord(label: string): void {
+	if (progression.paused) return;
 	progression.entries.push({ kind: "chord", label });
 	persist();
+}
+
+// Pause/resume jotting
+export function togglePaused(): void {
+	progression.paused = !progression.paused;
 }
 
 // Start a new line in the jotted progression

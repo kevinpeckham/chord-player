@@ -2,11 +2,14 @@
 
 import { tick } from "svelte";
 
+import { clearProgression, recordChord } from "$stores/progression.svelte";
+import { settings } from "$stores/settings.svelte";
+
 import { chordsData } from "$data/chordsData.server";
 
 import { render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import Page from "./+page.svelte";
 
 // jsdom has no PointerEvent constructor; the svelte:document listener keys
@@ -20,6 +23,36 @@ function pointerDown(target: Element | Document) {
 function hamburger(): HTMLElement {
 	return screen.getByRole("button", { name: "Toggle menu" });
 }
+
+describe("+page progression pad visibility", () => {
+	const data = { chords: chordsData };
+
+	beforeEach(() => {
+		clearProgression();
+		settings.mode = "chords";
+		settings.showProgressionPad = true;
+	});
+
+	it("shows the pad above the toolbar when enabled and there are entries", () => {
+		recordChord("C");
+		const { container } = render(Page, { data });
+		const pad = container.querySelector("[data-progression-pad]");
+		expect(pad).not.toBeNull();
+		// The pad renders before (above) the toolbar in document order
+		const toolbar = container.querySelector("[data-toolbar]");
+		if (!pad || !toolbar) throw new Error("pad or toolbar missing");
+		expect(
+			pad.compareDocumentPosition(toolbar) & Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy();
+	});
+
+	it("hides the pad when the setting is off", () => {
+		recordChord("C");
+		settings.showProgressionPad = false;
+		const { container } = render(Page, { data });
+		expect(container.querySelector("[data-progression-pad]")).toBeNull();
+	});
+});
 
 describe("+page settings menu", () => {
 	const data = { chords: chordsData };

@@ -503,4 +503,24 @@ describe("audio store", () => {
 			expect(FakeAudioContext.instances).toHaveLength(0);
 		});
 	});
+
+	describe("toggleReverb", () => {
+		it("turns reverb off and restores the last audible mix on the next toggle", async () => {
+			const audio = await freshStore();
+			audio.setReverbMix(0.6);
+
+			audio.toggleReverb();
+			expect(audio.audioState.reverbMix).toBe(0);
+
+			audio.toggleReverb();
+			expect(audio.audioState.reverbMix).toBe(0.6);
+		});
+
+		it("restores the default mix when toggled on without a prior setting", async () => {
+			const audio = await freshStore();
+			audio.setReverbMix(0);
+			audio.toggleReverb();
+			expect(audio.audioState.reverbMix).toBe(0.25);
+		});
+	});
 });

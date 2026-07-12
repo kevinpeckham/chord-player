@@ -31,6 +31,21 @@ pad") — effort: S–M
 - Forward-compatible: entries use the shared song format, so later a jotted
   progression can be auto-played (Phase C) or practiced (learn mode)
 
+### Audio effects backlog (post-Phase-A additions)
+
+Both follow the master-chain pattern established by the reverb (parallel or
+insert node + a settings slider), so each is a small standalone ship:
+
+**Distortion** — effort: S
+- `WaveShaperNode` with a soft-clipping curve (e.g. tanh-based), amount
+  control in settings; insert before the master gain
+- Pairs naturally with the sawtooth/square voices
+
+**Delay** — effort: S
+- `DelayNode` + feedback gain loop in parallel with the dry signal
+  (like the reverb send); time + feedback controls in settings
+- Later: sync delay time to the transport's BPM once Phase B lands
+
 ### Phase B — rhythm infrastructure
 
 **B1. Metronome / click** — effort: S–M

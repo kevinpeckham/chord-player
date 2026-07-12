@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-07-12
+
+### Added
+- Progression pad controls: pause/resume button (paused = chords are not jotted), an X to dismiss the pad, and a "Show progression pad" toggle in settings to bring it back
+- Keyboard shortcut: press R to toggle reverb on/off (restores the last audible mix; ignored while typing in a form control)
+
+### Changed
+- The progression pad moved from a floating strip at the bottom of the screen to sit above the volume control
+
 ## [0.7.0] - 2026-07-12
 
 ### Added

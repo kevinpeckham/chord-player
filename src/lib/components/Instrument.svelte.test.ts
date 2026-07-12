@@ -38,6 +38,7 @@ vi.mock("$stores/audio.svelte", () => ({
 	startChord: vi.fn(),
 	stopChord: vi.fn(),
 	stopChordById: vi.fn(),
+	toggleReverb: vi.fn(),
 	unlockAudio: vi.fn(),
 }));
 
@@ -45,6 +46,7 @@ import {
 	startChord,
 	stopChord,
 	stopChordById,
+	toggleReverb,
 	unlockAudio,
 } from "$stores/audio.svelte";
 
@@ -359,6 +361,33 @@ describe("Instrument", () => {
 			const { unmount } = render(Instrument, { chords: chordsData });
 			unmount();
 			expect(stopChord).toHaveBeenCalled();
+		});
+	});
+
+	describe("keyboard shortcuts", () => {
+		it("toggles reverb with the R key", async () => {
+			render(Instrument, { chords: chordsData });
+			window.dispatchEvent(
+				new KeyboardEvent("keydown", { key: "r", bubbles: true }),
+			);
+			expect(toggleReverb).toHaveBeenCalledTimes(1);
+
+			window.dispatchEvent(
+				new KeyboardEvent("keydown", { key: "R", bubbles: true }),
+			);
+			expect(toggleReverb).toHaveBeenCalledTimes(2);
+		});
+
+		it("ignores R typed into a form control", async () => {
+			render(Instrument, { chords: chordsData });
+			const input = document.createElement("input");
+			document.body.appendChild(input);
+
+			input.dispatchEvent(
+				new KeyboardEvent("keydown", { key: "r", bubbles: true }),
+			);
+			expect(toggleReverb).not.toHaveBeenCalled();
+			input.remove();
 		});
 	});
 

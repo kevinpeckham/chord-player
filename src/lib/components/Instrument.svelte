@@ -22,6 +22,7 @@ import {
 	startChord,
 	stopChord,
 	stopChordById,
+	toggleReverb,
 	unlockAudio,
 } from "$stores/audio.svelte";
 import { performance } from "$stores/performance.svelte";
@@ -315,9 +316,19 @@ function handleGlobalPointerUp(event: PointerEvent) {
 	releasePointer(event.pointerId);
 }
 
-// Shift is the desktop seventh modifier: held = sevenths, released = triads
+// True when the key press happened while typing in a form control
+function isTypingTarget(event: KeyboardEvent): boolean {
+	const target = event.target as HTMLElement | null;
+	return !!target && ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName);
+}
+
+// Shift is the desktop seventh modifier: held = sevenths, released = triads.
+// R toggles reverb on/off.
 function onWindowKeyDown(event: KeyboardEvent) {
 	if (event.key === "Shift") performance.seventhHeld = true;
+	if ((event.key === "r" || event.key === "R") && !isTypingTarget(event)) {
+		toggleReverb();
+	}
 }
 function onWindowKeyUp(event: KeyboardEvent) {
 	if (event.key === "Shift") performance.seventhHeld = false;

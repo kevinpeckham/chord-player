@@ -122,15 +122,26 @@ export function setMasterVolume(volume: number): void {
 	updateMasterGainVolume();
 }
 
+// Remembers the last audible mix so toggling reverb back on restores it
+let lastAudibleReverbMix = 0.25;
+
 // Reactive reverb wet-mix control (0-1); 0 is fully dry
 export function setReverbMix(mix: number): void {
 	audioState.reverbMix = Math.max(0, Math.min(1, mix));
+	if (audioState.reverbMix > 0) {
+		lastAudibleReverbMix = audioState.reverbMix;
+	}
 	if (reverbWetGain && audioContext) {
 		reverbWetGain.gain.setValueAtTime(
 			audioState.reverbMix,
 			audioContext.currentTime,
 		);
 	}
+}
+
+// On/off toggle (keyboard shortcut): off = fully dry, on = last audible mix
+export function toggleReverb(): void {
+	setReverbMix(audioState.reverbMix > 0 ? 0 : lastAudibleReverbMix);
 }
 
 // Suspend audio while the page is hidden, resume when it returns
