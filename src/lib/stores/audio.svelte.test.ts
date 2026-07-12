@@ -504,6 +504,49 @@ describe("audio store", () => {
 		});
 	});
 
+	describe("metronome click scheduling", () => {
+		it("audioTime is null before init and the context clock after", async () => {
+			const audio = await freshStore();
+			expect(audio.audioTime()).toBeNull();
+			await audio.startChord(C_MAJOR, "sine", 1);
+			expect(audio.audioTime()).toBe(0);
+		});
+
+		it("scheduleClick books a short dry blip at the exact time", async () => {
+			const audio = await freshStore();
+			await audio.startChord(C_MAJOR, "sine", 1);
+			const ctx = FakeAudioContext.instances[0];
+			const oscillatorsBefore = ctx.createdOscillators.length;
+
+			audio.scheduleClick(1.5, true);
+
+			const osc = ctx.createdOscillators[oscillatorsBefore];
+			expect(osc.type).toBe("square");
+			expect(osc.frequency.setValueAtTime).toHaveBeenCalledWith(1600, 1.5);
+			expect(osc.start).toHaveBeenCalledWith(1.5);
+			expect(osc.stop).toHaveBeenCalledWith(1.56);
+			// Dry path: the click gain connects straight to the destination
+			const clickGain = ctx.createdGains.at(-1);
+			expect(clickGain?.connect).toHaveBeenCalledWith(ctx.destination);
+		});
+
+		it("unaccented clicks use the lower pitch", async () => {
+			const audio = await freshStore();
+			await audio.startChord(C_MAJOR, "sine", 1);
+			const ctx = FakeAudioContext.instances[0];
+
+			audio.scheduleClick(2, false);
+			const osc = ctx.createdOscillators.at(-1);
+			expect(osc?.frequency.setValueAtTime).toHaveBeenCalledWith(1100, 2);
+		});
+
+		it("is a no-op before the context exists", async () => {
+			const audio = await freshStore();
+			expect(() => audio.scheduleClick(0, true)).not.toThrow();
+			expect(FakeAudioContext.instances).toHaveLength(0);
+		});
+	});
+
 	describe("toggleReverb", () => {
 		it("turns reverb off and restores the last audible mix on the next toggle", async () => {
 			const audio = await freshStore();

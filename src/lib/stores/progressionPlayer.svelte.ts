@@ -56,6 +56,29 @@ export function toggleLoop(): void {
 	player.loop = !player.loop;
 }
 
+// Tap tempo: average the intervals of the most recent taps. A pause longer
+// than 2s starts a fresh tap sequence.
+const TAP_RESET_MS = 2000;
+const TAP_WINDOW = 5;
+let tapTimes: number[] = [];
+
+export function tapTempo(): void {
+	const now = Date.now();
+	if (
+		tapTimes.length > 0 &&
+		now - tapTimes[tapTimes.length - 1] > TAP_RESET_MS
+	) {
+		tapTimes = [];
+	}
+	tapTimes.push(now);
+	if (tapTimes.length < 2) return;
+
+	const recent = tapTimes.slice(-TAP_WINDOW);
+	const elapsed = recent[recent.length - 1] - recent[0];
+	const averageInterval = elapsed / (recent.length - 1);
+	setBpm(60_000 / averageInterval);
+}
+
 let stepTimeout: ReturnType<typeof setTimeout> | null = null;
 let releaseTimeout: ReturnType<typeof setTimeout> | null = null;
 

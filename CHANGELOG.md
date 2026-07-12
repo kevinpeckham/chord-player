@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-07-12
+
+### Added
+- Metronome: a **click** toggle in the toolbar — 4/4 with an accented downbeat, scheduled ahead on the AudioContext clock (drift-free lookahead pattern), routed dry so the click stays crisp regardless of reverb
+- **Tap tempo**: tap the new toolbar button in time to set the BPM (averages recent taps; a 2s pause starts fresh)
+- Tempo controls (bpm / tap / click) live in the toolbar and share one tempo: the click, progression playback, hold-duration quantization, and MIDI export all follow it; tempo changes retune a running click live
+
+### Changed
+- The BPM input moved from the progression pad to the toolbar tempo controls
+
 ## [0.10.1] - 2026-07-12
 
 ### Removed
