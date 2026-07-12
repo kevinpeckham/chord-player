@@ -18,6 +18,7 @@ import { tick } from "svelte";
 import Instrument from "$components/Instrument.svelte";
 
 import { performance as performanceStore } from "$stores/performance.svelte";
+import { clearProgression, progression } from "$stores/progression.svelte";
 import { settings } from "$stores/settings.svelte";
 
 import { chordsData } from "$data/chordsData.server";
@@ -87,6 +88,7 @@ describe("Instrument", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 		vi.clearAllMocks();
+		clearProgression();
 		performanceStore.activeChord = "";
 		performanceStore.seventhHeld = false;
 		settings.activeVoice = "sine";
@@ -357,6 +359,54 @@ describe("Instrument", () => {
 			const { unmount } = render(Instrument, { chords: chordsData });
 			unmount();
 			expect(stopChord).toHaveBeenCalled();
+		});
+	});
+
+	describe("progression jotting", () => {
+		it("records each pressed chord as a compact symbol", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			const cWedge = container.querySelector('[id="chord-button-C"]');
+			const amWedge = container.querySelector('[id="chord-button-Am"]');
+			if (!cWedge || !amWedge) throw new Error("wedges not found");
+
+			await pressChord(cWedge, 1);
+			releasePointer(cWedge, 1);
+			await tick();
+			await pressChord(amWedge, 2);
+			releasePointer(amWedge, 2);
+			await tick();
+
+			expect(progression.entries).toEqual([
+				{ kind: "chord", label: "C" },
+				{ kind: "chord", label: "Am" },
+			]);
+		});
+
+		it("records seventh chords with their symbol", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			performanceStore.seventhHeld = true;
+			await tick();
+			const cWedge = container.querySelector('[id="chord-button-C"]');
+			if (!cWedge) throw new Error("C wedge not found");
+
+			await pressChord(cWedge, 1);
+
+			expect(progression.entries).toEqual([{ kind: "chord", label: "C7" }]);
+		});
+
+		it("does not re-record when a replay leaves the chord name unchanged", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			const cWedge = container.querySelector('[id="chord-button-C"]');
+			if (!cWedge) throw new Error("C wedge not found");
+
+			await pressChord(cWedge, 1);
+			// Changing the seventh type triggers the modifier effect's replay
+			// of held chords; with no seventh active the chord name is
+			// unchanged, so nothing new should be jotted
+			settings.seventhType = "major7";
+			await tick();
+
+			expect(progression.entries).toEqual([{ kind: "chord", label: "C" }]);
 		});
 	});
 

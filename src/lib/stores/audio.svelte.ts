@@ -1,6 +1,7 @@
 // Audio engine store - manages AudioContext and sound generation
 let audioContext: AudioContext | null = null;
 let masterGainNode: GainNode | null = null;
+let reverbWetGain: GainNode | null = null;
 
 // Active oscillators tracking for cleanup
 const activeOscillators = new Set<OscillatorNode>();
@@ -21,9 +22,28 @@ export const audioState = $state({
 	isInitialized: false,
 	isPlaying: false,
 	masterVolume: 0.8,
+	reverbMix: 0.25,
 	activeNoteCount: 0,
 	contextState: "suspended" as AudioContextState,
 });
+
+// Synthesize a reverb impulse response: exponentially decaying stereo noise.
+// No audio assets required, and the tail length/decay give a small-hall feel.
+function createImpulseResponse(
+	ctx: AudioContext,
+	duration = 2.5,
+	decay = 3,
+): AudioBuffer {
+	const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+	const buffer = ctx.createBuffer(2, length, ctx.sampleRate);
+	for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+		const data = buffer.getChannelData(channel);
+		for (let i = 0; i < length; i++) {
+			data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** decay;
+		}
+	}
+	return buffer;
+}
 
 // Initialize audio context lazily (on first user interaction)
 function initializeAudio(): AudioContext {
@@ -36,8 +56,20 @@ function initializeAudio(): AudioContext {
 
 		// Create master gain for volume control
 		masterGainNode = audioContext.createGain();
-		masterGainNode.connect(audioContext.destination);
 		masterGainNode.gain.value = audioState.masterVolume;
+
+		// Master chain: dry signal passes straight through; a parallel
+		// convolver adds the reverb tail, blended by the wet gain.
+		//   masterGain ─┬────────────────────────→ destination
+		//               └→ convolver → wetGain ──→ destination
+		masterGainNode.connect(audioContext.destination);
+		const convolver = audioContext.createConvolver();
+		convolver.buffer = createImpulseResponse(audioContext);
+		reverbWetGain = audioContext.createGain();
+		reverbWetGain.gain.value = audioState.reverbMix;
+		masterGainNode.connect(convolver);
+		convolver.connect(reverbWetGain);
+		reverbWetGain.connect(audioContext.destination);
 
 		// Update reactive state
 		audioState.isInitialized = true;
@@ -88,6 +120,17 @@ export function unlockAudio(): void {
 export function setMasterVolume(volume: number): void {
 	audioState.masterVolume = Math.max(0, Math.min(1, volume));
 	updateMasterGainVolume();
+}
+
+// Reactive reverb wet-mix control (0-1); 0 is fully dry
+export function setReverbMix(mix: number): void {
+	audioState.reverbMix = Math.max(0, Math.min(1, mix));
+	if (reverbWetGain && audioContext) {
+		reverbWetGain.gain.setValueAtTime(
+			audioState.reverbMix,
+			audioContext.currentTime,
+		);
+	}
 }
 
 // Suspend audio while the page is hidden, resume when it returns
