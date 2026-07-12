@@ -46,6 +46,23 @@ class FakeConvolverNode {
 	disconnect = vi.fn();
 }
 
+class FakeBufferSourceNode {
+	buffer: unknown = null;
+	connect = vi.fn();
+	disconnect = vi.fn();
+	start = vi.fn();
+	stop = vi.fn();
+	onended: (() => void) | null = null;
+}
+
+class FakeBiquadFilterNode {
+	type = "lowpass";
+	frequency = new FakeAudioParam();
+	Q = new FakeAudioParam();
+	connect = vi.fn();
+	disconnect = vi.fn();
+}
+
 class FakeAudioBuffer {
 	numberOfChannels = 2;
 	channels: Float32Array[];
@@ -75,6 +92,8 @@ class FakeAudioContext {
 	createdGains: FakeGainNode[] = [];
 	createdOscillators: FakeOscillatorNode[] = [];
 	createdConvolvers: FakeConvolverNode[] = [];
+	createdBufferSources: FakeBufferSourceNode[] = [];
+	createdFilters: FakeBiquadFilterNode[] = [];
 
 	constructor() {
 		FakeAudioContext.instances.push(this);
@@ -96,6 +115,18 @@ class FakeAudioContext {
 		const convolver = new FakeConvolverNode();
 		this.createdConvolvers.push(convolver);
 		return convolver;
+	}
+
+	createBufferSource() {
+		const source = new FakeBufferSourceNode();
+		this.createdBufferSources.push(source);
+		return source;
+	}
+
+	createBiquadFilter() {
+		const filter = new FakeBiquadFilterNode();
+		this.createdFilters.push(filter);
+		return filter;
 	}
 
 	createBuffer(channels: number, length: number, _sampleRate: number) {
@@ -512,32 +543,48 @@ describe("audio store", () => {
 			expect(audio.audioTime()).toBe(0);
 		});
 
-		it("scheduleClick books a short dry blip at the exact time", async () => {
+		it("scheduleClick books a short filtered noise burst at the exact time", async () => {
 			const audio = await freshStore();
 			await audio.startChord(C_MAJOR, "sine", 1);
 			const ctx = FakeAudioContext.instances[0];
-			const oscillatorsBefore = ctx.createdOscillators.length;
 
 			audio.scheduleClick(1.5, true);
 
-			const osc = ctx.createdOscillators[oscillatorsBefore];
-			expect(osc.type).toBe("square");
-			expect(osc.frequency.setValueAtTime).toHaveBeenCalledWith(1600, 1.5);
-			expect(osc.start).toHaveBeenCalledWith(1.5);
-			expect(osc.stop).toHaveBeenCalledWith(1.56);
+			// Noise voice, not an oscillator: no pitch content
+			const source = ctx.createdBufferSources.at(-1);
+			expect(source?.buffer).not.toBeNull();
+			expect(source?.start).toHaveBeenCalledWith(1.5);
+			expect(source?.stop).toHaveBeenCalledWith(1.52); // ~20ms tick
+
+			// Band-passed; the accent is brighter, not higher-pitched
+			const filter = ctx.createdFilters.at(-1);
+			expect(filter?.type).toBe("bandpass");
+			expect(filter?.frequency.setValueAtTime).toHaveBeenCalledWith(6000, 1.5);
+
 			// Dry path: the click gain connects straight to the destination
 			const clickGain = ctx.createdGains.at(-1);
 			expect(clickGain?.connect).toHaveBeenCalledWith(ctx.destination);
 		});
 
-		it("unaccented clicks use the lower pitch", async () => {
+		it("unaccented clicks use the darker filter center", async () => {
 			const audio = await freshStore();
 			await audio.startChord(C_MAJOR, "sine", 1);
 			const ctx = FakeAudioContext.instances[0];
 
 			audio.scheduleClick(2, false);
-			const osc = ctx.createdOscillators.at(-1);
-			expect(osc?.frequency.setValueAtTime).toHaveBeenCalledWith(1100, 2);
+			const filter = ctx.createdFilters.at(-1);
+			expect(filter?.frequency.setValueAtTime).toHaveBeenCalledWith(3500, 2);
+		});
+
+		it("reuses one shared noise buffer across clicks", async () => {
+			const audio = await freshStore();
+			await audio.startChord(C_MAJOR, "sine", 1);
+			const ctx = FakeAudioContext.instances[0];
+
+			audio.scheduleClick(1);
+			audio.scheduleClick(2);
+			const [first, second] = ctx.createdBufferSources.slice(-2);
+			expect(first.buffer).toBe(second.buffer);
 		});
 
 		it("is a no-op before the context exists", async () => {

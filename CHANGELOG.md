@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2026-07-12
+
+### Changed
+- Drier click voice: the metronome is now a ~15ms band-passed white-noise burst instead of a 50ms square-wave beep — no pitch content, reads as a tick rather than a tone. The accent is brighter and louder (higher filter center) instead of higher-pitched.
+
 ## [0.13.0] - 2026-07-12
 
 ### Added
