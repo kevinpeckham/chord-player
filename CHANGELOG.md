@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-07-12
+
+### Added
+- Playback click: a **click** checkbox in the progression pad plays a click during playback, beat-aligned with the chords (honors the accent and time-signature settings)
+- Measure separators: the pad now draws vertical pipes between measures, derived from each chord's beats and the time signature; the bar count restarts on each line, like a lead sheet
+
+### Changed
+- The live metronome yields when playback starts (two clocks would fight) and is restored when the transport disengages — so punching in after playback keeps the click going
+
 ## [0.12.0] - 2026-07-12
 
 ### Added
