@@ -89,7 +89,7 @@ export function recordChord(label: string, notes: number[] = []): number {
 // Set a chord's duration once its hold length is known (on release/slide)
 export function setEntryBeats(index: number, beats: ChordBeats): void {
 	const entry = progression.entries[index];
-	if (!entry || entry.kind !== "chord") return;
+	if (entry?.kind !== "chord") return;
 	entry.beats = beats;
 	persist();
 }

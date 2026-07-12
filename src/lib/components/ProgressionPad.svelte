@@ -6,9 +6,10 @@ Progression pad
 - Transport: play/pause (true pause, position kept), stop, loop; while the
   transport is engaged, live jotting is suspended — when playback ends
   naturally with rec on, the next chord played appends (punch-in)
-- ● rec toggles jotting; export midi downloads a .mid at the pad's BPM
+- ● rec toggles jotting
 - Line break / undo / clear; the X hides the pad (re-enable from settings);
   content persists in localStorage; hidden until the first chord is played
+- (.mid export exists in $utils/midi but is not surfaced in the UI for now)
 -->
 
 <script lang="ts">
@@ -28,8 +29,6 @@ import {
 	toggleLoop,
 } from "$stores/progressionPlayer.svelte";
 import { settings } from "$stores/settings.svelte";
-
-import { progressionToMidi } from "$utils/midi";
 
 // Group flat entries into visual lines at each break, keeping each chord's
 // index into progression.entries so the sounding chord can be highlighted
@@ -55,17 +54,6 @@ const transportRunning = $derived(player.playing && !player.paused);
 
 function dismiss() {
 	settings.showProgressionPad = false;
-}
-
-function exportMidi() {
-	const bytes = progressionToMidi(progression.entries, player.bpm);
-	const blob = new Blob([bytes], { type: "audio/midi" });
-	const url = URL.createObjectURL(blob);
-	const anchor = document.createElement("a");
-	anchor.href = url;
-	anchor.download = "progression.mid";
-	anchor.click();
-	URL.revokeObjectURL(url);
 }
 
 // Silence playback if the pad unmounts (dismissed / mode change)
@@ -180,15 +168,6 @@ const activeClasses = "text-accent border-accent/60";
 			</button>
 			<button type="button" class={buttonClasses} onclick={clearProgression}>
 				clear
-			</button>
-			<button
-				type="button"
-				class={buttonClasses}
-				disabled={!hasPlayableEntries}
-				title="Download this progression as a .mid file at the current BPM"
-				onclick={exportMidi}
-			>
-				export midi
 			</button>
 		</div>
 	</div>

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-07-12
+
+### Removed
+- The "export midi" button — small use case for now, and it cluttered the pad. The tested .mid writer stays in the codebase (`$utils/midi`) for a future, less prominent surface (e.g. an overflow menu or the Web MIDI epic).
+
 ## [0.10.0] - 2026-07-12
 
 ### Added

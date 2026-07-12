@@ -32,7 +32,13 @@
 		"svelte-check",
 		"uno.css"
 	],
-	"ignoreExports": [{ "file": "src/hooks.server.ts", "exports": ["config"] }],
+	"ignoreExports": [
+		{ "file": "src/hooks.server.ts", "exports": ["config"] },
+		{
+			"file": "src/lib/utils/midi.ts",
+			"exports": ["progressionToMidi", "encodeVariableLength"]
+		}
+	],
 	"ignoreExportsUsedInFile": true,
 	"ignorePatterns": [
 		".svelte-kit/**",
