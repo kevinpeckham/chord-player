@@ -11,7 +11,7 @@ import {
 import { player, setBpm, stopPlayback } from "$stores/progressionPlayer.svelte";
 import { settings } from "$stores/settings.svelte";
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -105,20 +105,12 @@ describe("ProgressionPad", () => {
 		expect(player.loop).toBe(true);
 	});
 
-	it("sets the tempo from the bpm input, clamped to range", async () => {
+	it("no longer hosts the tempo input (moved to the toolbar)", () => {
 		recordChord("C", [60, 64, 67]);
 		render(ProgressionPad);
-
-		const bpm = screen.getByLabelText(
-			"Tempo in beats per minute",
-		) as HTMLInputElement;
-		expect(bpm).toHaveValue(120);
-
-		await fireEvent.change(bpm, { target: { value: "90" } });
-		expect(player.bpm).toBe(90);
-
-		await fireEvent.change(bpm, { target: { value: "999" } });
-		expect(player.bpm).toBe(240);
+		expect(
+			screen.queryByLabelText("Tempo in beats per minute"),
+		).not.toBeInTheDocument();
 	});
 
 	it("dismisses the pad via the X (re-enabled from settings)", async () => {

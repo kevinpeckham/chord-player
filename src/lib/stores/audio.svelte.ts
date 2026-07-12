@@ -144,6 +144,37 @@ export function toggleReverb(): void {
 	setReverbMix(audioState.reverbMix > 0 ? 0 : lastAudibleReverbMix);
 }
 
+// The AudioContext clock, for scheduling ahead (metronome); null before init
+export function audioTime(): number | null {
+	return audioContext ? audioContext.currentTime : null;
+}
+
+// Schedule a short metronome click at an exact context time. Clicks connect
+// straight to the destination (not through the master chain) so they stay
+// dry — a reverberant click defeats the purpose — scaled by master volume.
+export function scheduleClick(atTime: number, accent = false): void {
+	if (!audioContext) return;
+
+	const osc = audioContext.createOscillator();
+	const gain = audioContext.createGain();
+	osc.type = "square";
+	osc.frequency.setValueAtTime(accent ? 1600 : 1100, atTime);
+
+	const peak = 0.25 * audioState.masterVolume * (accent ? 1.4 : 1);
+	gain.gain.setValueAtTime(0, atTime);
+	gain.gain.linearRampToValueAtTime(peak, atTime + 0.002);
+	gain.gain.exponentialRampToValueAtTime(0.001, atTime + 0.05);
+
+	osc.connect(gain);
+	gain.connect(audioContext.destination);
+	osc.start(atTime);
+	osc.stop(atTime + 0.06);
+	osc.onended = () => {
+		osc.disconnect();
+		gain.disconnect();
+	};
+}
+
 // Suspend audio while the page is hidden, resume when it returns
 function handleVisibilityChange(): void {
 	if (!audioContext) return;

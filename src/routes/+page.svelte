@@ -7,6 +7,7 @@ import Instrument from "$components/Instrument.svelte";
 import ProgressionPad from "$components/ProgressionPad.svelte";
 import SettingsPanel from "$components/SettingsPanel.svelte";
 import SeventhPad from "$components/SeventhPad.svelte";
+import TempoControls from "$components/TempoControls.svelte";
 import VolumeControl from "$components/VolumeControl.svelte";
 
 import { settings } from "$stores/settings.svelte";
@@ -56,11 +57,13 @@ function closeMenuOnOutsidePress(event: PointerEvent) {
 		{/if}
 
 		<!-- toolbar -->
-		<div data-toolbar class="flex items-center gap-6">
+		<div data-toolbar class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
 			<!-- volume control -->
 			<div class="">
 				<VolumeControl />
 			</div>
+			<!-- tempo: bpm / tap / click -->
+			<TempoControls />
 			<!-- seventh modifier (chords mode only) -->
 			{#if settings.mode === "chords"}
 				<SeventhPad />

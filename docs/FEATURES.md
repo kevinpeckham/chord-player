@@ -60,12 +60,12 @@ insert node + a settings slider), so each is a small standalone ship:
 
 ### Phase B — rhythm infrastructure
 
-**B1. Metronome / click** — effort: S–M
-- Builds the **transport**: BPM setting, play/stop, and a lookahead scheduler
-  (the standard ~25ms `setInterval` scheduling beats ~100ms ahead on the
-  AudioContext clock — required for drift-free timing)
-- Click = short oscillator blip, accented downbeat, time signature 4/4 first
-- Toolbar toggle + BPM control; transport lives in a new store
+**B1. Metronome / click** — ✅ shipped in v0.11.0 (+ tap tempo)
+- Lookahead scheduler (~25ms `setInterval` booking clicks ~100ms ahead on the
+  AudioContext clock — drift-free), 4/4 with accented downbeat, dry signal
+  path (bypasses reverb)
+- Toolbar tempo controls: bpm input / tap tempo / click toggle — one shared
+  tempo (player.bpm) drives the click, pad playback, and MIDI export
 
 **B2. Simple drum machine** — effort: M–L (depends on B1)
 - Synthesized kit, no samples: kick (sine pitch-drop), snare (noise burst +

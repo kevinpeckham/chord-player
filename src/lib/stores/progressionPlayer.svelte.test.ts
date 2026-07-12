@@ -110,6 +110,26 @@ describe("progression player", () => {
 		expect(player.position).toBe(1);
 	});
 
+	it("sets tempo from tap intervals and resets after a long pause", async () => {
+		const { tapTempo } = await import("$stores/progressionPlayer.svelte");
+
+		// Steady taps 500ms apart → 120 BPM
+		tapTempo();
+		for (let i = 0; i < 3; i++) {
+			vi.advanceTimersByTime(500);
+			tapTempo();
+		}
+		expect(player.bpm).toBe(120);
+
+		// A >2s pause starts a fresh sequence: the stale interval is ignored
+		vi.advanceTimersByTime(3000);
+		tapTempo(); // first tap of the new sequence — no bpm change yet
+		expect(player.bpm).toBe(120);
+		vi.advanceTimersByTime(1000);
+		tapTempo();
+		expect(player.bpm).toBe(60); // 1000ms interval
+	});
+
 	it("clamps and persists the tempo", () => {
 		setBpm(999);
 		expect(player.bpm).toBe(240);

@@ -24,7 +24,6 @@ import {
 	pausePlayback,
 	player,
 	playProgression,
-	setBpm,
 	stopPlayback,
 	toggleLoop,
 } from "$stores/progressionPlayer.svelte";
@@ -142,21 +141,6 @@ const activeClasses = "text-accent border-accent/60";
 			>
 				&#9679; rec
 			</button>
-
-			<!-- tempo -->
-			<label class="flex items-center gap-1 text-xs opacity-80">
-				<input
-					type="number"
-					min="40"
-					max="240"
-					value={player.bpm}
-					onchange={(e) =>
-						setBpm(Number.parseInt(e.currentTarget.value, 10) || 120)}
-					class="w-14 rounded border border-neutral-100/30 bg-primary/20 px-1.5 py-1 text-xs tabular-nums"
-					aria-label="Tempo in beats per minute"
-				/>
-				bpm
-			</label>
 		</div>
 
 		<div class="flex flex-wrap gap-2">
