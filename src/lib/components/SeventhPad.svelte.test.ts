@@ -24,12 +24,9 @@ describe("SeventhPad", () => {
 		expect(pad()).toHaveTextContent("7");
 	});
 
-	it("renders the desktop Shift hint (visibility is media-query gated)", () => {
+	it("wraps the pad so fine-pointer devices can hide it (touch-only control)", () => {
 		const { container } = render(SeventhPad);
-		const hint = container.querySelector(".seventh-desktop-hint");
-		expect(hint).toBeInTheDocument();
-		expect(hint).toHaveTextContent("hold");
-		expect(hint?.querySelector("kbd")).toHaveTextContent("Shift");
+		expect(container.querySelector(".seventh-pad")).toBeInTheDocument();
 	});
 
 	it("labels itself maj7 when the seventh type setting is major7", async () => {

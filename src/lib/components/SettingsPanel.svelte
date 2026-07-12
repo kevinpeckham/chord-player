@@ -113,5 +113,5 @@ import { settings } from "$stores/settings.svelte";
 	{/if}
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.5.2</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.5.3</div>
 </div>

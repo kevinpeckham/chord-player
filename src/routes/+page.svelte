@@ -55,6 +55,12 @@ let menuState: "closed" | "open" = $state("closed");
 
 </main>
 
+<!-- desktop-only seventh hint (the touch pad is hidden on fine-pointer
+     devices; see SeventhPad.svelte) -->
+{#if settings.mode === "chords"}
+	<p class="seventh-hint fixed bottom-4 inset-x-0 text-center text-sm opacity-60 pointer-events-none z-10 text-neutral-50">Hold down Shift to play 7th chords</p>
+{/if}
+
 
 
 
@@ -66,3 +72,15 @@ let menuState: "closed" | "open" = $state("closed");
 <!-- <footer class="text-12px px-8 py-4 border-t border-t-neutral-100/30 bg-black/10">
 	<div class="flex opacity-60">MIT License</div>
 </footer> -->
+
+<style>
+	/* The Shift hint only makes sense for mouse/trackpad users */
+	.seventh-hint {
+		display: none;
+	}
+	@media (hover: hover) and (pointer: fine) {
+		.seventh-hint {
+			display: block;
+		}
+	}
+</style>

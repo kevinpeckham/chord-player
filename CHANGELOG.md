@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-07-11
+
+### Changed
+- The "7" pad is now touch-only: it is hidden entirely on mouse/trackpad devices, replaced by a plain text note on its own line at the bottom of the screen — "Hold down Shift to play 7th chords" (shown in chords mode only). This removes the confusing state where the pad appeared interactive on desktop but couldn't be used with a single mouse.
+
 ## [0.5.2] - 2026-07-11
 
 ### Fixed
