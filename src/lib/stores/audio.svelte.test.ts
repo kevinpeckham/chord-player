@@ -366,6 +366,38 @@ describe("audio store", () => {
 			expect(audio.audioState.isPlaying).toBe(false);
 		});
 
+		// Regression: playback of repeated identical chords (quarter-note
+		// C C C C) restarts the same frequencies on the same pointer right
+		// after stopChordById. The pointer's map entry used to linger until
+		// the ~100ms cleanup timer, so startChord's same-chord dedup matched
+		// the STOPPED chord and silently skipped every second repetition —
+		// "4 chords shown, 2 played per measure".
+		it("replays the same chord immediately after it was stopped", async () => {
+			const audio = await freshStore();
+			await audio.startChord(C_MAJOR, "sine", -1);
+			audio.stopChordById(-1);
+
+			// Next playback step starts before the node-cleanup timer fires
+			await audio.startChord(C_MAJOR, "sine", -1);
+
+			const ctx = FakeAudioContext.instances[0];
+			// Two full soundings: 3 oscillators each
+			expect(ctx.createdOscillators).toHaveLength(6);
+			const secondHit = ctx.createdOscillators.slice(3);
+			for (const osc of secondHit) {
+				expect(osc.start).toHaveBeenCalled();
+			}
+		});
+
+		it("still dedups a chord that is actively sounding (not stopped)", async () => {
+			const audio = await freshStore();
+			await audio.startChord(C_MAJOR, "sine", 1);
+			await audio.startChord(C_MAJOR, "sine", 1); // same chord, still held
+
+			const ctx = FakeAudioContext.instances[0];
+			expect(ctx.createdOscillators).toHaveLength(3); // no restart
+		});
+
 		// Regression: sliding between wedges restarts the chord under the same
 		// pointer ID while the previous chord's fade cleanup is still pending.
 		// That cleanup used to delete the pointer's map entry unconditionally,
