@@ -112,6 +112,14 @@ import { settings } from "$stores/settings.svelte";
 		</div>
 	{/if}
 
+	<!-- about link -->
+	<div>
+		<a
+			href="/about"
+			class="text-sm opacity-80 underline underline-offset-2 hover:text-accent hover:opacity-100"
+		>About Fifths &rarr;</a>
+	</div>
+
 	<!-- attribution -->
 	<div class="absolute left-8 bottom-8 opacity-60 text-xs">
 		Made by Kevin Peckham @
@@ -125,5 +133,5 @@ import { settings } from "$stores/settings.svelte";
 	</div>
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.5.5</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.6.0</div>
 </div>
