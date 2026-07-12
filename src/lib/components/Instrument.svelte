@@ -26,7 +26,8 @@ import {
 	unlockAudio,
 } from "$stores/audio.svelte";
 import { performance } from "$stores/performance.svelte";
-import { recordChord } from "$stores/progression.svelte";
+import { recordChord, setEntryBeats } from "$stores/progression.svelte";
+import { player } from "$stores/progressionPlayer.svelte";
 import { settings } from "$stores/settings.svelte";
 
 // types
@@ -45,7 +46,14 @@ import { textCoords, wedgePath } from "$utils/circleGeometry";
 import { processChordEnharmonics } from "$utils/enharmonics";
 import { frequenciesToMidi } from "$utils/midi";
 import { CHROMATIC_NOTES, getNoteForPosition } from "$utils/noteHelpers";
+import { beatsFromHold } from "$utils/rhythm";
 import { seventhChordName, withSeventh } from "$utils/sevenths";
+
+// A jotted entry whose hold duration is still open (finalized on release)
+interface OpenRecord {
+	index: number;
+	start: number;
+}
 
 // Track active playback - Map pointer IDs to their elements and chord names
 const activePointers = $state(
@@ -57,6 +65,8 @@ const activePointers = $state(
 			chordName: string;
 			// Per-pointer seventh upgrade (a second finger on this wedge)
 			seventh: boolean;
+			// The pad entry this pointer is currently holding open, if any
+			openRecord: OpenRecord | null;
 		}
 	>(),
 );
@@ -153,18 +163,35 @@ function playChordAtIndex(index: number, mode: string, pointerId: number) {
 	const frequencies = chordFrequencies(datum, mode, seventh);
 
 	// Jot every distinct chord this pointer sounds (new press, slide to a
-	// new wedge, or a seventh change) onto the progression pad
-	const previousName = activePointers.get(pointerId)?.chordName;
+	// new wedge, or a seventh change) onto the progression pad. The entry's
+	// duration stays open until the pointer releases or moves on.
+	const pointerInfo = activePointers.get(pointerId);
 	const chordName = chordDisplayName(datum, mode, seventh);
-	if (chordName !== previousName) {
-		recordChord(
+	if (pointerInfo && chordName !== pointerInfo.chordName) {
+		closeOpenRecord(pointerInfo);
+		const index = recordChord(
 			chordSymbol(datum, mode, seventh),
 			frequenciesToMidi(frequencies),
 		);
+		if (index >= 0) {
+			pointerInfo.openRecord = { index, start: Date.now() };
+		}
 	}
 
 	setPointerChordName(pointerId, chordName);
 	startChord(frequencies, settings.activeVoice as OscillatorType, pointerId);
+}
+
+// Finalize an open pad entry's duration from how long it was held,
+// quantized to the pad's tempo
+function closeOpenRecord(pointerInfo: { openRecord: OpenRecord | null }) {
+	if (!pointerInfo.openRecord) return;
+	const heldMs = Date.now() - pointerInfo.openRecord.start;
+	setEntryBeats(
+		pointerInfo.openRecord.index,
+		beatsFromHold(heldMs, player.bpm),
+	);
+	pointerInfo.openRecord = null;
 }
 
 function playChordFromElement(element: SVGPathElement, pointerId: number) {
@@ -211,6 +238,7 @@ function onPressStart(event: PointerEvent) {
 		elementId: target.id,
 		chordName: "",
 		seventh: false,
+		openRecord: null,
 	});
 	currentPointerId = pointerId;
 
@@ -264,6 +292,7 @@ function onPointerMove(event: PointerEvent) {
 			elementId: element.id,
 			chordName: pointerInfo.chordName,
 			seventh: pointerInfo.seventh,
+			openRecord: pointerInfo.openRecord,
 		});
 
 		// Play new chord (this will stop the previous chord for this pointer)
@@ -286,7 +315,11 @@ function releasePointer(pointerId: number): boolean {
 		return true;
 	}
 
-	if (!activePointers.has(pointerId)) return false;
+	const pointerInfo = activePointers.get(pointerId);
+	if (!pointerInfo) return false;
+
+	// Finalize the jotted entry's duration from the hold length
+	closeOpenRecord(pointerInfo);
 
 	// Stop the chord for this pointer and drop any upgrade aimed at it
 	stopChordById(pointerId);

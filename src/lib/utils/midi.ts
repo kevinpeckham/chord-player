@@ -56,8 +56,8 @@ function uint16(value: number): number[] {
 
 /**
  * Build a format-0 .mid file from progression entries.
- * Each chord lasts one quarter note; line breaks become one-quarter rests.
- * Entries without note data (legacy jottings) are skipped.
+ * Each chord lasts its recorded `beats` in quarter notes; line breaks become
+ * one-quarter rests. Entries without note data (legacy jottings) are skipped.
  */
 export function progressionToMidi(
 	entries: ProgressionEntry[],
@@ -96,10 +96,11 @@ export function progressionToMidi(
 				NOTE_VELOCITY,
 			);
 		});
-		// Note-offs one quarter note later
+		// Note-offs after the chord's recorded duration
+		const durationTicks = entry.beats * TICKS_PER_QUARTER;
 		entry.notes.forEach((note, i) => {
 			events.push(
-				...encodeVariableLength(i === 0 ? TICKS_PER_QUARTER : 0),
+				...encodeVariableLength(i === 0 ? durationTicks : 0),
 				0x80,
 				note & 0x7f,
 				0x00,

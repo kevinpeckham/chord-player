@@ -13,14 +13,19 @@ import {
 	clearProgression,
 	progression,
 	recordChord,
+	setEntryBeats,
 } from "$stores/progression.svelte";
 import {
+	pausePlayback,
 	player,
 	playProgression,
+	setBpm,
 	stopPlayback,
+	toggleLoop,
 } from "$stores/progressionPlayer.svelte";
 import { settings } from "$stores/settings.svelte";
 
+// One beat at the default 120 BPM
 const STEP_MS = 500;
 const C_NOTES = [60, 64, 67];
 const G_NOTES = [55, 59, 62];
@@ -31,9 +36,12 @@ describe("progression player", () => {
 		// Reset player state BEFORE clearing mocks — stopPlayback itself
 		// calls the mocked stopChordById
 		stopPlayback();
+		player.loop = false;
+		setBpm(120);
 		vi.clearAllMocks();
 		clearProgression();
-		progression.paused = false;
+		progression.recording = true;
+		progression.suspended = false;
 		settings.activeVoice = "sine";
 	});
 
@@ -61,13 +69,93 @@ describe("progression player", () => {
 		expect(startChord).toHaveBeenCalledTimes(2);
 	});
 
-	it("releases each chord before the next step", () => {
+	it("suspends live jotting while the transport is engaged (punch-in)", () => {
 		recordChord("C", C_NOTES);
 		playProgression();
-		expect(stopChordById).not.toHaveBeenCalledWith(-1);
 
-		vi.advanceTimersByTime(STEP_MS - 1);
+		// While playing, jotting is suspended — playing along cannot jot
+		expect(progression.suspended).toBe(true);
+		expect(recordChord("G", G_NOTES)).toBe(-1);
+		expect(progression.entries).toHaveLength(1);
+
+		// Natural end lifts the suspension: the next chord played appends
+		vi.advanceTimersByTime(STEP_MS);
+		expect(player.playing).toBe(false);
+		expect(progression.suspended).toBe(false);
+		expect(recordChord("G", G_NOTES)).toBe(1);
+	});
+
+	it("honors each chord's beats at the current tempo", () => {
+		recordChord("C", C_NOTES);
+		setEntryBeats(0, 2);
+		recordChord("G", G_NOTES);
+		playProgression();
+
+		// C holds for 2 beats — still sounding after one step
+		vi.advanceTimersByTime(STEP_MS);
+		expect(player.position).toBe(0);
+		vi.advanceTimersByTime(STEP_MS);
+		expect(player.position).toBe(1);
+	});
+
+	it("scales step time with BPM", () => {
+		setBpm(60); // 1000ms per beat
+		recordChord("C", C_NOTES);
+		recordChord("G", G_NOTES);
+		playProgression();
+
+		vi.advanceTimersByTime(500);
+		expect(player.position).toBe(0); // not yet
+		vi.advanceTimersByTime(500);
+		expect(player.position).toBe(1);
+	});
+
+	it("clamps and persists the tempo", () => {
+		setBpm(999);
+		expect(player.bpm).toBe(240);
+		setBpm(10);
+		expect(player.bpm).toBe(40);
+		setBpm(96);
+		expect(localStorage.getItem("fifths-progression-bpm")).toBe("96");
+	});
+
+	it("pauses at the current position and resumes from it", () => {
+		recordChord("C", C_NOTES);
+		recordChord("G", G_NOTES);
+		recordChord("Am", [57, 60, 64]);
+		playProgression();
+		vi.advanceTimersByTime(STEP_MS); // now on G (index 1)
+
+		pausePlayback();
+		expect(player.playing).toBe(true);
+		expect(player.paused).toBe(true);
+		expect(player.position).toBe(1);
 		expect(stopChordById).toHaveBeenCalledWith(-1);
+		expect(progression.suspended).toBe(true); // still engaged
+
+		const callsBefore = vi.mocked(startChord).mock.calls.length;
+		vi.advanceTimersByTime(STEP_MS * 4);
+		expect(vi.mocked(startChord).mock.calls.length).toBe(callsBefore); // frozen
+
+		playProgression(); // resume
+		expect(player.paused).toBe(false);
+		expect(player.position).toBe(1); // replays the paused chord
+		expect(vi.mocked(startChord).mock.calls.length).toBe(callsBefore + 1);
+	});
+
+	it("loops back to the top when loop is on", () => {
+		recordChord("C", C_NOTES);
+		recordChord("G", G_NOTES);
+		toggleLoop();
+		playProgression();
+
+		vi.advanceTimersByTime(STEP_MS * 2); // past the end
+		expect(player.playing).toBe(true);
+		expect(player.position).toBe(0); // wrapped
+		expect(progression.suspended).toBe(true); // loop never punches in
+
+		stopPlayback();
+		expect(progression.suspended).toBe(false);
 	});
 
 	it("rests on line breaks", () => {
@@ -84,13 +172,12 @@ describe("progression player", () => {
 		expect(startChord).toHaveBeenCalledTimes(2);
 	});
 
-	it("stops at the end and resets position", () => {
+	it("releases each chord before the next step", () => {
 		recordChord("C", C_NOTES);
 		playProgression();
-		vi.advanceTimersByTime(STEP_MS);
+		expect(stopChordById).not.toHaveBeenCalledWith(-1);
 
-		expect(player.playing).toBe(false);
-		expect(player.position).toBe(-1);
+		vi.advanceTimersByTime(STEP_MS - 1);
 		expect(stopChordById).toHaveBeenCalledWith(-1);
 	});
 

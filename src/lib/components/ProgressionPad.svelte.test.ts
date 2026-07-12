@@ -8,16 +8,21 @@ import {
 	progression,
 	recordChord,
 } from "$stores/progression.svelte";
+import { player, setBpm, stopPlayback } from "$stores/progressionPlayer.svelte";
 import { settings } from "$stores/settings.svelte";
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("ProgressionPad", () => {
 	beforeEach(() => {
+		stopPlayback();
 		clearProgression();
-		progression.paused = false;
+		progression.recording = true;
+		progression.suspended = false;
+		player.loop = false;
+		setBpm(120);
 		settings.showProgressionPad = true;
 	});
 
@@ -48,24 +53,72 @@ describe("ProgressionPad", () => {
 		expect(rows[1]).toHaveTextContent("G");
 	});
 
-	it("toggles jotting with the pause button", async () => {
+	it("toggles jotting with the rec button", async () => {
 		const user = userEvent.setup();
 		recordChord("C");
 		render(ProgressionPad);
 
-		const pause = screen.getByRole("button", { name: "pause" });
-		expect(pause).toHaveAttribute("aria-pressed", "false");
-		await user.click(pause);
-		expect(progression.paused).toBe(true);
+		const rec = screen.getByRole("button", { name: "● rec" });
+		expect(rec).toHaveAttribute("aria-pressed", "true");
+		await user.click(rec);
+		expect(progression.recording).toBe(false);
 
-		// While paused, plays are not jotted
+		// With rec off, plays are not jotted
 		recordChord("G");
 		expect(progression.entries).toHaveLength(1);
 
-		const resume = screen.getByRole("button", { name: "resume" });
-		expect(resume).toHaveAttribute("aria-pressed", "true");
-		await user.click(resume);
-		expect(progression.paused).toBe(false);
+		await user.click(rec);
+		expect(progression.recording).toBe(true);
+	});
+
+	it("play becomes a true pause and stop resets", async () => {
+		const user = userEvent.setup();
+		recordChord("C", [60, 64, 67]);
+		recordChord("G", [55, 59, 62]);
+		render(ProgressionPad);
+
+		await user.click(screen.getByRole("button", { name: "play" }));
+		expect(player.playing).toBe(true);
+		expect(progression.suspended).toBe(true);
+
+		// The same slot is now a pause button; pausing keeps the position
+		await user.click(screen.getByRole("button", { name: "pause" }));
+		expect(player.paused).toBe(true);
+		expect(player.position).toBeGreaterThanOrEqual(0);
+		expect(progression.suspended).toBe(true); // transport still engaged
+
+		// stop disengages the transport and lifts the jotting suspension
+		await user.click(screen.getByRole("button", { name: "stop" }));
+		expect(player.playing).toBe(false);
+		expect(player.position).toBe(-1);
+		expect(progression.suspended).toBe(false);
+	});
+
+	it("toggles loop", async () => {
+		const user = userEvent.setup();
+		recordChord("C", [60, 64, 67]);
+		render(ProgressionPad);
+
+		const loop = screen.getByRole("button", { name: "loop" });
+		expect(loop).toHaveAttribute("aria-pressed", "false");
+		await user.click(loop);
+		expect(player.loop).toBe(true);
+	});
+
+	it("sets the tempo from the bpm input, clamped to range", async () => {
+		recordChord("C", [60, 64, 67]);
+		render(ProgressionPad);
+
+		const bpm = screen.getByLabelText(
+			"Tempo in beats per minute",
+		) as HTMLInputElement;
+		expect(bpm).toHaveValue(120);
+
+		await fireEvent.change(bpm, { target: { value: "90" } });
+		expect(player.bpm).toBe(90);
+
+		await fireEvent.change(bpm, { target: { value: "999" } });
+		expect(player.bpm).toBe(240);
 	});
 
 	it("dismisses the pad via the X (re-enabled from settings)", async () => {
@@ -133,6 +186,7 @@ describe("ProgressionPad", () => {
 			kind: "chord",
 			label: "G",
 			notes: [],
+			beats: 1,
 		});
 
 		await user.click(screen.getByRole("button", { name: "clear" }));

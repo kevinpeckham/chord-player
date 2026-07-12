@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-07-12
+
+### Added
+- Progression pad transport: **pause** is now a true playback pause (position kept, resume from the same chord), plus a **stop** button and a **loop** toggle
+- **● rec** toggle replaces the old pause-jotting button — off means noodle freely without jotting
+- Punch-in continuation: while the transport runs, live jotting is suspended (playing along can't jot into the progression being played); when playback reaches its natural end with rec on, the next chord you play appends — press play, listen to the end, keep going
+- **Tempo**: a BPM control on the pad (40–240, persisted) drives playback and MIDI export
+- **Rhythm from hold duration**: how long you hold each chord is quantized to 1, 2, or 4 beats at the pad's tempo — playback and .mid export reproduce your long and short chords on a clean grid
+
+### Changed
+- MIDI export honors per-chord beats and the pad's BPM
+
 ## [0.9.0] - 2026-07-12
 
 ### Added

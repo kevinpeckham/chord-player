@@ -406,8 +406,8 @@ describe("Instrument", () => {
 			await tick();
 
 			expect(progression.entries).toEqual([
-				{ kind: "chord", label: "C", notes: [60, 64, 67] },
-				{ kind: "chord", label: "Am", notes: [69, 72, 76] },
+				{ kind: "chord", label: "C", notes: [60, 64, 67], beats: 1 },
+				{ kind: "chord", label: "Am", notes: [69, 72, 76], beats: 1 },
 			]);
 		});
 
@@ -421,8 +421,25 @@ describe("Instrument", () => {
 			await pressChord(cWedge, 1);
 
 			expect(progression.entries).toEqual([
-				{ kind: "chord", label: "C7", notes: [60, 64, 67, 70] },
+				{ kind: "chord", label: "C7", notes: [60, 64, 67, 70], beats: 1 },
 			]);
+		});
+
+		it("quantizes a chord's held duration into beats on release", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			const cWedge = container.querySelector('[id="chord-button-C"]');
+			if (!cWedge) throw new Error("C wedge not found");
+
+			// pressChord already advances 150ms (unlock delay); hold ~1.1s
+			// total — at 120 BPM that's ~2.2 beats, quantized to a half note
+			await pressChord(cWedge, 1);
+			vi.advanceTimersByTime(950);
+			releasePointer(cWedge, 1);
+			await tick();
+
+			const entry = progression.entries[0];
+			if (entry.kind !== "chord") throw new Error("expected chord entry");
+			expect(entry.beats).toBe(2);
 		});
 
 		it("does not re-record when a replay leaves the chord name unchanged", async () => {
@@ -438,7 +455,7 @@ describe("Instrument", () => {
 			await tick();
 
 			expect(progression.entries).toEqual([
-				{ kind: "chord", label: "C", notes: [60, 64, 67] },
+				{ kind: "chord", label: "C", notes: [60, 64, 67], beats: 1 },
 			]);
 		});
 	});

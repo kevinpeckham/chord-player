@@ -168,5 +168,5 @@ const reverbPercent = $derived(Math.round(audioState.reverbMix * 100));
 	</div>
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.9.0</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.10.0</div>
 </div>
