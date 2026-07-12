@@ -25,4 +25,5 @@ export const settings = $state({
 		| "A#"
 		| "B",
 	keyCenterPosition: "bottom" as "top" | "bottom",
+	showProgressionPad: true,
 });

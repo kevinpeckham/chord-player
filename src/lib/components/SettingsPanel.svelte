@@ -115,7 +115,21 @@ const reverbPercent = $derived(Math.round(audioState.reverbMix * 100));
 			/>
 			<span class="text-sm tabular-nums opacity-80 w-10">{reverbPercent}%</span>
 		</div>
+		<p class="text-xs opacity-60">Press R to toggle reverb on and off.</p>
 	</div>
+
+	<!-- Progression Pad visibility (only in chords mode) -->
+	{#if settings.mode === "chords"}
+		<div class="flex items-center gap-3">
+			<input
+				id="progression-pad-toggle"
+				type="checkbox"
+				bind:checked={settings.showProgressionPad}
+				class="w-4 h-4 accent-accent cursor-pointer"
+			/>
+			<label for="progression-pad-toggle" class="text-sm opacity-80 cursor-pointer">Show progression pad</label>
+		</div>
+	{/if}
 
 	<!-- Octave Selection (only in notes mode) -->
 	{#if settings.mode === "notes"}
@@ -154,5 +168,5 @@ const reverbPercent = $derived(Math.round(audioState.reverbMix * 100));
 	</div>
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.7.0</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.8.0</div>
 </div>

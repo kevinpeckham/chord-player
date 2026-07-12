@@ -50,6 +50,11 @@ function closeMenuOnOutsidePress(event: PointerEvent) {
 
 <main class="relative grid grid-cols-1 gap-y-12 place-items-center page-x-padding pb-36 text-neutral-50 max-w-full max-h-full z-0">
 
+		<!-- progression pad (chords mode only, toggleable in settings) -->
+		{#if settings.mode === "chords" && settings.showProgressionPad}
+			<ProgressionPad />
+		{/if}
+
 		<!-- toolbar -->
 		<div data-toolbar class="flex items-center gap-6">
 			<!-- volume control -->
@@ -68,11 +73,6 @@ function closeMenuOnOutsidePress(event: PointerEvent) {
 	</div>
 
 </main>
-
-<!-- progression pad (chords mode only) -->
-{#if settings.mode === "chords"}
-	<ProgressionPad />
-{/if}
 
 <!-- desktop-only seventh hint (the touch pad is hidden on fine-pointer
      devices; see SeventhPad.svelte) -->
