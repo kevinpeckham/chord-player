@@ -149,28 +149,51 @@ export function audioTime(): number | null {
 	return audioContext ? audioContext.currentTime : null;
 }
 
-// Schedule a short metronome click at an exact context time. Clicks connect
-// straight to the destination (not through the master chain) so they stay
-// dry — a reverberant click defeats the purpose — scaled by master volume.
+// Shared white-noise buffer for the click voice, built once per context
+let clickNoiseBuffer: AudioBuffer | null = null;
+function getClickNoiseBuffer(ctx: AudioContext): AudioBuffer {
+	if (!clickNoiseBuffer) {
+		const length = Math.max(1, Math.floor(ctx.sampleRate * 0.05));
+		clickNoiseBuffer = ctx.createBuffer(1, length, ctx.sampleRate);
+		const data = clickNoiseBuffer.getChannelData(0);
+		for (let i = 0; i < length; i++) {
+			data[i] = Math.random() * 2 - 1;
+		}
+	}
+	return clickNoiseBuffer;
+}
+
+// Schedule a short metronome click at an exact context time. The voice is a
+// ~15ms band-passed noise burst: noise has no pitch and the burst is too
+// short for pitch perception to engage, so the click reads as a dry tick
+// rather than a tone. The accent is brighter and louder, not higher-pitched.
+// Clicks connect straight to the destination (not through the master chain)
+// so they stay out of the reverb, scaled by master volume.
 export function scheduleClick(atTime: number, accent = false): void {
 	if (!audioContext) return;
 
-	const osc = audioContext.createOscillator();
+	const source = audioContext.createBufferSource();
+	source.buffer = getClickNoiseBuffer(audioContext);
+
+	// Low Q = broad band = dry; higher center frequency = brighter accent
+	const filter = audioContext.createBiquadFilter();
+	filter.type = "bandpass";
+	filter.frequency.setValueAtTime(accent ? 6000 : 3500, atTime);
+	filter.Q.value = 1.2;
+
 	const gain = audioContext.createGain();
-	osc.type = "square";
-	osc.frequency.setValueAtTime(accent ? 1600 : 1100, atTime);
+	const peak = 0.5 * audioState.masterVolume * (accent ? 1.5 : 1);
+	gain.gain.setValueAtTime(peak, atTime);
+	gain.gain.exponentialRampToValueAtTime(0.001, atTime + 0.015);
 
-	const peak = 0.25 * audioState.masterVolume * (accent ? 1.4 : 1);
-	gain.gain.setValueAtTime(0, atTime);
-	gain.gain.linearRampToValueAtTime(peak, atTime + 0.002);
-	gain.gain.exponentialRampToValueAtTime(0.001, atTime + 0.05);
-
-	osc.connect(gain);
+	source.connect(filter);
+	filter.connect(gain);
 	gain.connect(audioContext.destination);
-	osc.start(atTime);
-	osc.stop(atTime + 0.06);
-	osc.onended = () => {
-		osc.disconnect();
+	source.start(atTime);
+	source.stop(atTime + 0.02);
+	source.onended = () => {
+		source.disconnect();
+		filter.disconnect();
 		gain.disconnect();
 	};
 }
