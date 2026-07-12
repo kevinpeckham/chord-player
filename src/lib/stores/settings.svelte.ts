@@ -26,4 +26,14 @@ export const settings = $state({
 		| "B",
 	keyCenterPosition: "bottom" as "top" | "bottom",
 	showProgressionPad: true,
+	// Metronome: accent the downbeat of each bar (off by default — a fixed
+	// accent fights odd meters unless the time signature matches)
+	metronomeAccent: false,
+	timeSignature: "4/4" as "2/4" | "3/4" | "4/4" | "5/4" | "6/8",
 });
+
+// Beats per bar from the time signature's numerator (drives the accent
+// pattern and, later, bar-based features like the drum machine)
+export function beatsPerBar(): number {
+	return Number(settings.timeSignature.split("/")[0]);
+}

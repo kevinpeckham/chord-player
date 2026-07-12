@@ -7,10 +7,10 @@
 
 import { audioTime, scheduleClick, unlockAudio } from "$stores/audio.svelte";
 import { player } from "$stores/progressionPlayer.svelte";
+import { beatsPerBar, settings } from "$stores/settings.svelte";
 
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD_S = 0.1;
-const BEATS_PER_BAR = 4; // 4/4 with an accented downbeat
 
 export const metronome = $state({
 	running: false,
@@ -24,7 +24,10 @@ function scheduler(): void {
 	const now = audioTime();
 	if (now === null) return;
 	while (nextBeatTime < now + SCHEDULE_AHEAD_S) {
-		scheduleClick(nextBeatTime, beatIndex % BEATS_PER_BAR === 0);
+		// Accent the bar's downbeat only when the setting is on; the time
+		// signature decides where bars fall
+		const accent = settings.metronomeAccent && beatIndex % beatsPerBar() === 0;
+		scheduleClick(nextBeatTime, accent);
 		beatIndex++;
 		nextBeatTime += 60 / player.bpm;
 	}

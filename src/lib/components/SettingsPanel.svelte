@@ -118,6 +118,36 @@ const reverbPercent = $derived(Math.round(audioState.reverbMix * 100));
 		<p class="text-xs opacity-60">Press R to toggle reverb on and off.</p>
 	</div>
 
+	<!-- Time Signature -->
+	<div class="flex flex-col gap-2">
+		<label for="time-signature-select" class="text-sm opacity-80">Time Signature</label>
+		<select
+			id="time-signature-select"
+			bind:value={settings.timeSignature}
+			class="bg-primary/20 border border-neutral-100/20 rounded px-3 py-2 text-sm"
+		>
+			<option value="2/4">2/4</option>
+			<option value="3/4">3/4</option>
+			<option value="4/4">4/4</option>
+			<option value="5/4">5/4</option>
+			<option value="6/8">6/8</option>
+		</select>
+	</div>
+
+	<!-- Metronome Accent -->
+	<div class="flex flex-col gap-2">
+		<div class="flex items-center gap-3">
+			<input
+				id="metronome-accent-toggle"
+				type="checkbox"
+				bind:checked={settings.metronomeAccent}
+				class="w-4 h-4 accent-accent cursor-pointer"
+			/>
+			<label for="metronome-accent-toggle" class="text-sm opacity-80 cursor-pointer">Accent metronome downbeat</label>
+		</div>
+		<p class="text-xs opacity-60">When on, the click accents beat 1 of each bar per the time signature.</p>
+	</div>
+
 	<!-- Progression Pad visibility (only in chords mode) -->
 	{#if settings.mode === "chords"}
 		<div class="flex items-center gap-3">
@@ -168,5 +198,5 @@ const reverbPercent = $derived(Math.round(audioState.reverbMix * 100));
 	</div>
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.11.0</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.12.0</div>
 </div>
