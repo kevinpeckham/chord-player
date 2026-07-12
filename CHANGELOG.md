@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-07-12
+
+### Added
+- Reverb: a convolver with a synthesized small-hall impulse response (decaying stereo noise — no audio assets) runs parallel to the dry signal; new "Reverb" wet-mix slider in settings, default 25%
+- Progression pad: every chord played is jotted as a compact symbol (C, Am, C7) onto a pad above the bottom of the screen, with new line / undo / clear controls; content persists in localStorage and the pad stays hidden until the first chord is played
+
 ## [0.6.0] - 2026-07-12
 
 ### Added

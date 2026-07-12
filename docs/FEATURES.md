@@ -1,5 +1,92 @@
 # Proposed Features
 
+## Scoped Roadmap (July 2026)
+
+Eight features, scoped and sequenced. Two pieces of shared infrastructure
+determine the order: a **transport** (BPM + lookahead beat scheduler) that the
+metronome, drum machine, and song playback all need, and a **progression/song
+data format** (sequence of `{chordId, mode, seventh, beats}` entries plus line
+breaks) shared by the tracker, scratch pad, demos, and learn mode. Wedge
+**highlighting** (needed by demos and learn mode) is the trigger for the
+planned Instrument componentization (NotesRing/ChordsRing).
+
+### Phase A — quick wins (no dependencies)
+
+**A1. Reverb** — effort: S
+- Web Audio `ConvolverNode` in the master chain with a synthesized impulse
+  response (exponentially decaying noise buffer — no audio assets needed)
+- Dry/wet mix slider in settings; master chain becomes
+  `chordGain → masterGain → [dry + convolver] → destination`
+- Instant sound-quality win: the raw oscillator voices are dry and harsh
+- Tests: extend the FakeAudioContext stub with `createConvolver`/buffers
+
+**A2. Progression pad** (merges "chords played display/tracker" + "scratch
+pad") — effort: S–M
+- Every chord played is appended to a progression store (id, display name,
+  seventh); shown as a strip/pad below the instrument
+- Controls: line break, delete last, clear/reset
+- Persisted to localStorage (SSR-guarded)
+- This IS the tracker with reset; the scratch pad is the same feature with
+  persistence and line breaks, so build once
+- Forward-compatible: entries use the shared song format, so later a jotted
+  progression can be auto-played (Phase C) or practiced (learn mode)
+
+### Phase B — rhythm infrastructure
+
+**B1. Metronome / click** — effort: S–M
+- Builds the **transport**: BPM setting, play/stop, and a lookahead scheduler
+  (the standard ~25ms `setInterval` scheduling beats ~100ms ahead on the
+  AudioContext clock — required for drift-free timing)
+- Click = short oscillator blip, accented downbeat, time signature 4/4 first
+- Toolbar toggle + BPM control; transport lives in a new store
+
+**B2. Simple drum machine** — effort: M–L (depends on B1)
+- Synthesized kit, no samples: kick (sine pitch-drop), snare (noise burst +
+  tone), hi-hat (filtered noise)
+- 16-step × 3-voice pattern grid UI + a few preset patterns
+- Driven by the transport's scheduler; pattern store persisted to localStorage
+
+### Phase C — song engine + instrument highlighting
+
+**C0. Instrument componentization + highlight state** — effort: M
+(prerequisite for C1/C2; retires the standing fallow suppression)
+- Split the SVG template into NotesRing/ChordsRing; wedges accept a
+  `highlighted` state keyed by chord id
+- Programmatic playback API already exists (`startChord` with a reserved
+  pointer id)
+
+**C1. Auto-play demos** — effort: M (depends on B1 + C0)
+- Song format: shared with the progression pad; demo songs ship as JSON
+- Playback engine walks the song on the transport; wedges light as they play
+- ⚠ Song choice: use public-domain/original progressions (12-bar blues,
+  50s progression, Pachelbel) — named contemporary songs raise rights issues
+- User-jotted progressions from the pad become auto-playable for free
+
+**C2. Wait-for-me playing (learn mode)** — effort: M (depends on C1)
+- Same songs, same highlighting; instead of auto-advance, the engine
+  highlights the next expected chord and listens to Instrument play events,
+  advancing on match (with a "close enough" grace for seventh/voicing)
+- Progress display + restart; the incremental work over C1 is the matcher
+
+### Phase D — real voiced instruments (largest, most open-ended)
+
+**D1. Plucked-string synth voice (Karplus–Strong)** — effort: M
+- Physical-modeling pluck (noise burst into a filtered feedback delay) gives
+  a convincing guitar/harp-like voice with zero audio assets
+- Ships as a fifth entry in the existing voice selector; good test of whether
+  synthesis quality satisfies before investing in samples
+
+**D2. Sampled instruments (true guitar/piano)** — effort: L–XL
+- Requires a multisample set per instrument (licensing/sourcing decision),
+  sample loading + caching strategy (megabytes of assets), pitch-shifting
+  between sampled notes, and per-voicing polyphony management
+- Decision needed before scoping further: source/licensing of sample sets
+  (e.g. open ones like VS Chamber Orchestra/Salamander piano) and how many
+  instruments
+
+### Suggested order
+A1 → A2 → B1 → B2 → C0 → C1 → C2 → D1 → (decide) D2
+
 ## Your Proposed Features
 
 ### 1. Settings Menu

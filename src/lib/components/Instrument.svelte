@@ -25,6 +25,7 @@ import {
 	unlockAudio,
 } from "$stores/audio.svelte";
 import { performance } from "$stores/performance.svelte";
+import { recordChord } from "$stores/progression.svelte";
 import { settings } from "$stores/settings.svelte";
 
 // types
@@ -126,6 +127,18 @@ function chordFrequencies(
 	return withSeventh(base, rootFrequency, mode, settings.seventhType);
 }
 
+// Compact chord symbol for the progression pad ("C", "Am", "C7", "Cmaj7")
+function chordSymbol(
+	datum: Chord,
+	mode: "major" | "minor",
+	seventh: boolean,
+): string {
+	const display = mode === "major" ? datum.majorDisplay : datum.minorDisplay;
+	return seventh
+		? seventhChordName(display, mode, settings.seventhType)
+		: display;
+}
+
 // Chords mode: play the major/minor chord at this wedge position using the
 // selected voicing, adding the seventh when the modifier is active
 function playChordAtIndex(index: number, mode: string, pointerId: number) {
@@ -135,7 +148,16 @@ function playChordAtIndex(index: number, mode: string, pointerId: number) {
 	if (mode !== "major" && mode !== "minor") return;
 
 	const seventh = seventhIsActive(pointerId);
-	setPointerChordName(pointerId, chordDisplayName(datum, mode, seventh));
+
+	// Jot every distinct chord this pointer sounds (new press, slide to a
+	// new wedge, or a seventh change) onto the progression pad
+	const previousName = activePointers.get(pointerId)?.chordName;
+	const chordName = chordDisplayName(datum, mode, seventh);
+	if (chordName !== previousName) {
+		recordChord(chordSymbol(datum, mode, seventh));
+	}
+
+	setPointerChordName(pointerId, chordName);
 	startChord(
 		chordFrequencies(datum, mode, seventh),
 		settings.activeVoice as OscillatorType,

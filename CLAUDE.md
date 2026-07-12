@@ -37,7 +37,7 @@ Fifths (chord-player) is an interactive web application that visualizes and play
 
 **Documentation**: All documentation and planning files should be placed in the `/docs` folder
 
-**Current Version**: 0.6.0
+**Current Version**: 0.7.0
 **Feature Roadmap**: See docs/FEATURES.md for planned enhancements
 
 **Frequency Generation**: 
@@ -128,12 +128,13 @@ Components are organized in a flat structure:
    - Props passing with `$props()`
    - Computed values with `$derived()`
    - State stores in `/src/lib/stores/`:
-     - `settings.svelte.ts` - Audio settings (oscillator voice selection, chord voicing)
-     - `performance.svelte.ts` - Performance state (active chord display)
-     - `audio.svelte.ts` - Audio engine with singleton AudioContext, reactive state, and volume control
+     - `settings.svelte.ts` - Audio settings (oscillator voice selection, chord voicing, seventh type)
+     - `performance.svelte.ts` - Performance state (active chord display, seventh modifier)
+     - `progression.svelte.ts` - Progression pad (jotted chords, line breaks, localStorage persistence)
+     - `audio.svelte.ts` - Audio engine with singleton AudioContext, reactive state, volume, and convolver reverb (synthesized impulse response)
        - Exports `startChord(frequencies, oscillatorType, pointerId)` for continuous per-pointer playback
        - Exports `stopChordById(pointerId)` and `stopChord()` to end playback
-       - Exports `setMasterVolume(volume)` and the reactive `audioState`
+       - Exports `setMasterVolume(volume)`, `setReverbMix(mix)`, and the reactive `audioState`
 
 4. **Audio Generation**: Uses Web Audio API with oscillator types (sine, triangle, square, sawtooth)
 

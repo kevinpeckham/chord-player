@@ -4,6 +4,7 @@
 
 import HamburgerButton from "$components/HamburgerButton.svelte";
 import Instrument from "$components/Instrument.svelte";
+import ProgressionPad from "$components/ProgressionPad.svelte";
 import SettingsPanel from "$components/SettingsPanel.svelte";
 import SeventhPad from "$components/SeventhPad.svelte";
 import VolumeControl from "$components/VolumeControl.svelte";
@@ -67,6 +68,11 @@ function closeMenuOnOutsidePress(event: PointerEvent) {
 	</div>
 
 </main>
+
+<!-- progression pad (chords mode only) -->
+{#if settings.mode === "chords"}
+	<ProgressionPad />
+{/if}
 
 <!-- desktop-only seventh hint (the touch pad is hidden on fine-pointer
      devices; see SeventhPad.svelte) -->

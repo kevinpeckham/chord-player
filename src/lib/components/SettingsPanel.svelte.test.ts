@@ -3,9 +3,10 @@
 
 import SettingsPanel from "$components/SettingsPanel.svelte";
 
+import { audioState } from "$stores/audio.svelte";
 import { settings } from "$stores/settings.svelte";
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { version } from "../../../package.json";
@@ -132,6 +133,16 @@ describe("SettingsPanel", () => {
 	it("displays the current package version", () => {
 		render(SettingsPanel);
 		expect(screen.getByText(`v${version}`)).toBeInTheDocument();
+	});
+
+	it("adjusts the reverb mix from the slider", async () => {
+		audioState.reverbMix = 0.25;
+		render(SettingsPanel);
+		const slider = screen.getByLabelText("Reverb") as HTMLInputElement;
+		expect(slider).toHaveValue("25");
+
+		await fireEvent.input(slider, { target: { value: "60" } });
+		expect(audioState.reverbMix).toBe(0.6);
 	});
 
 	it("links to the About page", () => {

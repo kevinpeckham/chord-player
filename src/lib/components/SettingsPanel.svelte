@@ -3,7 +3,10 @@
 
 import VoicingSelector from "$components/VoicingSelector.svelte";
 
+import { audioState, setReverbMix } from "$stores/audio.svelte";
 import { settings } from "$stores/settings.svelte";
+
+const reverbPercent = $derived(Math.round(audioState.reverbMix * 100));
 </script>
 
 <div class="grid grid-cols-1 gap-6 page-x-padding pt-4">
@@ -96,6 +99,24 @@ import { settings } from "$stores/settings.svelte";
 		</div>
 	{/if}
 
+	<!-- Reverb -->
+	<div class="flex flex-col gap-2">
+		<label for="reverb-mix" class="text-sm opacity-80">Reverb</label>
+		<div class="flex items-center gap-3">
+			<input
+				id="reverb-mix"
+				type="range"
+				min="0"
+				max="100"
+				value={reverbPercent}
+				oninput={(e) =>
+					setReverbMix(Number.parseInt(e.currentTarget.value, 10) / 100)}
+				class="w-full h-2 cursor-pointer appearance-none rounded-lg bg-gray-200/20 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-accent"
+			/>
+			<span class="text-sm tabular-nums opacity-80 w-10">{reverbPercent}%</span>
+		</div>
+	</div>
+
 	<!-- Octave Selection (only in notes mode) -->
 	{#if settings.mode === "notes"}
 		<div class="flex flex-col gap-2">
@@ -133,5 +154,5 @@ import { settings } from "$stores/settings.svelte";
 	</div>
 
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.6.0</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.7.0</div>
 </div>

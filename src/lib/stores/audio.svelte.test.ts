@@ -40,6 +40,27 @@ class FakeOscillatorNode {
 	onended: (() => void) | null = null;
 }
 
+class FakeConvolverNode {
+	buffer: unknown = null;
+	connect = vi.fn();
+	disconnect = vi.fn();
+}
+
+class FakeAudioBuffer {
+	numberOfChannels = 2;
+	channels: Float32Array[];
+	constructor(channels: number, length: number) {
+		this.numberOfChannels = channels;
+		this.channels = Array.from(
+			{ length: channels },
+			() => new Float32Array(length),
+		);
+	}
+	getChannelData(channel: number) {
+		return this.channels[channel];
+	}
+}
+
 class FakeAudioContext {
 	static instances: FakeAudioContext[] = [];
 	// Allows a test to make the next context start out suspended.
@@ -47,10 +68,13 @@ class FakeAudioContext {
 
 	state: AudioContextState = FakeAudioContext.initialState;
 	currentTime = 0;
+	// Small so impulse-response generation stays fast in tests
+	sampleRate = 100;
 	destination = { connect: vi.fn(), disconnect: vi.fn() };
 	onstatechange: (() => void) | null = null;
 	createdGains: FakeGainNode[] = [];
 	createdOscillators: FakeOscillatorNode[] = [];
+	createdConvolvers: FakeConvolverNode[] = [];
 
 	constructor() {
 		FakeAudioContext.instances.push(this);
@@ -66,6 +90,16 @@ class FakeAudioContext {
 		const osc = new FakeOscillatorNode();
 		this.createdOscillators.push(osc);
 		return osc;
+	}
+
+	createConvolver() {
+		const convolver = new FakeConvolverNode();
+		this.createdConvolvers.push(convolver);
+		return convolver;
+	}
+
+	createBuffer(channels: number, length: number, _sampleRate: number) {
+		return new FakeAudioBuffer(channels, length);
 	}
 
 	resume = vi.fn(async () => {
@@ -131,6 +165,32 @@ describe("audio store", () => {
 			const masterGain = ctx.createdGains[0];
 			expect(masterGain.connect).toHaveBeenCalledWith(ctx.destination);
 			expect(masterGain.gain.value).toBe(audio.audioState.masterVolume);
+		});
+
+		it("wires a parallel convolver reverb path with an impulse response", async () => {
+			const audio = await freshStore();
+			await audio.startChord(C_MAJOR, "sine", 1);
+			const ctx = FakeAudioContext.instances[0];
+
+			expect(ctx.createdConvolvers).toHaveLength(1);
+			const convolver = ctx.createdConvolvers[0];
+			const masterGain = ctx.createdGains[0];
+			const wetGain = ctx.createdGains[1];
+
+			// masterGain feeds both the destination (dry) and the convolver
+			expect(masterGain.connect).toHaveBeenCalledWith(ctx.destination);
+			expect(masterGain.connect).toHaveBeenCalledWith(convolver);
+			expect(convolver.connect).toHaveBeenCalledWith(wetGain);
+			expect(wetGain.connect).toHaveBeenCalledWith(ctx.destination);
+			expect(wetGain.gain.value).toBe(audio.audioState.reverbMix);
+
+			// The impulse response is a stereo decaying-noise buffer
+			const buffer = convolver.buffer as FakeAudioBuffer;
+			expect(buffer.numberOfChannels).toBe(2);
+			const data = buffer.getChannelData(0);
+			expect(data.length).toBeGreaterThan(0);
+			// Decays to silence at the tail
+			expect(Math.abs(data[data.length - 1])).toBeLessThan(0.01);
 		});
 
 		it("resumes a suspended context before playing", async () => {
@@ -239,8 +299,8 @@ describe("audio store", () => {
 			const audio = await freshStore();
 			await audio.startChord(C_MAJOR, "sine", 1);
 			const ctx = FakeAudioContext.instances[0];
-			// gains: [0] master, [1] chordGain, then per-note gains
-			const chordGain = ctx.createdGains[1];
+			// gains: [0] master, [1] reverb wet, [2] chordGain, then per-note
+			const chordGain = ctx.createdGains[2];
 
 			audio.stopChordById(1);
 
@@ -258,8 +318,8 @@ describe("audio store", () => {
 			const audio = await freshStore();
 			await audio.startChord(C_MAJOR, "sine", 1);
 			const ctx = FakeAudioContext.instances[0];
-			const chordGain = ctx.createdGains[1];
-			const noteGains = ctx.createdGains.slice(2);
+			const chordGain = ctx.createdGains[2];
+			const noteGains = ctx.createdGains.slice(3);
 
 			audio.stopChordById(1);
 			// Cleanup has not run yet.
@@ -410,6 +470,36 @@ describe("audio store", () => {
 			const audio = await freshStore();
 			expect(() => audio.setMasterVolume(0.3)).not.toThrow();
 			expect(audio.audioState.masterVolume).toBe(0.3);
+			expect(FakeAudioContext.instances).toHaveLength(0);
+		});
+	});
+
+	describe("setReverbMix", () => {
+		it("clamps the mix to [0, 1] and updates state", async () => {
+			const audio = await freshStore();
+			audio.setReverbMix(1.5);
+			expect(audio.audioState.reverbMix).toBe(1);
+			audio.setReverbMix(-0.5);
+			expect(audio.audioState.reverbMix).toBe(0);
+		});
+
+		it("applies the mix to the reverb wet gain once initialized", async () => {
+			const audio = await freshStore();
+			await audio.startChord(C_MAJOR, "sine", 1);
+			const ctx = FakeAudioContext.instances[0];
+			const wetGain = ctx.createdGains[1];
+
+			audio.setReverbMix(0.6);
+			expect(wetGain.gain.setValueAtTime).toHaveBeenCalledWith(
+				0.6,
+				ctx.currentTime,
+			);
+		});
+
+		it("works before initialization without touching a gain node", async () => {
+			const audio = await freshStore();
+			expect(() => audio.setReverbMix(0.4)).not.toThrow();
+			expect(audio.audioState.reverbMix).toBe(0.4);
 			expect(FakeAudioContext.instances).toHaveLength(0);
 		});
 	});
