@@ -2,10 +2,25 @@
 // persisted to localStorage so a work-in-progress survives reloads.
 
 export type ProgressionEntry =
-	| { kind: "chord"; label: string }
+	| { kind: "chord"; label: string; notes: number[] }
 	| { kind: "break" };
 
-const STORAGE_KEY = "fifths-progression";
+// v2: chord entries carry MIDI note numbers (for playback and .mid export).
+// The key was bumped from "fifths-progression", intentionally abandoning
+// note-less v1 jottings.
+const STORAGE_KEY = "fifths-progression-v2";
+
+function isValidEntry(entry: unknown): entry is ProgressionEntry {
+	if (typeof entry !== "object" || entry === null) return false;
+	const candidate = entry as Partial<ProgressionEntry>;
+	if (candidate.kind === "break") return true;
+	return (
+		candidate.kind === "chord" &&
+		typeof candidate.label === "string" &&
+		Array.isArray(candidate.notes) &&
+		candidate.notes.every((note) => typeof note === "number")
+	);
+}
 
 // Guarded for SSR/prerender, where localStorage does not exist
 function loadEntries(): ProgressionEntry[] {
@@ -15,11 +30,7 @@ function loadEntries(): ProgressionEntry[] {
 		if (!raw) return [];
 		const parsed = JSON.parse(raw);
 		if (!Array.isArray(parsed)) return [];
-		return parsed.filter(
-			(entry): entry is ProgressionEntry =>
-				entry?.kind === "break" ||
-				(entry?.kind === "chord" && typeof entry.label === "string"),
-		);
+		return parsed.filter(isValidEntry);
 	} catch {
 		return [];
 	}
@@ -41,10 +52,11 @@ export const progression = $state({
 	paused: false,
 });
 
-// Append a played chord (called by the Instrument on each distinct chord)
-export function recordChord(label: string): void {
+// Append a played chord (called by the Instrument on each distinct chord).
+// `notes` are MIDI note numbers, used for pad playback and .mid export.
+export function recordChord(label: string, notes: number[] = []): void {
 	if (progression.paused) return;
-	progression.entries.push({ kind: "chord", label });
+	progression.entries.push({ kind: "chord", label, notes });
 	persist();
 }
 

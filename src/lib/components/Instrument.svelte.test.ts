@@ -406,8 +406,8 @@ describe("Instrument", () => {
 			await tick();
 
 			expect(progression.entries).toEqual([
-				{ kind: "chord", label: "C" },
-				{ kind: "chord", label: "Am" },
+				{ kind: "chord", label: "C", notes: [60, 64, 67] },
+				{ kind: "chord", label: "Am", notes: [69, 72, 76] },
 			]);
 		});
 
@@ -420,7 +420,9 @@ describe("Instrument", () => {
 
 			await pressChord(cWedge, 1);
 
-			expect(progression.entries).toEqual([{ kind: "chord", label: "C7" }]);
+			expect(progression.entries).toEqual([
+				{ kind: "chord", label: "C7", notes: [60, 64, 67, 70] },
+			]);
 		});
 
 		it("does not re-record when a replay leaves the chord name unchanged", async () => {
@@ -435,7 +437,9 @@ describe("Instrument", () => {
 			settings.seventhType = "major7";
 			await tick();
 
-			expect(progression.entries).toEqual([{ kind: "chord", label: "C" }]);
+			expect(progression.entries).toEqual([
+				{ kind: "chord", label: "C", notes: [60, 64, 67] },
+			]);
 		});
 	});
 

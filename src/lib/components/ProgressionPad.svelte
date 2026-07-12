@@ -2,6 +2,8 @@
 @component
 Progression pad
 - A simple tracker: every chord played is jotted onto the pad
+- play/stop plays the jotted progression through the app synth; export midi
+  downloads it as a .mid file
 - Line break / undo / clear controls; pause stops jotting; the X hides the
   pad (re-enable from settings); content persists in localStorage
 - Hidden until the first chord is played
@@ -15,27 +17,59 @@ import {
 	progression,
 	togglePaused,
 } from "$stores/progression.svelte";
+import {
+	player,
+	playProgression,
+	stopPlayback,
+} from "$stores/progressionPlayer.svelte";
 import { settings } from "$stores/settings.svelte";
 
-// Group flat entries into visual lines at each break
+import { progressionToMidi } from "$utils/midi";
+
+// Group flat entries into visual lines at each break, keeping each chord's
+// index into progression.entries so the sounding chord can be highlighted
 const lines = $derived.by(() => {
-	const grouped: string[][] = [[]];
-	for (const entry of progression.entries) {
+	const grouped: { label: string; index: number }[][] = [[]];
+	progression.entries.forEach((entry, index) => {
 		if (entry.kind === "break") {
 			grouped.push([]);
 		} else {
-			grouped[grouped.length - 1].push(entry.label);
+			grouped[grouped.length - 1].push({ label: entry.label, index });
 		}
-	}
+	});
 	return grouped;
 });
+
+const hasPlayableEntries = $derived(
+	progression.entries.some(
+		(entry) => entry.kind === "chord" && entry.notes.length > 0,
+	),
+);
 
 function dismiss() {
 	settings.showProgressionPad = false;
 }
 
+function exportMidi() {
+	const bytes = progressionToMidi(progression.entries);
+	const blob = new Blob([bytes], { type: "audio/midi" });
+	const url = URL.createObjectURL(blob);
+	const anchor = document.createElement("a");
+	anchor.href = url;
+	anchor.download = "progression.mid";
+	anchor.click();
+	URL.revokeObjectURL(url);
+}
+
+// Silence playback if the pad unmounts (dismissed / mode change)
+$effect(() => {
+	return () => {
+		stopPlayback();
+	};
+});
+
 const buttonClasses =
-	"rounded border border-neutral-100/30 px-2 py-1 text-xs opacity-80 hover:opacity-100 hover:border-neutral-100/60";
+	"rounded border border-neutral-100/30 px-2 py-1 text-xs opacity-80 hover:opacity-100 hover:border-neutral-100/60 disabled:opacity-30 disabled:cursor-default";
 </script>
 
 {#if progression.entries.length > 0}
@@ -57,13 +91,28 @@ const buttonClasses =
 		>
 			{#each lines as line}
 				<div class="flex flex-wrap gap-x-3 gap-y-1 min-h-5">
-					{#each line as label}
-						<span class="opacity-90">{label}</span>
+					{#each line as chip}
+						<span
+							class={player.position === chip.index
+								? "text-accent"
+								: "opacity-90"}
+						>{chip.label}</span>
 					{/each}
 				</div>
 			{/each}
 		</div>
-		<div class="flex gap-2">
+		<div class="flex flex-wrap gap-2">
+			<button
+				type="button"
+				class="{buttonClasses} {player.playing ? 'text-accent border-accent/60' : ''}"
+				disabled={!hasPlayableEntries}
+				title={player.playing
+					? "Stop playback"
+					: "Play this progression"}
+				onclick={player.playing ? stopPlayback : playProgression}
+			>
+				{player.playing ? "stop" : "play"}
+			</button>
 			<button
 				type="button"
 				class="{buttonClasses} {progression.paused ? 'text-accent border-accent/60' : ''}"
@@ -83,6 +132,15 @@ const buttonClasses =
 			</button>
 			<button type="button" class={buttonClasses} onclick={clearProgression}>
 				clear
+			</button>
+			<button
+				type="button"
+				class={buttonClasses}
+				disabled={!hasPlayableEntries}
+				title="Download this progression as a .mid file"
+				onclick={exportMidi}
+			>
+				export midi
 			</button>
 		</div>
 	</div>
