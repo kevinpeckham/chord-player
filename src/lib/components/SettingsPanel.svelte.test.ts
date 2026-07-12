@@ -134,6 +134,12 @@ describe("SettingsPanel", () => {
 		expect(screen.getByText(`v${version}`)).toBeInTheDocument();
 	});
 
+	it("links to the About page", () => {
+		render(SettingsPanel);
+		const about = screen.getByRole("link", { name: "About Fifths →" });
+		expect(about).toHaveAttribute("href", "/about");
+	});
+
 	it("displays the maker attribution with a link to Lightning Jar", () => {
 		render(SettingsPanel);
 		const link = screen.getByRole("link", { name: "Lightning Jar" });
