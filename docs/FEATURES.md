@@ -46,6 +46,18 @@ insert node + a settings slider), so each is a small standalone ship:
   (like the reverb send); time + feedback controls in settings
 - Later: sync delay time to the transport's BPM once Phase B lands
 
+### MIDI (M1–M3 shipped in v0.9.0; M4 deferred)
+
+- ✅ M1: pad entries record MIDI note numbers (exact conversion from the
+  equal-tempered frequencies at jot time; storage schema v2)
+- ✅ M2: pad playback through the app synth (reserved pointer ID, cannot
+  re-jot itself; uniform 120 BPM steps until the transport lands)
+- ✅ M3: .mid export — hand-rolled SMF format-0 writer, zero dependencies;
+  each chord one quarter note, line breaks become rests
+- ⏳ M4: live Web MIDI out to devices/DAWs — bigger scope (port selection,
+  permissions, scheduling) and no Safari support; aligns with the older
+  "MIDI Controller/Slave Mode" items below
+
 ### Phase B — rhythm infrastructure
 
 **B1. Metronome / click** — effort: S–M

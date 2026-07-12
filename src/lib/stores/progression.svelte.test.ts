@@ -11,7 +11,7 @@ import {
 
 import { beforeEach, describe, expect, it } from "vitest";
 
-const STORAGE_KEY = "fifths-progression";
+const STORAGE_KEY = "fifths-progression-v2";
 
 function stored() {
 	return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
@@ -29,13 +29,15 @@ describe("progression store", () => {
 		togglePaused();
 		expect(progression.paused).toBe(true);
 		recordChord("G");
-		expect(progression.entries).toEqual([{ kind: "chord", label: "C" }]);
+		expect(progression.entries).toEqual([
+			{ kind: "chord", label: "C", notes: [] },
+		]);
 
 		togglePaused();
 		recordChord("Am");
 		expect(progression.entries).toEqual([
-			{ kind: "chord", label: "C" },
-			{ kind: "chord", label: "Am" },
+			{ kind: "chord", label: "C", notes: [] },
+			{ kind: "chord", label: "Am", notes: [] },
 		]);
 	});
 
@@ -44,9 +46,9 @@ describe("progression store", () => {
 		recordChord("Am");
 		recordChord("F7");
 		expect(progression.entries).toEqual([
-			{ kind: "chord", label: "C" },
-			{ kind: "chord", label: "Am" },
-			{ kind: "chord", label: "F7" },
+			{ kind: "chord", label: "C", notes: [] },
+			{ kind: "chord", label: "Am", notes: [] },
+			{ kind: "chord", label: "F7", notes: [] },
 		]);
 	});
 
@@ -59,9 +61,9 @@ describe("progression store", () => {
 		addLineBreak(); // doubled — ignored
 		recordChord("G");
 		expect(progression.entries).toEqual([
-			{ kind: "chord", label: "C" },
+			{ kind: "chord", label: "C", notes: [] },
 			{ kind: "break" },
-			{ kind: "chord", label: "G" },
+			{ kind: "chord", label: "G", notes: [] },
 		]);
 	});
 
@@ -69,7 +71,9 @@ describe("progression store", () => {
 		recordChord("C");
 		recordChord("G");
 		deleteLast();
-		expect(progression.entries).toEqual([{ kind: "chord", label: "C" }]);
+		expect(progression.entries).toEqual([
+			{ kind: "chord", label: "C", notes: [] },
+		]);
 		deleteLast();
 		deleteLast(); // empty — no throw
 		expect(progression.entries).toEqual([]);
@@ -86,12 +90,12 @@ describe("progression store", () => {
 
 	it("persists every mutation to localStorage", () => {
 		recordChord("C");
-		expect(stored()).toEqual([{ kind: "chord", label: "C" }]);
+		expect(stored()).toEqual([{ kind: "chord", label: "C", notes: [] }]);
 		addLineBreak();
 		recordChord("G");
 		deleteLast();
 		expect(stored()).toEqual([
-			{ kind: "chord", label: "C" },
+			{ kind: "chord", label: "C", notes: [] },
 			{ kind: "break" },
 		]);
 	});

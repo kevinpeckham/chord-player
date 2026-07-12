@@ -43,6 +43,7 @@ import { untrack } from "svelte";
 // import utils
 import { textCoords, wedgePath } from "$utils/circleGeometry";
 import { processChordEnharmonics } from "$utils/enharmonics";
+import { frequenciesToMidi } from "$utils/midi";
 import { CHROMATIC_NOTES, getNoteForPosition } from "$utils/noteHelpers";
 import { seventhChordName, withSeventh } from "$utils/sevenths";
 
@@ -149,21 +150,21 @@ function playChordAtIndex(index: number, mode: string, pointerId: number) {
 	if (mode !== "major" && mode !== "minor") return;
 
 	const seventh = seventhIsActive(pointerId);
+	const frequencies = chordFrequencies(datum, mode, seventh);
 
 	// Jot every distinct chord this pointer sounds (new press, slide to a
 	// new wedge, or a seventh change) onto the progression pad
 	const previousName = activePointers.get(pointerId)?.chordName;
 	const chordName = chordDisplayName(datum, mode, seventh);
 	if (chordName !== previousName) {
-		recordChord(chordSymbol(datum, mode, seventh));
+		recordChord(
+			chordSymbol(datum, mode, seventh),
+			frequenciesToMidi(frequencies),
+		);
 	}
 
 	setPointerChordName(pointerId, chordName);
-	startChord(
-		chordFrequencies(datum, mode, seventh),
-		settings.activeVoice as OscillatorType,
-		pointerId,
-	);
+	startChord(frequencies, settings.activeVoice as OscillatorType, pointerId);
 }
 
 function playChordFromElement(element: SVGPathElement, pointerId: number) {
