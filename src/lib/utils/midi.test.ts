@@ -52,6 +52,7 @@ describe("progressionToMidi", () => {
 		kind: "chord",
 		label: "C",
 		notes: C_MAJOR_NOTES,
+		beats: 1,
 	};
 	const lineBreak: ProgressionEntry = { kind: "break" };
 
@@ -92,7 +93,9 @@ describe("progressionToMidi", () => {
 	});
 
 	it("holds each chord for one quarter note", () => {
-		const bytes = bytesOf([{ kind: "chord", label: "A", notes: [69] }]);
+		const bytes = bytesOf([
+			{ kind: "chord", label: "A", notes: [69], beats: 1 },
+		]);
 		// After the tempo event: delta 0, note-on 69; delta 480, note-off 69
 		expect(bytes.slice(29)).toEqual([
 			0x00,
@@ -111,6 +114,16 @@ describe("progressionToMidi", () => {
 		]);
 	});
 
+	it("holds multi-beat chords proportionally longer", () => {
+		const bytes = bytesOf([
+			{ kind: "chord", label: "A", notes: [69], beats: 2 },
+		]);
+		// Note-off delta is 2 quarters = 960 ticks = VLQ 0x87 0x40
+		expect(bytes.slice(29)).toEqual([
+			0x00, 0x90, 69, 96, 0x87, 0x40, 0x80, 69, 0, 0x00, 0xff, 0x2f, 0x00,
+		]);
+	});
+
 	it("turns line breaks into one-quarter rests before the next chord", () => {
 		const single = bytesOf([cChord, cChord]);
 		const withBreak = bytesOf([cChord, lineBreak, cChord]);
@@ -124,7 +137,7 @@ describe("progressionToMidi", () => {
 	});
 
 	it("skips legacy chords without note data", () => {
-		const bytes = bytesOf([{ kind: "chord", label: "C", notes: [] }]);
+		const bytes = bytesOf([{ kind: "chord", label: "C", notes: [], beats: 1 }]);
 		expect(bytes.filter((b) => b === 0x90)).toHaveLength(0);
 	});
 

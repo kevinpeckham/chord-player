@@ -1,12 +1,14 @@
 <!--
 @component
 Progression pad
-- A simple tracker: every chord played is jotted onto the pad
-- play/stop plays the jotted progression through the app synth; export midi
-  downloads it as a .mid file
-- Line break / undo / clear controls; pause stops jotting; the X hides the
-  pad (re-enable from settings); content persists in localStorage
-- Hidden until the first chord is played
+- A simple tracker: every chord played is jotted onto the pad (with its
+  hold duration quantized to beats at the pad's tempo)
+- Transport: play/pause (true pause, position kept), stop, loop; while the
+  transport is engaged, live jotting is suspended — when playback ends
+  naturally with rec on, the next chord played appends (punch-in)
+- ● rec toggles jotting; export midi downloads a .mid at the pad's BPM
+- Line break / undo / clear; the X hides the pad (re-enable from settings);
+  content persists in localStorage; hidden until the first chord is played
 -->
 
 <script lang="ts">
@@ -15,12 +17,15 @@ import {
 	clearProgression,
 	deleteLast,
 	progression,
-	togglePaused,
+	toggleRecording,
 } from "$stores/progression.svelte";
 import {
+	pausePlayback,
 	player,
 	playProgression,
+	setBpm,
 	stopPlayback,
+	toggleLoop,
 } from "$stores/progressionPlayer.svelte";
 import { settings } from "$stores/settings.svelte";
 
@@ -46,12 +51,14 @@ const hasPlayableEntries = $derived(
 	),
 );
 
+const transportRunning = $derived(player.playing && !player.paused);
+
 function dismiss() {
 	settings.showProgressionPad = false;
 }
 
 function exportMidi() {
-	const bytes = progressionToMidi(progression.entries);
+	const bytes = progressionToMidi(progression.entries, player.bpm);
 	const blob = new Blob([bytes], { type: "audio/midi" });
 	const url = URL.createObjectURL(blob);
 	const anchor = document.createElement("a");
@@ -70,6 +77,7 @@ $effect(() => {
 
 const buttonClasses =
 	"rounded border border-neutral-100/30 px-2 py-1 text-xs opacity-80 hover:opacity-100 hover:border-neutral-100/60 disabled:opacity-30 disabled:cursor-default";
+const activeClasses = "text-accent border-accent/60";
 </script>
 
 {#if progression.entries.length > 0}
@@ -101,29 +109,69 @@ const buttonClasses =
 				</div>
 			{/each}
 		</div>
-		<div class="flex flex-wrap gap-2">
+
+		<div class="flex flex-wrap items-center gap-2">
+			<!-- transport -->
 			<button
 				type="button"
-				class="{buttonClasses} {player.playing ? 'text-accent border-accent/60' : ''}"
+				class="{buttonClasses} {transportRunning ? activeClasses : ''}"
 				disabled={!hasPlayableEntries}
-				title={player.playing
-					? "Stop playback"
+				title={transportRunning
+					? "Pause playback"
 					: "Play this progression"}
-				onclick={player.playing ? stopPlayback : playProgression}
+				onclick={transportRunning ? pausePlayback : playProgression}
 			>
-				{player.playing ? "stop" : "play"}
+				{transportRunning ? "pause" : "play"}
 			</button>
 			<button
 				type="button"
-				class="{buttonClasses} {progression.paused ? 'text-accent border-accent/60' : ''}"
-				aria-pressed={progression.paused}
-				title={progression.paused
-					? "Resume jotting chords"
-					: "Pause jotting chords"}
-				onclick={togglePaused}
+				class={buttonClasses}
+				disabled={!player.playing}
+				title="Stop playback"
+				onclick={stopPlayback}
 			>
-				{progression.paused ? "resume" : "pause"}
+				stop
 			</button>
+			<button
+				type="button"
+				class="{buttonClasses} {player.loop ? activeClasses : ''}"
+				aria-pressed={player.loop}
+				title="Loop playback"
+				onclick={toggleLoop}
+			>
+				loop
+			</button>
+
+			<!-- recorder -->
+			<button
+				type="button"
+				class="{buttonClasses} {progression.recording ? activeClasses : ''}"
+				aria-pressed={progression.recording}
+				title={progression.recording
+					? "Recording: chords you play are jotted (off = noodle freely)"
+					: "Not recording: chords you play are not jotted"}
+				onclick={toggleRecording}
+			>
+				&#9679; rec
+			</button>
+
+			<!-- tempo -->
+			<label class="flex items-center gap-1 text-xs opacity-80">
+				<input
+					type="number"
+					min="40"
+					max="240"
+					value={player.bpm}
+					onchange={(e) =>
+						setBpm(Number.parseInt(e.currentTarget.value, 10) || 120)}
+					class="w-14 rounded border border-neutral-100/30 bg-primary/20 px-1.5 py-1 text-xs tabular-nums"
+					aria-label="Tempo in beats per minute"
+				/>
+				bpm
+			</label>
+		</div>
+
+		<div class="flex flex-wrap gap-2">
 			<button type="button" class={buttonClasses} onclick={addLineBreak}>
 				new line
 			</button>
@@ -137,7 +185,7 @@ const buttonClasses =
 				type="button"
 				class={buttonClasses}
 				disabled={!hasPlayableEntries}
-				title="Download this progression as a .mid file"
+				title="Download this progression as a .mid file at the current BPM"
 				onclick={exportMidi}
 			>
 				export midi
