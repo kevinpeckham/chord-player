@@ -54,8 +54,6 @@ describe("progressionToMidi", () => {
 		notes: C_MAJOR_NOTES,
 		beats: 1,
 	};
-	const lineBreak: ProgressionEntry = { kind: "break" };
-
 	function bytesOf(entries: ProgressionEntry[]): number[] {
 		return Array.from(progressionToMidi(entries));
 	}
@@ -124,16 +122,14 @@ describe("progressionToMidi", () => {
 		]);
 	});
 
-	it("turns line breaks into one-quarter rests before the next chord", () => {
-		const single = bytesOf([cChord, cChord]);
-		const withBreak = bytesOf([cChord, lineBreak, cChord]);
-		// The second chord's first note-on delta grows from 0 to 480 (1 extra
-		// byte for the variable-length delta)
-		expect(withBreak.length).toBe(single.length + 1);
-		const secondOnDelta = withBreak.indexOf(0x90, 40);
-		expect(withBreak.slice(secondOnDelta - 2, secondOnDelta)).toEqual([
-			0x83, 0x60,
+	it("places consecutive chords back to back with no gap", () => {
+		const bytes = bytesOf([
+			{ kind: "chord", label: "A", notes: [69], beats: 1 },
+			{ kind: "chord", label: "B", notes: [71], beats: 1 },
 		]);
+		// Second chord's note-on has a zero delta (starts as the first ends)
+		const secondOn = bytes.indexOf(0x90, 34);
+		expect(bytes[secondOn - 1]).toBe(0x00);
 	});
 
 	it("skips legacy chords without note data", () => {

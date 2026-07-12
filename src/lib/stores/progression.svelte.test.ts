@@ -1,7 +1,6 @@
 // Tests for the progression pad store (jotting + localStorage persistence).
 
 import {
-	addLineBreak,
 	clearProgression,
 	deleteLast,
 	progression,
@@ -65,12 +64,10 @@ describe("progression store", () => {
 		expect(stored()[0].beats).toBe(4);
 	});
 
-	it("ignores setEntryBeats for missing or break entries", () => {
+	it("ignores setEntryBeats for missing entries", () => {
 		recordChord("C");
-		addLineBreak();
-		expect(() => setEntryBeats(1, 2)).not.toThrow(); // break
 		expect(() => setEntryBeats(99, 2)).not.toThrow(); // missing
-		expect(progression.entries[1]).toEqual({ kind: "break" });
+		expect(progression.entries).toHaveLength(1);
 	});
 
 	it("records chords in order", () => {
@@ -81,21 +78,6 @@ describe("progression store", () => {
 			{ kind: "chord", label: "C", notes: [], beats: 1 },
 			{ kind: "chord", label: "Am", notes: [], beats: 1 },
 			{ kind: "chord", label: "F7", notes: [], beats: 1 },
-		]);
-	});
-
-	it("adds line breaks between chords but never leading or doubled", () => {
-		addLineBreak(); // leading — ignored
-		expect(progression.entries).toEqual([]);
-
-		recordChord("C");
-		addLineBreak();
-		addLineBreak(); // doubled — ignored
-		recordChord("G");
-		expect(progression.entries).toEqual([
-			{ kind: "chord", label: "C", notes: [], beats: 1 },
-			{ kind: "break" },
-			{ kind: "chord", label: "G", notes: [], beats: 1 },
 		]);
 	});
 
@@ -113,7 +95,6 @@ describe("progression store", () => {
 
 	it("clears the pad", () => {
 		recordChord("C");
-		addLineBreak();
 		recordChord("G");
 		clearProgression();
 		expect(progression.entries).toEqual([]);
@@ -125,12 +106,10 @@ describe("progression store", () => {
 		expect(stored()).toEqual([
 			{ kind: "chord", label: "C", notes: [], beats: 1 },
 		]);
-		addLineBreak();
 		recordChord("G");
 		deleteLast();
 		expect(stored()).toEqual([
 			{ kind: "chord", label: "C", notes: [], beats: 1 },
-			{ kind: "break" },
 		]);
 	});
 });

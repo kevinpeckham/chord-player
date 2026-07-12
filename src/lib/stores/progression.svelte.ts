@@ -3,20 +3,24 @@
 
 import type { ChordBeats } from "$utils/rhythm";
 
-export type ProgressionEntry =
-	| { kind: "chord"; label: string; notes: number[]; beats: ChordBeats }
-	| { kind: "break" };
+export type ProgressionEntry = {
+	kind: "chord";
+	label: string;
+	notes: number[];
+	beats: ChordBeats;
+};
 
 // v2: chord entries carry MIDI note numbers (for playback and .mid export).
 // The key was bumped from "fifths-progression", intentionally abandoning
 // note-less v1 jottings. `beats` was added later and defaults to 1 when
-// missing, so v2 data upgrades in place.
+// missing, so v2 data upgrades in place. Legacy "break" entries (the removed
+// new-line feature — they silently played as rests and shifted measures) are
+// dropped on load.
 const STORAGE_KEY = "fifths-progression-v2";
 
 function isValidEntry(entry: unknown): entry is ProgressionEntry {
 	if (typeof entry !== "object" || entry === null) return false;
 	const candidate = entry as Partial<ProgressionEntry> & { beats?: unknown };
-	if (candidate.kind === "break") return true;
 	return (
 		candidate.kind === "chord" &&
 		typeof candidate.label === "string" &&
@@ -37,13 +41,10 @@ function loadEntries(): ProgressionEntry[] {
 		if (!raw) return [];
 		const parsed = JSON.parse(raw);
 		if (!Array.isArray(parsed)) return [];
-		return parsed
-			.filter(isValidEntry)
-			.map((entry: ProgressionEntry) =>
-				entry.kind === "chord"
-					? { ...entry, beats: normalizeBeats(entry.beats) }
-					: entry,
-			);
+		return parsed.filter(isValidEntry).map((entry: ProgressionEntry) => ({
+			...entry,
+			beats: normalizeBeats(entry.beats),
+		}));
 	} catch {
 		return [];
 	}
@@ -99,16 +100,7 @@ export function toggleRecording(): void {
 	progression.recording = !progression.recording;
 }
 
-// Start a new line in the jotted progression
-export function addLineBreak(): void {
-	// No leading or doubled breaks — they would render as empty lines
-	const last = progression.entries.at(-1);
-	if (!last || last.kind === "break") return;
-	progression.entries.push({ kind: "break" });
-	persist();
-}
-
-// Remove the most recent entry (chord or break)
+// Remove the most recent chord
 export function deleteLast(): void {
 	progression.entries.pop();
 	persist();

@@ -17,7 +17,6 @@ import {
 	stopMetronome,
 } from "$stores/metronome.svelte";
 import {
-	addLineBreak,
 	clearProgression,
 	progression,
 	recordChord,
@@ -245,20 +244,6 @@ describe("progression player", () => {
 		playProgression();
 		vi.advanceTimersByTime(STEP_MS);
 		expect(metronome.running).toBe(false);
-	});
-
-	it("rests on line breaks", () => {
-		recordChord("C", C_NOTES);
-		addLineBreak();
-		recordChord("G", G_NOTES);
-		playProgression();
-
-		vi.advanceTimersByTime(STEP_MS); // now on the break
-		expect(player.position).toBe(1);
-		expect(startChord).toHaveBeenCalledTimes(1); // no new chord
-
-		vi.advanceTimersByTime(STEP_MS); // now on G
-		expect(startChord).toHaveBeenCalledTimes(2);
 	});
 
 	it("releases each chord before the next step", () => {

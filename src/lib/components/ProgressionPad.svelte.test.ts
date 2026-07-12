@@ -3,7 +3,6 @@
 import ProgressionPad from "$components/ProgressionPad.svelte";
 
 import {
-	addLineBreak,
 	clearProgression,
 	progression,
 	recordChord,
@@ -43,17 +42,20 @@ describe("ProgressionPad", () => {
 		expect(pad).toHaveTextContent("Am");
 	});
 
-	it("renders line breaks as separate rows", () => {
-		recordChord("C");
-		addLineBreak();
-		recordChord("G");
+	it("renders each measure as an unbreakable unit", () => {
+		settings.timeSignature = "4/4";
+		for (const label of ["C", "F", "G", "Am", "C", "F"]) {
+			recordChord(label, [60]);
+		}
 		render(ProgressionPad);
-		const rows = screen
+		const groups = screen
 			.getByLabelText("Jotted progression")
-			.querySelectorAll(":scope > div");
-		expect(rows).toHaveLength(2);
-		expect(rows[0]).toHaveTextContent("C");
-		expect(rows[1]).toHaveTextContent("G");
+			.querySelectorAll("[data-measure]");
+		expect(groups).toHaveLength(2);
+		// Measures keep their chords together so wrapping cannot split them
+		expect(groups[0]).toHaveClass("whitespace-nowrap");
+		expect(groups[0].textContent).toContain("Am");
+		expect(groups[1].textContent).toContain("F");
 	});
 
 	it("toggles jotting with the rec button", async () => {
@@ -115,33 +117,25 @@ describe("ProgressionPad", () => {
 			recordChord(label, [60]);
 		}
 		render(ProgressionPad);
-		const row = screen
-			.getByLabelText("Jotted progression")
-			.querySelector(":scope > div");
-		const chips = Array.from(row?.querySelectorAll("span") ?? []).map(
-			(span) => span.textContent,
-		);
+		const chips = Array.from(
+			screen.getByLabelText("Jotted progression").querySelectorAll("span"),
+		).map((span) => span.textContent);
 		expect(chips).toEqual(["C", "F", "G", "Am", "|", "C"]);
 	});
 
-	it("counts multi-beat chords toward the bar and resets bars per line", async () => {
+	it("counts multi-beat chords toward the bar", async () => {
 		settings.timeSignature = "4/4";
 		recordChord("C", [60]);
 		setEntryBeats(0, 2);
 		recordChord("G", [55]);
 		setEntryBeats(1, 2);
 		recordChord("Am", [57]); // bar boundary before this chord
-		addLineBreak();
-		recordChord("F", [53]); // new line: bar count restarts, no pipe
 		render(ProgressionPad);
 
-		const rows = screen
-			.getByLabelText("Jotted progression")
-			.querySelectorAll(":scope > div");
-		const rowChips = (row: Element) =>
-			Array.from(row.querySelectorAll("span")).map((span) => span.textContent);
-		expect(rowChips(rows[0])).toEqual(["C", "G", "|", "Am"]);
-		expect(rowChips(rows[1])).toEqual(["F"]);
+		const chips = Array.from(
+			screen.getByLabelText("Jotted progression").querySelectorAll("span"),
+		).map((span) => span.textContent);
+		expect(chips).toEqual(["C", "G", "|", "Am"]);
 	});
 
 	it("binds the playback click checkbox", async () => {
@@ -190,19 +184,20 @@ describe("ProgressionPad", () => {
 		).not.toBeInTheDocument();
 	});
 
-	it("wires the new line, undo, and clear controls", async () => {
+	it("wires the undo and clear controls (new line is gone)", async () => {
 		const user = userEvent.setup();
 		recordChord("C");
 		recordChord("G");
 		render(ProgressionPad);
 
-		await user.click(screen.getByRole("button", { name: "new line" }));
-		expect(progression.entries.at(-1)).toEqual({ kind: "break" });
+		expect(
+			screen.queryByRole("button", { name: "new line" }),
+		).not.toBeInTheDocument();
 
 		await user.click(screen.getByRole("button", { name: "undo" }));
 		expect(progression.entries.at(-1)).toEqual({
 			kind: "chord",
-			label: "G",
+			label: "C",
 			notes: [],
 			beats: 1,
 		});
