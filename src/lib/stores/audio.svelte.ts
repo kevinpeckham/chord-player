@@ -330,6 +330,14 @@ export function stopChordById(pointerId: number): void {
 	const chord = activeChords.get(pointerId);
 	if (!chord) return;
 
+	// A stopping chord is no longer "playing": remove its entry immediately
+	// so startChord's same-chord dedup cannot match it. (Deferring this to
+	// the cleanup timer made repeated identical chords — quarter-note C C C C
+	// in playback — skip every second hit, and once caused stuck drones when
+	// a replacement chord reused the pointer ID mid-fade.) Node teardown
+	// still happens on the timer below, via this closure's reference.
+	activeChords.delete(pointerId);
+
 	const fadeTime = 0.05;
 	const currentTime = audioContext.currentTime;
 
@@ -372,13 +380,6 @@ export function stopChordById(pointerId: number): void {
 				chord.chordGain.disconnect();
 			} catch {
 				// Already disconnected
-			}
-			// Only remove the map entry if it still belongs to the chord being
-			// cleaned up — a replacement chord (e.g. sliding between wedges)
-			// may have reused this pointer ID while the fade was in flight,
-			// and deleting its entry would orphan it as an unstoppable drone
-			if (activeChords.get(pointerId) === chord) {
-				activeChords.delete(pointerId);
 			}
 			audioState.activeNoteCount = activeOscillators.size;
 			audioState.isPlaying = activeOscillators.size > 0;
