@@ -58,7 +58,7 @@ let menuState: "closed" | "open" = $state("closed");
 <!-- desktop-only seventh hint (the touch pad is hidden on fine-pointer
      devices; see SeventhPad.svelte) -->
 {#if settings.mode === "chords"}
-	<p class="seventh-hint fixed bottom-4 inset-x-0 text-center text-sm opacity-60 pointer-events-none z-10 text-neutral-50">Hold down Shift to play 7th chords</p>
+	<p class="seventh-hint fixed bottom-4 inset-x-0 text-center text-sm opacity-60 pointer-events-none z-10 text-neutral-50">Shift + click to play 7th chords</p>
 {/if}
 
 
