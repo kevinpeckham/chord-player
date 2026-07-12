@@ -20,6 +20,7 @@ import {
 	toggleMetronome,
 } from "$stores/metronome.svelte";
 import { setBpm } from "$stores/progressionPlayer.svelte";
+import { settings } from "$stores/settings.svelte";
 
 function clickCalls() {
 	return vi.mocked(scheduleClick).mock.calls;
@@ -30,6 +31,8 @@ describe("metronome", () => {
 		vi.useFakeTimers();
 		stopMetronome();
 		setBpm(120);
+		settings.metronomeAccent = false;
+		settings.timeSignature = "4/4";
 		vi.clearAllMocks();
 	});
 
@@ -58,7 +61,17 @@ describe("metronome", () => {
 		}
 	});
 
-	it("accents the downbeat of every 4/4 bar", () => {
+	it("plays every beat unaccented by default", () => {
+		startMetronome();
+		vi.advanceTimersByTime(4000); // ≈ 8 beats
+
+		const accents = clickCalls().map(([, accent]) => accent);
+		expect(accents.length).toBeGreaterThanOrEqual(8);
+		expect(accents.every((accent) => accent === false)).toBe(true);
+	});
+
+	it("accents the downbeat of every 4/4 bar when the accent setting is on", () => {
+		settings.metronomeAccent = true;
 		startMetronome();
 		vi.advanceTimersByTime(4000); // ≈ 8 beats
 
@@ -66,6 +79,18 @@ describe("metronome", () => {
 		expect(accents[0]).toBe(true);
 		expect(accents.slice(1, 4)).toEqual([false, false, false]);
 		expect(accents[4]).toBe(true);
+	});
+
+	it("follows the time signature for the accent pattern (3/4 waltz)", () => {
+		settings.metronomeAccent = true;
+		settings.timeSignature = "3/4";
+		startMetronome();
+		vi.advanceTimersByTime(3500); // ≈ 7 beats
+
+		const accents = clickCalls()
+			.slice(0, 7)
+			.map(([, accent]) => accent);
+		expect(accents).toEqual([true, false, false, true, false, false, true]);
 	});
 
 	it("retunes live when the tempo changes", () => {

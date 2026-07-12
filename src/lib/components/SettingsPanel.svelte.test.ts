@@ -145,6 +145,21 @@ describe("SettingsPanel", () => {
 		expect(audioState.reverbMix).toBe(0.6);
 	});
 
+	it("binds the time signature and metronome accent settings", async () => {
+		const user = userEvent.setup();
+		settings.timeSignature = "4/4";
+		settings.metronomeAccent = false;
+		render(SettingsPanel);
+
+		await user.selectOptions(screen.getByLabelText("Time Signature"), "3/4");
+		expect(settings.timeSignature).toBe("3/4");
+
+		const accent = screen.getByLabelText("Accent metronome downbeat");
+		expect(accent).not.toBeChecked();
+		await user.click(accent);
+		expect(settings.metronomeAccent).toBe(true);
+	});
+
 	it("links to the About page", () => {
 		render(SettingsPanel);
 		const about = screen.getByRole("link", { name: "About Fifths →" });
