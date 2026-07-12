@@ -112,6 +112,18 @@ import { settings } from "$stores/settings.svelte";
 		</div>
 	{/if}
 
+	<!-- attribution -->
+	<div class="absolute left-8 bottom-8 opacity-60 text-xs">
+		Made by Kevin Peckham @
+		<a
+			href="https://www.lightningjar.com"
+			target="_blank"
+			rel="noopener"
+			class="underline underline-offset-2 hover:text-accent"
+		>Lightning Jar</a>
+		in Philadelphia
+	</div>
+
 	<!-- version -->
-	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.5.4</div>
+	<div class="absolute right-8 bottom-8 opacity-60 text-xs">v0.5.5</div>
 </div>

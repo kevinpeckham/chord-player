@@ -15,7 +15,20 @@ let { data } = $props();
 
 // state
 let menuState: "closed" | "open" = $state("closed");
+
+// Close the settings menu on a click/tap outside it. The hamburger button
+// is excluded — its own click handler toggles the menu, and closing here
+// first would make that toggle immediately reopen it.
+function closeMenuOnOutsidePress(event: PointerEvent) {
+	if (menuState !== "open") return;
+	const target = event.target as Element | null;
+	if (target?.closest("[data-settings]") || target?.closest("[data-hamburger]"))
+		return;
+	menuState = "closed";
+}
 </script>
+
+<svelte:document onpointerdown={closeMenuOnOutsidePress} />
 
 
 <svelte:head>
