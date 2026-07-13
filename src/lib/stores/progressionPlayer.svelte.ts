@@ -156,7 +156,7 @@ function step(index: number): void {
 		scheduleStepClicks(entryBeats(entry));
 	}
 
-	if (entry.notes.length > 0) {
+	if (entry.kind === "chord" && entry.notes.length > 0) {
 		startChord(
 			entry.notes.map(midiToFrequency),
 			settings.activeVoice as OscillatorType,
@@ -166,7 +166,8 @@ function step(index: number): void {
 			stopChordById(PLAYBACK_POINTER_ID);
 		}, durationMs * GATE);
 	}
-	// Legacy note-less chords simply rest for their duration
+	// Rests (and legacy note-less chords) are silent for their duration —
+	// the click above still marks their beats
 
 	stepTimeout = setTimeout(() => step(index + 1), durationMs);
 }

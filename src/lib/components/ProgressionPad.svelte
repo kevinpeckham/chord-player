@@ -30,12 +30,13 @@ import {
 } from "$stores/progressionPlayer.svelte";
 import { beatsPerBar, settings } from "$stores/settings.svelte";
 
-// Group chords into measures (per the time signature), keeping each chord's
-// index into progression.entries so the sounding chord can be highlighted.
+// Group entries into measures (per the time signature), keeping each entry's
+// index into progression.entries so the sounding step can be highlighted.
+// Rests appear as dimmed dashes and count toward the bar like chords.
 // Each measure renders as an unbreakable unit, so wrapping never splits one.
 const measures = $derived.by(() => {
 	const barBeats = beatsPerBar();
-	const grouped: { label: string; index: number }[][] = [[]];
+	const grouped: { label: string; index: number; rest: boolean }[][] = [[]];
 	let beatsInBar = 0;
 
 	progression.entries.forEach((entry, index) => {
@@ -43,7 +44,11 @@ const measures = $derived.by(() => {
 			grouped.push([]);
 			beatsInBar = beatsInBar % barBeats;
 		}
-		grouped[grouped.length - 1].push({ label: entry.label, index });
+		grouped[grouped.length - 1].push({
+			label: entry.kind === "chord" ? entry.label : "–",
+			index,
+			rest: entry.kind === "rest",
+		});
 		beatsInBar += entry.beats;
 	});
 	return grouped;
@@ -94,9 +99,12 @@ const activeClasses = "text-accent border-accent/60";
 				<div data-measure class="flex gap-x-3 whitespace-nowrap">
 					{#each measure as chip}
 						<span
+							title={chip.rest ? "rest" : undefined}
 							class={player.position === chip.index
 								? "text-accent"
-								: "opacity-90"}
+								: chip.rest
+									? "opacity-40"
+									: "opacity-90"}
 						>{chip.label}</span>
 					{/each}
 					{#if m < measures.length - 1}

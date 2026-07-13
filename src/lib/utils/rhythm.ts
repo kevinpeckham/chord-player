@@ -25,3 +25,18 @@ export function beatsFromHold(heldMs: number, bpm: number): ChordBeats {
 	if (beats < 3) return 2;
 	return 4;
 }
+
+/**
+ * Quantize the silence between a release and the next press into a rest.
+ * Under half a beat is articulation (no rest); up to 8 beats quantizes to
+ * 1/2/4 beats (capped at a whole 4/4 bar); anything longer reads as
+ * thinking time, not music, and records nothing.
+ */
+export function restBeatsFromGap(gapMs: number, bpm: number): ChordBeats | 0 {
+	const beats = gapMs / beatMs(bpm);
+	if (beats < 0.5) return 0;
+	if (beats < 1.5) return 1;
+	if (beats < 3) return 2;
+	if (beats <= 8) return 4;
+	return 0;
+}

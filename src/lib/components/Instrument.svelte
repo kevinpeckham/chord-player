@@ -26,7 +26,11 @@ import {
 	unlockAudio,
 } from "$stores/audio.svelte";
 import { performance } from "$stores/performance.svelte";
-import { recordChord, setEntryBeats } from "$stores/progression.svelte";
+import {
+	recordChord,
+	recordRest,
+	setEntryBeats,
+} from "$stores/progression.svelte";
 import { player } from "$stores/progressionPlayer.svelte";
 import { settings } from "$stores/settings.svelte";
 
@@ -46,7 +50,7 @@ import { textCoords, wedgePath } from "$utils/circleGeometry";
 import { processChordEnharmonics } from "$utils/enharmonics";
 import { frequenciesToMidi } from "$utils/midi";
 import { CHROMATIC_NOTES, getNoteForPosition } from "$utils/noteHelpers";
-import { beatsFromHold } from "$utils/rhythm";
+import { beatsFromHold, restBeatsFromGap } from "$utils/rhythm";
 import { seventhChordName, withSeventh } from "$utils/sevenths";
 
 // A jotted entry whose hold duration is still open (finalized on release)
@@ -169,6 +173,7 @@ function playChordAtIndex(index: number, mode: string, pointerId: number) {
 	const chordName = chordDisplayName(datum, mode, seventh);
 	if (pointerInfo && chordName !== pointerInfo.chordName) {
 		closeOpenRecord(pointerInfo);
+		maybeRecordRestGap();
 		const index = recordChord(
 			chordSymbol(datum, mode, seventh),
 			frequenciesToMidi(frequencies),
@@ -182,6 +187,9 @@ function playChordAtIndex(index: number, mode: string, pointerId: number) {
 	startChord(frequencies, settings.activeVoice as OscillatorType, pointerId);
 }
 
+// When the last recorded chord was released, for rest-gap detection
+let lastRecordedReleaseAt: number | null = null;
+
 // Finalize an open pad entry's duration from how long it was held,
 // quantized to the pad's tempo
 function closeOpenRecord(pointerInfo: { openRecord: OpenRecord | null }) {
@@ -192,6 +200,29 @@ function closeOpenRecord(pointerInfo: { openRecord: OpenRecord | null }) {
 		beatsFromHold(heldMs, player.bpm),
 	);
 	pointerInfo.openRecord = null;
+	lastRecordedReleaseAt = Date.now();
+}
+
+// True while any pointer is holding a recorded chord open
+function anyOpenRecords(): boolean {
+	for (const info of activePointers.values()) {
+		if (info.openRecord) return true;
+	}
+	return false;
+}
+
+// Capture the silence since the last recorded release as a rest. Slides and
+// seventh changes close their record in the same tick (zero gap), other
+// sounding pointers suppress it, and restBeatsFromGap ignores both
+// articulation gaps and walked-away pauses.
+function maybeRecordRestGap() {
+	if (lastRecordedReleaseAt === null) return;
+	if (anyOpenRecords()) return;
+	const beats = restBeatsFromGap(
+		Date.now() - lastRecordedReleaseAt,
+		player.bpm,
+	);
+	if (beats !== 0) recordRest(beats);
 }
 
 function playChordFromElement(element: SVGPathElement, pointerId: number) {

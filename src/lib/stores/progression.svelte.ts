@@ -3,12 +3,12 @@
 
 import type { ChordBeats } from "$utils/rhythm";
 
-export type ProgressionEntry = {
-	kind: "chord";
-	label: string;
-	notes: number[];
-	beats: ChordBeats;
-};
+export type ProgressionEntry =
+	| { kind: "chord"; label: string; notes: number[]; beats: ChordBeats }
+	// Captured silence between chords — unlike the removed visual "break",
+	// a rest is musical: it counts toward measures, plays back as silence,
+	// clicks along, and exports as a MIDI gap
+	| { kind: "rest"; beats: ChordBeats };
 
 // v2: chord entries carry MIDI note numbers (for playback and .mid export).
 // The key was bumped from "fifths-progression", intentionally abandoning
@@ -20,7 +20,12 @@ const STORAGE_KEY = "fifths-progression-v2";
 
 function isValidEntry(entry: unknown): entry is ProgressionEntry {
 	if (typeof entry !== "object" || entry === null) return false;
-	const candidate = entry as Partial<ProgressionEntry> & { beats?: unknown };
+	const candidate = entry as {
+		kind?: unknown;
+		label?: unknown;
+		notes?: unknown;
+	};
+	if (candidate.kind === "rest") return true;
 	return (
 		candidate.kind === "chord" &&
 		typeof candidate.label === "string" &&
@@ -43,7 +48,7 @@ function loadEntries(): ProgressionEntry[] {
 		if (!Array.isArray(parsed)) return [];
 		return parsed.filter(isValidEntry).map((entry: ProgressionEntry) => ({
 			...entry,
-			beats: normalizeBeats(entry.beats),
+			beats: normalizeBeats((entry as { beats?: unknown }).beats),
 		}));
 	} catch {
 		return [];
@@ -85,6 +90,15 @@ export function recordChord(label: string, notes: number[] = []): number {
 	progression.entries.push({ kind: "chord", label, notes, beats: 1 });
 	persist();
 	return progression.entries.length - 1;
+}
+
+// Record captured silence between chords. Rests never lead a progression —
+// a leading gap is just the player getting ready.
+export function recordRest(beats: ChordBeats): void {
+	if (!shouldRecord()) return;
+	if (progression.entries.length === 0) return;
+	progression.entries.push({ kind: "rest", beats });
+	persist();
 }
 
 // Set a chord's duration once its hold length is known (on release/slide)

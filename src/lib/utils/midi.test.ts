@@ -132,6 +132,18 @@ describe("progressionToMidi", () => {
 		expect(bytes[secondOn - 1]).toBe(0x00);
 	});
 
+	it("advances the clock silently across rests", () => {
+		const bytes = bytesOf([
+			{ kind: "chord", label: "A", notes: [69], beats: 1 },
+			{ kind: "rest", beats: 2 },
+			{ kind: "chord", label: "B", notes: [71], beats: 1 },
+		]);
+		// Second chord's note-on carries the rest delta: 2 quarters = 960
+		// ticks = VLQ 0x87 0x40
+		const secondOn = bytes.indexOf(0x90, 34);
+		expect(bytes.slice(secondOn - 2, secondOn)).toEqual([0x87, 0x40]);
+	});
+
 	it("skips legacy chords without note data", () => {
 		const bytes = bytesOf([{ kind: "chord", label: "C", notes: [], beats: 1 }]);
 		expect(bytes.filter((b) => b === 0x90)).toHaveLength(0);

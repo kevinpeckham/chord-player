@@ -20,6 +20,7 @@ import {
 	clearProgression,
 	progression,
 	recordChord,
+	recordRest,
 	setEntryBeats,
 } from "$stores/progression.svelte";
 import {
@@ -244,6 +245,35 @@ describe("progression player", () => {
 		playProgression();
 		vi.advanceTimersByTime(STEP_MS);
 		expect(metronome.running).toBe(false);
+	});
+
+	it("rests are silent for their beats, then playback continues", () => {
+		recordChord("C", C_NOTES);
+		recordRest(2);
+		recordChord("G", G_NOTES);
+		playProgression();
+
+		vi.advanceTimersByTime(STEP_MS); // now on the rest
+		expect(player.position).toBe(1);
+		expect(startChord).toHaveBeenCalledTimes(1); // nothing new sounds
+
+		vi.advanceTimersByTime(STEP_MS); // rest is 2 beats — still resting
+		expect(player.position).toBe(1);
+
+		vi.advanceTimersByTime(STEP_MS); // now on G
+		expect(player.position).toBe(2);
+		expect(startChord).toHaveBeenCalledTimes(2);
+	});
+
+	it("the playback click marks rest beats too", () => {
+		player.clickAlong = true;
+		recordChord("C", C_NOTES);
+		recordRest(2);
+		playProgression();
+		vi.advanceTimersByTime(STEP_MS * 3);
+
+		// 1 beat for C + 2 for the rest
+		expect(vi.mocked(scheduleClick).mock.calls).toHaveLength(3);
 	});
 
 	it("releases each chord before the next step", () => {
