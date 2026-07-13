@@ -5,6 +5,7 @@ import {
 	deleteLast,
 	progression,
 	recordChord,
+	recordRest,
 	setEntryBeats,
 	toggleRecording,
 } from "$stores/progression.svelte";
@@ -78,6 +79,32 @@ describe("progression store", () => {
 			{ kind: "chord", label: "C", notes: [], beats: 1 },
 			{ kind: "chord", label: "Am", notes: [], beats: 1 },
 			{ kind: "chord", label: "F7", notes: [], beats: 1 },
+		]);
+	});
+
+	it("records rests between chords, but never leading and never while off", () => {
+		recordRest(2); // leading — ignored
+		expect(progression.entries).toEqual([]);
+
+		recordChord("C");
+		recordRest(2);
+		expect(progression.entries).toEqual([
+			{ kind: "chord", label: "C", notes: [], beats: 1 },
+			{ kind: "rest", beats: 2 },
+		]);
+		expect(stored()).toHaveLength(2);
+
+		toggleRecording();
+		recordRest(1); // rec off — ignored
+		expect(progression.entries).toHaveLength(2);
+	});
+
+	it("undo removes a rest like any entry", () => {
+		recordChord("C");
+		recordRest(1);
+		deleteLast();
+		expect(progression.entries).toEqual([
+			{ kind: "chord", label: "C", notes: [], beats: 1 },
 		]);
 	});
 

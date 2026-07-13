@@ -6,6 +6,7 @@ import {
 	clearProgression,
 	progression,
 	recordChord,
+	recordRest,
 	setEntryBeats,
 } from "$stores/progression.svelte";
 import { player, setBpm, stopPlayback } from "$stores/progressionPlayer.svelte";
@@ -121,6 +122,20 @@ describe("ProgressionPad", () => {
 			screen.getByLabelText("Jotted progression").querySelectorAll("span"),
 		).map((span) => span.textContent);
 		expect(chips).toEqual(["C", "F", "G", "Am", "|", "C"]);
+	});
+
+	it("shows rests as dashes that count toward the measure", () => {
+		settings.timeSignature = "4/4";
+		recordChord("C", [60]);
+		recordRest(2);
+		recordChord("G", [55]); // 1 + 2 + 1 beats complete the bar
+		recordChord("Am", [57]); // starts the next measure
+		render(ProgressionPad);
+
+		const chips = Array.from(
+			screen.getByLabelText("Jotted progression").querySelectorAll("span"),
+		).map((span) => span.textContent);
+		expect(chips).toEqual(["C", "–", "G", "|", "Am"]);
 	});
 
 	it("counts multi-beat chords toward the bar", async () => {

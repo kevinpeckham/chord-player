@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-07-13
+
+### Added
+- Rests: the silence between a release and the next press is now captured as part of the rhythm. Gaps under half a beat read as articulation (ignored); gaps up to 8 beats quantize to 1/2/4-beat rests (capped at a bar); longer pauses read as thinking time. Rests appear as dimmed dashes in the pad, count toward measures, play back as silence (the click still marks their beats), export as MIDI gaps, and are removable with undo. Rests never lead a progression and are not recorded while another chord is still sounding.
+
 ## [0.14.1] - 2026-07-12
 
 ### Fixed

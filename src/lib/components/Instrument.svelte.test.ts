@@ -425,6 +425,77 @@ describe("Instrument", () => {
 			]);
 		});
 
+		it("captures silence between chords as a rest", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			const cWedge = container.querySelector('[id="chord-button-C"]');
+			const gWedge = container.querySelector('[id="chord-button-G"]');
+			if (!cWedge || !gWedge) throw new Error("wedges not found");
+
+			await pressChord(cWedge, 1);
+			releasePointer(cWedge, 1);
+			await tick();
+
+			// A two-beat silence at 120 BPM, then the next chord
+			vi.advanceTimersByTime(1000);
+			gWedge.dispatchEvent(pointerEvent("pointerdown", 1));
+			await tick();
+
+			expect(progression.entries.map((e) => e.kind)).toEqual([
+				"chord",
+				"rest",
+				"chord",
+			]);
+			expect(progression.entries[1]).toEqual({ kind: "rest", beats: 2 });
+		});
+
+		it("does not record a rest for short articulation gaps", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			const cWedge = container.querySelector('[id="chord-button-C"]');
+			const gWedge = container.querySelector('[id="chord-button-G"]');
+			if (!cWedge || !gWedge) throw new Error("wedges not found");
+
+			await pressChord(cWedge, 1);
+			releasePointer(cWedge, 1);
+			await tick();
+
+			vi.advanceTimersByTime(100); // < half a beat
+			gWedge.dispatchEvent(pointerEvent("pointerdown", 1));
+			await tick();
+
+			expect(progression.entries.map((e) => e.kind)).toEqual([
+				"chord",
+				"chord",
+			]);
+		});
+
+		it("does not record a rest while another chord is still sounding", async () => {
+			const { container } = render(Instrument, { chords: chordsData });
+			const cWedge = container.querySelector('[id="chord-button-C"]');
+			const gWedge = container.querySelector('[id="chord-button-G"]');
+			const fWedge = container.querySelector('[id="chord-button-F"]');
+			if (!cWedge || !gWedge || !fWedge) throw new Error("wedges not found");
+
+			await pressChord(cWedge, 1);
+			releasePointer(cWedge, 1);
+			await tick();
+
+			vi.advanceTimersByTime(1000);
+			// G starts (a rest is jotted for the gap) and KEEPS sounding
+			gWedge.dispatchEvent(pointerEvent("pointerdown", 1));
+			await tick();
+			vi.advanceTimersByTime(1000);
+			// F on a second finger while G holds: no rest despite the time gap
+			fWedge.dispatchEvent(pointerEvent("pointerdown", 2));
+			await tick();
+
+			expect(progression.entries.map((e) => e.kind)).toEqual([
+				"chord",
+				"rest",
+				"chord",
+				"chord",
+			]);
+		});
+
 		it("quantizes a chord's held duration into beats on release", async () => {
 			const { container } = render(Instrument, { chords: chordsData });
 			const cWedge = container.querySelector('[id="chord-button-C"]');

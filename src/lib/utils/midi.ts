@@ -56,8 +56,8 @@ function uint16(value: number): number[] {
 
 /**
  * Build a format-0 .mid file from progression entries.
- * Each chord lasts its recorded `beats` in quarter notes.
- * Entries without note data (legacy jottings) are skipped.
+ * Each chord lasts its recorded `beats` in quarter notes; rests advance the
+ * clock silently. Chords without note data (legacy jottings) are skipped.
  */
 export function progressionToMidi(
 	entries: ProgressionEntry[],
@@ -77,13 +77,26 @@ export function progressionToMidi(
 		microsPerQuarter & 0xff,
 	);
 
+	// Delta time owed to the next note-on (accumulates across rests/skips)
+	let pendingDelta = 0;
+
 	for (const entry of entries) {
+		if (entry.kind === "rest") {
+			pendingDelta += entry.beats * TICKS_PER_QUARTER;
+			continue;
+		}
 		if (entry.notes.length === 0) continue;
 
-		// Note-ons are simultaneous at the previous chord's end
-		for (const note of entry.notes) {
-			events.push(...encodeVariableLength(0), 0x90, note & 0x7f, NOTE_VELOCITY);
-		}
+		// Note-ons: the first carries any pending rest delta, the rest of the
+		// chord's notes are simultaneous
+		entry.notes.forEach((note, i) => {
+			events.push(
+				...encodeVariableLength(i === 0 ? pendingDelta : 0),
+				0x90,
+				note & 0x7f,
+				NOTE_VELOCITY,
+			);
+		});
 		// Note-offs after the chord's recorded duration
 		const durationTicks = entry.beats * TICKS_PER_QUARTER;
 		entry.notes.forEach((note, i) => {
@@ -94,6 +107,7 @@ export function progressionToMidi(
 				0x00,
 			);
 		});
+		pendingDelta = 0;
 	}
 
 	// End-of-track meta event
